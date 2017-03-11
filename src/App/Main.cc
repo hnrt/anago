@@ -55,6 +55,11 @@ int main(int argc, char *argv[])
         xen_fini();
         xmlCleanupParser();
     }
+    catch (std::bad_alloc e)
+    {
+        g_printerr("Error: Out of memory.\n");
+        status = EXIT_FAILURE;
+    }
     catch (std::runtime_error e)
     {
         g_printerr("Error: %s\n", e.what());
