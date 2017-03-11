@@ -9,11 +9,11 @@ extern "C" {
 #include <xen/api/xen_all.h>
 }
 #include <stdexcept>
+#include "Controller/Controller.h"
 #include "Env/Env.h"
 #include "Env/Locale.h"
-
-
-#define TEXTDOMAIN "anago"
+#include "View/View.h"
+#include "Constants.h"
 
 
 using namespace hnrt;
@@ -38,11 +38,16 @@ int main(int argc, char *argv[])
 
         // initialization for UI localization
         bindtextdomain(TEXTDOMAIN, Locale::instance().getMessageCatalogDir(TEXTDOMAIN).c_str());
-        bind_textdomain_codeset(TEXTDOMAIN, "UTF-8");
+        bind_textdomain_codeset(TEXTDOMAIN, CODESET);
         textdomain(TEXTDOMAIN);
 
-        //TODO Gtk::Main::run(View::instance());
+        Controller::init();
+        View::init();
 
+        Gtk::Main::run(View::instance().getWindow());
+
+        View::fini();
+        Controller::fini();
         Env::fini();
 
         // cleanup for Xen API

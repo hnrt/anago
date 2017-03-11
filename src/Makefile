@@ -103,7 +103,9 @@ debug-clean::
 
 SUBDIRS=\
 App \
-Env
+Controller \
+Env \
+View
 
 clean distclean::
 	for d in $(SUBDIRS); do $(RM) $$d/*~ ; done
@@ -113,11 +115,16 @@ clean distclean::
 PROJ1=$(BINDIR)/$(TARGETEXE)
 LIBS1=$(STDLIBS) $(USRLIBS)
 OBJS1=$(OBJDIR)/App/Main.o \
+$(OBJDIR)/Controller/Controller.o \
+$(OBJDIR)/Controller/ControllerImpl.o \
 $(OBJDIR)/Env/Env.o \
 $(OBJDIR)/Env/Locale.o \
 $(OBJDIR)/Env/LocaleImpl.o \
 $(OBJDIR)/Env/Process.o \
-$(OBJDIR)/Env/ProcessImpl.o
+$(OBJDIR)/Env/ProcessImpl.o \
+$(OBJDIR)/View/MainWindow.o \
+$(OBJDIR)/View/View.o \
+$(OBJDIR)/View/ViewImpl.o
 
 ######################################################################
 
@@ -135,9 +142,14 @@ clean::
 
 ######################################################################
 
-$(OBJDIR)/App/Main.o: App/Main.cc Env/Env.h Env/Locale.h 
+$(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Controller/Controller.h Env/Env.h Env/Locale.h View/View.h 
+$(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Controller/Controller.h Controller/ControllerImpl.h 
+$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Controller/Controller.h Controller/ControllerImpl.h View/View.h 
 $(OBJDIR)/Env/Env.o: Env/Env.cc Env/Env.h Env/Locale.h Env/Process.h 
 $(OBJDIR)/Env/Locale.o: Env/Locale.cc Env/Locale.h Env/LocaleImpl.h 
 $(OBJDIR)/Env/LocaleImpl.o: Env/LocaleImpl.cc Env/Locale.h Env/LocaleImpl.h Env/Process.h 
 $(OBJDIR)/Env/Process.o: Env/Process.cc Env/Process.h Env/ProcessImpl.h 
 $(OBJDIR)/Env/ProcessImpl.o: Env/ProcessImpl.cc Env/Process.h Env/ProcessImpl.h 
+$(OBJDIR)/View/MainWindow.o: View/MainWindow.cc Controller/Controller.h View/MainWindow.h 
+$(OBJDIR)/View/View.o: View/View.cc View/MainWindow.h View/View.h View/ViewImpl.h 
+$(OBJDIR)/View/ViewImpl.o: View/ViewImpl.cc View/MainWindow.h View/View.h View/ViewImpl.h 
