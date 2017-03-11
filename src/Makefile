@@ -121,6 +121,7 @@ OBJS1=$(OBJDIR)/App/Main.o \
 $(OBJDIR)/Base/InterlockedCompareExchange.o \
 $(OBJDIR)/Base/InterlockedExchange.o \
 $(OBJDIR)/Base/InterlockedExchangeAdd.o \
+$(OBJDIR)/Base/RefObj.o \
 $(OBJDIR)/Controller/Background.o \
 $(OBJDIR)/Controller/Controller.o \
 $(OBJDIR)/Controller/ControllerImpl.o \
@@ -157,6 +158,7 @@ clean::
 ######################################################################
 
 $(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h View/View.h 
+$(OBJDIR)/Base/RefObj.o: Base/RefObj.cc Base/Atomic.h Base/RefObj.h 
 $(OBJDIR)/Controller/Background.o: Controller/Background.cc Controller/Background.h Controller/Controller.h 
 $(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Controller/Controller.h Controller/ControllerImpl.h 
 $(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h View/View.h 
