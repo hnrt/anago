@@ -21,13 +21,18 @@ namespace hnrt
         ~ControllerImpl();
         virtual void parseCommandLine(int argc, char *argv[]);
         virtual void quit();
+        virtual void incBackgroundCount();
+        virtual void decBackgroundCount();
 
     private:
 
         ControllerImpl(const ControllerImpl&);
         void operator =(const ControllerImpl&);
+        bool quit1();
 
         Logger& _log;
+        volatile int _backgroundCount;
+        bool _quitInProgress;
     };
 }
 

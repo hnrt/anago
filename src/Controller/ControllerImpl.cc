@@ -2,6 +2,7 @@
 
 
 #include <stdexcept>
+#include "Base/Atomic.h"
 #include "View/View.h"
 #include "ControllerImpl.h"
 
@@ -11,6 +12,8 @@ using namespace hnrt;
 
 ControllerImpl::ControllerImpl()
     : _log(Logger::instance())
+    , _backgroundCount(0)
+    , _quitInProgress(false)
 {
     _log.trace("ControllerImpl::ctor");
 }
@@ -50,7 +53,44 @@ void ControllerImpl::quit()
 {
     _log.trace("ControllerImpl::quit: Entered.");
 
-    View::instance().getWindow().hide();
+    if (!_quitInProgress)
+    {
+        _quitInProgress = true;
+        View::instance().getWindow().set_title("Quitting..."); //TODO: LOCALIZE
+        if (quit1())
+        {
+            Glib::signal_timeout().connect(sigc::mem_fun(*this, &ControllerImpl::quit1), 100); // 100 milleseconds
+        }
+    }
 
     _log.trace("ControllerImpl::quit: Finished.");
+}
+
+
+bool ControllerImpl::quit1()
+{
+    int busyCount = 0;
+    //TODO: DISCONNECT SESSIONS
+    if (busyCount || _backgroundCount)
+    {
+        _log.trace("ControllerImpl::quit1: busy=%d background=%d", busyCount, _backgroundCount);
+        return true; // to be invoked again
+    }
+    else
+    {
+        View::instance().getWindow().hide();
+        return false; // done
+    }
+}
+
+
+void ControllerImpl::incBackgroundCount()
+{
+    InterlockedIncrement(&_backgroundCount);
+}
+
+
+void ControllerImpl::decBackgroundCount()
+{
+    InterlockedDecrement(&_backgroundCount);
 }

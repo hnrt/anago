@@ -17,6 +17,8 @@ namespace hnrt
 
         virtual void parseCommandLine(int argc, char *argv[]) = 0;
         virtual void quit() = 0;
+        virtual void incBackgroundCount() = 0;
+        virtual void decBackgroundCount() = 0;
     };
 }
 
