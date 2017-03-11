@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     }
     catch (...)
     {
-        g_printerr("Error(%s:%d): Unhandled exception caught.\n", __FILE__, __LINE__);
+        g_printerr("Error: Unhandled exception caught.\n");
     }
 
     return status;
