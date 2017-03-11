@@ -118,7 +118,7 @@ namespace hnrt
 
         template<typename U> static RefPtr<T> castStatic(const RefPtr<U>& src)
         {
-            RefPtr<T> instance(static_cast<T*>(src._ptr));
+            RefPtr<T> instance(static_cast<T*>(const_cast<U*>(src.ptr())));
             if (instance._ptr)
             {
                 instance._ptr->reference();
