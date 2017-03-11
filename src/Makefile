@@ -108,6 +108,8 @@ Controller \
 Env \
 Logger \
 Model \
+Net \
+Util \
 View \
 XenServer
 
@@ -136,11 +138,25 @@ $(OBJDIR)/Logger/LogLevel.o \
 $(OBJDIR)/Logger/Logger.o \
 $(OBJDIR)/Logger/LoggerImpl.o \
 $(OBJDIR)/Logger/Trace.o \
+$(OBJDIR)/Model/ConnectSpec.o \
 $(OBJDIR)/Model/Model.o \
 $(OBJDIR)/Model/ModelImpl.o \
+$(OBJDIR)/Net/AddressResolution.o \
+$(OBJDIR)/Net/HostEntry.o \
+$(OBJDIR)/Net/MacAddress.o \
+$(OBJDIR)/Util/Base64Decoder.o \
+$(OBJDIR)/Util/Base64Encoder.o \
+$(OBJDIR)/Util/ByteString.o \
+$(OBJDIR)/Util/Scrambler.o \
+$(OBJDIR)/Util/ScramblerBase.o \
+$(OBJDIR)/Util/StringBuffer.o \
+$(OBJDIR)/Util/UUID.o \
 $(OBJDIR)/View/MainWindow.o \
 $(OBJDIR)/View/View.o \
-$(OBJDIR)/View/ViewImpl.o
+$(OBJDIR)/View/ViewImpl.o \
+$(OBJDIR)/XenServer/Session.o \
+$(OBJDIR)/XenServer/XenObject.o \
+$(OBJDIR)/XenServer/XenObjectStore.o
 
 ######################################################################
 
@@ -158,11 +174,11 @@ clean::
 
 ######################################################################
 
-$(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h View/View.h XenServer/Api.h 
+$(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Base/RefObj.h Base/RefPtr.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h View/View.h XenServer/Api.h 
 $(OBJDIR)/Base/RefObj.o: Base/RefObj.cc Base/Atomic.h Base/RefObj.h 
-$(OBJDIR)/Controller/Background.o: Controller/Background.cc Controller/Background.h Controller/Controller.h 
-$(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Controller/Controller.h Controller/ControllerImpl.h 
-$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h View/View.h 
+$(OBJDIR)/Controller/Background.o: Controller/Background.cc Base/RefObj.h Base/RefPtr.h Controller/Background.h Controller/Controller.h 
+$(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Base/RefObj.h Base/RefPtr.h Controller/Controller.h Controller/ControllerImpl.h 
+$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h View/View.h 
 $(OBJDIR)/Env/Env.o: Env/Env.cc Env/Env.h Env/Locale.h Env/Process.h 
 $(OBJDIR)/Env/Locale.o: Env/Locale.cc Env/Locale.h Env/LocaleImpl.h 
 $(OBJDIR)/Env/LocaleImpl.o: Env/LocaleImpl.cc Env/Locale.h Env/LocaleImpl.h Env/Process.h 
@@ -173,8 +189,22 @@ $(OBJDIR)/Logger/LogLevel.o: Logger/LogLevel.cc Logger/LogLevel.h
 $(OBJDIR)/Logger/Logger.o: Logger/Logger.cc Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h 
 $(OBJDIR)/Logger/LoggerImpl.o: Logger/LoggerImpl.cc App/Constants.h Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h 
 $(OBJDIR)/Logger/Trace.o: Logger/Trace.cc Logger/LogLevel.h Logger/Logger.h Logger/Trace.h 
+$(OBJDIR)/Model/ConnectSpec.o: Model/ConnectSpec.cc Base/RefObj.h Base/RefPtr.h Model/ConnectSpec.h Net/MacAddress.h Util/Base64.h Util/ByteString.h Util/Scrambler.h Util/ScramblerBase.h Util/StringBuffer.h Util/UUID.h 
 $(OBJDIR)/Model/Model.o: Model/Model.cc Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/ModelImpl.h 
 $(OBJDIR)/Model/ModelImpl.o: Model/ModelImpl.cc Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/Model.h Model/ModelImpl.h 
-$(OBJDIR)/View/MainWindow.o: View/MainWindow.cc Controller/Controller.h View/MainWindow.h 
+$(OBJDIR)/Net/AddressResolution.o: Net/AddressResolution.cc Net/AddressResolution.h 
+$(OBJDIR)/Net/HostEntry.o: Net/HostEntry.cc Net/HostEntry.h 
+$(OBJDIR)/Net/MacAddress.o: Net/MacAddress.cc Net/AddressResolution.h Net/HostEntry.h Net/MacAddress.h 
+$(OBJDIR)/Util/Base64Decoder.o: Util/Base64Decoder.cc Util/Base64.h Util/ByteString.h 
+$(OBJDIR)/Util/Base64Encoder.o: Util/Base64Encoder.cc Util/Base64.h Util/ByteString.h 
+$(OBJDIR)/Util/ByteString.o: Util/ByteString.cc Util/ByteString.h 
+$(OBJDIR)/Util/Scrambler.o: Util/Scrambler.cc Base/RefObj.h Base/RefPtr.h Util/Scrambler.h Util/ScramblerBase.h 
+$(OBJDIR)/Util/ScramblerBase.o: Util/ScramblerBase.cc Base/RefObj.h Base/RefPtr.h Util/ScramblerBase.h 
+$(OBJDIR)/Util/StringBuffer.o: Util/StringBuffer.cc Util/StringBuffer.h 
+$(OBJDIR)/Util/UUID.o: Util/UUID.cc Util/UUID.h 
+$(OBJDIR)/View/MainWindow.o: View/MainWindow.cc Base/RefObj.h Base/RefPtr.h Controller/Controller.h View/MainWindow.h 
 $(OBJDIR)/View/View.o: View/View.cc View/MainWindow.h View/View.h View/ViewImpl.h 
 $(OBJDIR)/View/ViewImpl.o: View/ViewImpl.cc Logger/LogLevel.h Logger/Logger.h Logger/Trace.h View/MainWindow.h View/View.h View/ViewImpl.h 
+$(OBJDIR)/XenServer/Session.o: XenServer/Session.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/XenObject.h XenServer/XenObjectStore.h 
+$(OBJDIR)/XenServer/XenObject.o: XenServer/XenObject.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Controller/Controller.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/XenObject.h 
+$(OBJDIR)/XenServer/XenObjectStore.o: XenServer/XenObjectStore.cc Base/RefObj.h Base/RefPtr.h Controller/Controller.h Model/Model.h XenServer/Api.h XenServer/Constants.h XenServer/Macros.h XenServer/XenObject.h XenServer/XenObjectStore.h 

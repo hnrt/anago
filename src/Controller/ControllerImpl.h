@@ -22,6 +22,7 @@ namespace hnrt
         virtual void quit();
         virtual void incBackgroundCount();
         virtual void decBackgroundCount();
+        virtual void notify(RefPtr<RefObj>, Notification);
 
     private:
 

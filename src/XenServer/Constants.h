@@ -7,7 +7,8 @@
 
 #define REFPREFIX "OpaqueRef:"
 #define REFPREFIX_LENGTH 10
-#define NULLREF reinterpret_cast<void*>(const_cast<char*>("OpaqueRef:NULL"))
+#define NULLREFSTRING "OpaqueRef:NULL"
+#define NULLREF reinterpret_cast<void*>(const_cast<char*>(NULLREFSTRING))
 
 
 #define ERROR_SESSION_INVALID "SESSION_INVALID"

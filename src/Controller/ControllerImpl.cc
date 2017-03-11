@@ -94,3 +94,9 @@ void ControllerImpl::decBackgroundCount()
 {
     InterlockedDecrement(&_backgroundCount);
 }
+
+
+void ControllerImpl::notify(RefPtr<RefObj> object, Notification notif)
+{
+    //TODO: IMPLEMENT
+}
