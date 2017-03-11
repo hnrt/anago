@@ -5,9 +5,6 @@
 #include <libintl.h>
 #include <libxml/parser.h>
 #include <curl/curl.h>
-extern "C" {
-#include <xen/api/xen_all.h>
-}
 #include <stdexcept>
 #include "Controller/Controller.h"
 #include "Env/Env.h"
@@ -15,6 +12,7 @@ extern "C" {
 #include "Logger/Logger.h"
 #include "Model/Model.h"
 #include "View/View.h"
+#include "XenServer/Api.h"
 #include "Constants.h"
 
 

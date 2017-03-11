@@ -108,7 +108,8 @@ Controller \
 Env \
 Logger \
 Model \
-View
+View \
+XenServer
 
 clean distclean::
 	for d in $(SUBDIRS); do $(RM) $$d/*~ ; done
@@ -157,7 +158,7 @@ clean::
 
 ######################################################################
 
-$(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h View/View.h 
+$(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h View/View.h XenServer/Api.h 
 $(OBJDIR)/Base/RefObj.o: Base/RefObj.cc Base/Atomic.h Base/RefObj.h 
 $(OBJDIR)/Controller/Background.o: Controller/Background.cc Controller/Background.h Controller/Controller.h 
 $(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Controller/Controller.h Controller/ControllerImpl.h 
