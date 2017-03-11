@@ -58,10 +58,12 @@ int main(int argc, char *argv[])
     catch (std::runtime_error e)
     {
         g_printerr("Error: %s\n", e.what());
+        status = EXIT_FAILURE;
     }
     catch (...)
     {
         g_printerr("Error: Unhandled exception caught.\n");
+        status = EXIT_FAILURE;
     }
 
     return status;
