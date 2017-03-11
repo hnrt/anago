@@ -6,7 +6,6 @@
 
 
 #include <glibmm.h>
-#include "Logger/Logger.h"
 #include "Controller.h"
 
 
@@ -30,7 +29,6 @@ namespace hnrt
         void operator =(const ControllerImpl&);
         bool quit1();
 
-        Logger& _log;
         volatile int _backgroundCount;
         bool _quitInProgress;
     };

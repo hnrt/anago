@@ -22,7 +22,9 @@ namespace hnrt
         virtual LogLevel getLevel() const { return _level; }
         virtual void setLevel(LogLevel level) { _level = level; }
         virtual void trace(const char*, ...);
+        virtual void trace2(const char*, const char*, va_list);
         virtual void debug(const char*, ...);
+        virtual void debug2(const char*, const char*, va_list);
         virtual void info(const char*, ...);
         virtual void warn(const char*, ...);
         virtual void error(const char*, ...);

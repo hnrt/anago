@@ -24,8 +24,6 @@ namespace hnrt
 
         ModelImpl(const ModelImpl&);
         void operator =(const ModelImpl&);
-
-        Logger& _log;
     };
 }
 

@@ -115,6 +115,21 @@ void LoggerImpl::trace(const char* format, ...)
 }
 
 
+void LoggerImpl::trace2(const char* name, const char* format, va_list argList)
+{
+    if (_fp && _level == LogLevel::TRACE)
+    {
+        Glib::Mutex::Lock lock(_mutex);
+        char buf[64];
+        fputs(GetHeader(buf, sizeof(buf), LogLevel::TRACE), _fp);
+        fprintf(_fp, "%s: ", name);
+        vfprintf(_fp, format, argList);
+        putc('\n', _fp);
+        fflush(_fp);
+    }
+}
+
+
 void LoggerImpl::debug(const char* format, ...)
 {
     if (_fp && _level <= LogLevel::DEBUG)
@@ -126,6 +141,21 @@ void LoggerImpl::debug(const char* format, ...)
         va_start(argList, format);
         vfprintf(_fp, format, argList);
         va_end(argList);
+        putc('\n', _fp);
+        fflush(_fp);
+    }
+}
+
+
+void LoggerImpl::debug2(const char* name, const char* format, va_list argList)
+{
+    if (_fp && _level <= LogLevel::DEBUG)
+    {
+        Glib::Mutex::Lock lock(_mutex);
+        char buf[64];
+        fputs(GetHeader(buf, sizeof(buf), LogLevel::DEBUG), _fp);
+        fprintf(_fp, "%s: ", name);
+        vfprintf(_fp, format, argList);
         putc('\n', _fp);
         fflush(_fp);
     }

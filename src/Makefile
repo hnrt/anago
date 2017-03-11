@@ -129,9 +129,11 @@ $(OBJDIR)/Env/Locale.o \
 $(OBJDIR)/Env/LocaleImpl.o \
 $(OBJDIR)/Env/Process.o \
 $(OBJDIR)/Env/ProcessImpl.o \
+$(OBJDIR)/Logger/Debug.o \
 $(OBJDIR)/Logger/LogLevel.o \
 $(OBJDIR)/Logger/Logger.o \
 $(OBJDIR)/Logger/LoggerImpl.o \
+$(OBJDIR)/Logger/Trace.o \
 $(OBJDIR)/Model/Model.o \
 $(OBJDIR)/Model/ModelImpl.o \
 $(OBJDIR)/View/MainWindow.o \
@@ -156,18 +158,20 @@ clean::
 
 $(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h View/View.h 
 $(OBJDIR)/Controller/Background.o: Controller/Background.cc Controller/Background.h Controller/Controller.h 
-$(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h 
-$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h View/View.h 
+$(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Controller/Controller.h Controller/ControllerImpl.h 
+$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h View/View.h 
 $(OBJDIR)/Env/Env.o: Env/Env.cc Env/Env.h Env/Locale.h Env/Process.h 
 $(OBJDIR)/Env/Locale.o: Env/Locale.cc Env/Locale.h Env/LocaleImpl.h 
 $(OBJDIR)/Env/LocaleImpl.o: Env/LocaleImpl.cc Env/Locale.h Env/LocaleImpl.h Env/Process.h 
 $(OBJDIR)/Env/Process.o: Env/Process.cc Env/Process.h Env/ProcessImpl.h 
 $(OBJDIR)/Env/ProcessImpl.o: Env/ProcessImpl.cc Env/Process.h Env/ProcessImpl.h 
+$(OBJDIR)/Logger/Debug.o: Logger/Debug.cc Logger/Debug.h Logger/LogLevel.h Logger/Logger.h 
 $(OBJDIR)/Logger/LogLevel.o: Logger/LogLevel.cc Logger/LogLevel.h 
 $(OBJDIR)/Logger/Logger.o: Logger/Logger.cc Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h 
 $(OBJDIR)/Logger/LoggerImpl.o: Logger/LoggerImpl.cc App/Constants.h Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h 
+$(OBJDIR)/Logger/Trace.o: Logger/Trace.cc Logger/LogLevel.h Logger/Logger.h Logger/Trace.h 
 $(OBJDIR)/Model/Model.o: Model/Model.cc Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/ModelImpl.h 
-$(OBJDIR)/Model/ModelImpl.o: Model/ModelImpl.cc Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/ModelImpl.h 
+$(OBJDIR)/Model/ModelImpl.o: Model/ModelImpl.cc Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/Model.h Model/ModelImpl.h 
 $(OBJDIR)/View/MainWindow.o: View/MainWindow.cc Controller/Controller.h View/MainWindow.h 
-$(OBJDIR)/View/View.o: View/View.cc Logger/LogLevel.h Logger/Logger.h View/MainWindow.h View/View.h View/ViewImpl.h 
-$(OBJDIR)/View/ViewImpl.o: View/ViewImpl.cc Logger/LogLevel.h Logger/Logger.h View/MainWindow.h View/View.h View/ViewImpl.h 
+$(OBJDIR)/View/View.o: View/View.cc View/MainWindow.h View/View.h View/ViewImpl.h 
+$(OBJDIR)/View/ViewImpl.o: View/ViewImpl.cc Logger/LogLevel.h Logger/Logger.h Logger/Trace.h View/MainWindow.h View/View.h View/ViewImpl.h 

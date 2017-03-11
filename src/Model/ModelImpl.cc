@@ -1,6 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "Logger/Trace.h"
 #include "ModelImpl.h"
 
 
@@ -8,13 +9,12 @@ using namespace hnrt;
 
 
 ModelImpl::ModelImpl()
-    : _log(Logger::instance())
 {
-    _log.trace("ModelImpl::ctor");
+    Trace trace(__PRETTY_FUNCTION__);
 }
 
 
 ModelImpl::~ModelImpl()
 {
-    _log.trace("ModelImpl::dtor");
+    Trace trace(__PRETTY_FUNCTION__);
 }

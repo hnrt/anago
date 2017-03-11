@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include "Base/Atomic.h"
+#include "Logger/Trace.h"
 #include "View/View.h"
 #include "ControllerImpl.h"
 
@@ -11,17 +12,16 @@ using namespace hnrt;
 
 
 ControllerImpl::ControllerImpl()
-    : _log(Logger::instance())
-    , _backgroundCount(0)
+    : _backgroundCount(0)
     , _quitInProgress(false)
 {
-    _log.trace("ControllerImpl::ctor");
+    Trace trace(__PRETTY_FUNCTION__);
 }
 
 
 ControllerImpl::~ControllerImpl()
 {
-    _log.trace("ControllerImpl::dtor");
+    Trace trace(__PRETTY_FUNCTION__);
 }
 
 
@@ -37,7 +37,7 @@ void ControllerImpl::parseCommandLine(int argc, char *argv[])
                 snprintf(msg, sizeof(msg), "Command line option -log operand was not specified.");
                 throw std::runtime_error(msg);
             }
-            _log.setLevel(LogLevel::parse(argv[index]));
+            Logger::instance().setLevel(LogLevel::parse(argv[index]));
         }
         else
         {
@@ -51,7 +51,7 @@ void ControllerImpl::parseCommandLine(int argc, char *argv[])
 
 void ControllerImpl::quit()
 {
-    _log.trace("ControllerImpl::quit: Entered.");
+    Trace trace(__PRETTY_FUNCTION__);
 
     if (!_quitInProgress)
     {
@@ -62,18 +62,18 @@ void ControllerImpl::quit()
             Glib::signal_timeout().connect(sigc::mem_fun(*this, &ControllerImpl::quit1), 100); // 100 milleseconds
         }
     }
-
-    _log.trace("ControllerImpl::quit: Finished.");
 }
 
 
 bool ControllerImpl::quit1()
 {
+    Trace trace(__PRETTY_FUNCTION__);
+
     int busyCount = 0;
     //TODO: DISCONNECT SESSIONS
     if (busyCount || _backgroundCount)
     {
-        _log.trace("ControllerImpl::quit1: busy=%d background=%d", busyCount, _backgroundCount);
+        trace.put("busy=%d background=%d", busyCount, _backgroundCount);
         return true; // to be invoked again
     }
     else

@@ -1,6 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "Logger/Trace.h"
 #include "ViewImpl.h"
 
 
@@ -8,13 +9,12 @@ using namespace hnrt;
 
 
 ViewImpl::ViewImpl()
-    : _log(Logger::instance())
 {
-    _log.trace("ViewImpl::ctor");
+    Trace trace(__PRETTY_FUNCTION__);
 }
 
 
 ViewImpl::~ViewImpl()
 {
-    _log.trace("ViewImpl::dtor");
+    Trace trace(__PRETTY_FUNCTION__);
 }
