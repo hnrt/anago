@@ -17,7 +17,7 @@ XenObject::XenObject(Type type, Session& session, const char* refid, const char*
     : _type(type)
     , _session(session)
     , _refid(refid)
-    , _uuid(uuid ? uuid : NULLREFSTRING)
+    , _uuid(uuid ? uuid : "")
     , _name(name ? name : "")
     , _busyCount(0)
 {
