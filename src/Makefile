@@ -105,6 +105,7 @@ SUBDIRS=\
 App \
 Controller \
 Env \
+Model \
 View
 
 clean distclean::
@@ -122,6 +123,8 @@ $(OBJDIR)/Env/Locale.o \
 $(OBJDIR)/Env/LocaleImpl.o \
 $(OBJDIR)/Env/Process.o \
 $(OBJDIR)/Env/ProcessImpl.o \
+$(OBJDIR)/Model/Model.o \
+$(OBJDIR)/Model/ModelImpl.o \
 $(OBJDIR)/View/MainWindow.o \
 $(OBJDIR)/View/View.o \
 $(OBJDIR)/View/ViewImpl.o
@@ -150,6 +153,8 @@ $(OBJDIR)/Env/Locale.o: Env/Locale.cc Env/Locale.h Env/LocaleImpl.h
 $(OBJDIR)/Env/LocaleImpl.o: Env/LocaleImpl.cc Env/Locale.h Env/LocaleImpl.h Env/Process.h 
 $(OBJDIR)/Env/Process.o: Env/Process.cc Env/Process.h Env/ProcessImpl.h 
 $(OBJDIR)/Env/ProcessImpl.o: Env/ProcessImpl.cc Env/Process.h Env/ProcessImpl.h 
+$(OBJDIR)/Model/Model.o: Model/Model.cc Model/Model.h Model/ModelImpl.h 
+$(OBJDIR)/Model/ModelImpl.o: Model/ModelImpl.cc Model/Model.h Model/ModelImpl.h 
 $(OBJDIR)/View/MainWindow.o: View/MainWindow.cc Controller/Controller.h View/MainWindow.h 
 $(OBJDIR)/View/View.o: View/View.cc View/MainWindow.h View/View.h View/ViewImpl.h 
 $(OBJDIR)/View/ViewImpl.o: View/ViewImpl.cc View/MainWindow.h View/View.h View/ViewImpl.h 

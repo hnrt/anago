@@ -12,6 +12,7 @@ extern "C" {
 #include "Controller/Controller.h"
 #include "Env/Env.h"
 #include "Env/Locale.h"
+#include "Model/Model.h"
 #include "View/View.h"
 #include "Constants.h"
 
@@ -41,6 +42,7 @@ int main(int argc, char *argv[])
         bind_textdomain_codeset(TEXTDOMAIN, CODESET);
         textdomain(TEXTDOMAIN);
 
+        Model::init();
         Controller::init();
         View::init();
 
@@ -48,6 +50,7 @@ int main(int argc, char *argv[])
 
         View::fini();
         Controller::fini();
+        Model::fini();
         Env::fini();
 
         // cleanup for Xen API
