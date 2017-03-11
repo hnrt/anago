@@ -8,10 +8,13 @@ using namespace hnrt;
 
 
 ModelImpl::ModelImpl()
+    : _log(Logger::instance())
 {
+    _log.trace("ModelImpl::ctor");
 }
 
 
 ModelImpl::~ModelImpl()
 {
+    _log.trace("ModelImpl::dtor");
 }

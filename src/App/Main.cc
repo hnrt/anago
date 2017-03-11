@@ -12,6 +12,7 @@ extern "C" {
 #include "Controller/Controller.h"
 #include "Env/Env.h"
 #include "Env/Locale.h"
+#include "Logger/Logger.h"
 #include "Model/Model.h"
 #include "View/View.h"
 #include "Constants.h"
@@ -35,6 +36,7 @@ int main(int argc, char *argv[])
         xen_init();
         curl_global_init(CURL_GLOBAL_ALL);
 
+        Logger::init();
         Env::init();
 
         // initialization for UI localization
@@ -53,12 +55,12 @@ int main(int argc, char *argv[])
         }
         catch (std::bad_alloc e)
         {
-            g_printerr("Error: Out of memory.\n");
+            Logger::instance().error("Out of memory.");
             status = EXIT_FAILURE;
         }
         catch (std::runtime_error e)
         {
-            g_printerr("Error: %s\n", e.what());
+            Logger::instance().error("%s", e.what());
             status = EXIT_FAILURE;
         }
 
@@ -66,6 +68,7 @@ int main(int argc, char *argv[])
         Controller::fini();
         Model::fini();
         Env::fini();
+        Logger::fini();
 
         // cleanup for Xen API
         curl_global_cleanup();
@@ -74,17 +77,17 @@ int main(int argc, char *argv[])
     }
     catch (std::bad_alloc e)
     {
-        g_printerr("Error: Out of memory.\n");
+        g_printerr("ERROR: Out of memory.\n");
         status = EXIT_FAILURE;
     }
     catch (std::runtime_error e)
     {
-        g_printerr("Error: %s\n", e.what());
+        g_printerr("ERROR: %s\n", e.what());
         status = EXIT_FAILURE;
     }
     catch (...)
     {
-        g_printerr("Error: Unhandled exception caught.\n");
+        g_printerr("ERROR: Unhandled exception caught.\n");
         status = EXIT_FAILURE;
     }
 

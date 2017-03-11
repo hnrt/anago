@@ -6,6 +6,7 @@
 
 
 #include <glibmm.h>
+#include "Logger/Logger.h"
 #include "Model.h"
 
 
@@ -23,6 +24,8 @@ namespace hnrt
 
         ModelImpl(const ModelImpl&);
         void operator =(const ModelImpl&);
+
+        Logger& _log;
     };
 }
 

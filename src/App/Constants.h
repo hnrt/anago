@@ -5,6 +5,9 @@
 #define HNRT_APP_CONSTANTS_H
 
 
+#define APPNAME "anago"
+
+
 #define TEXTDOMAIN "anago"
 
 

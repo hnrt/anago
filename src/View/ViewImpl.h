@@ -5,6 +5,7 @@
 #define HNRT_VIEWIMPL_H
 
 
+#include "Logger/Logger.h"
 #include "MainWindow.h"
 #include "View.h"
 
@@ -26,6 +27,7 @@ namespace hnrt
         void operator =(const ViewImpl&);
 
         MainWindow _mainWindow;
+        Logger& _log;
     };
 }
 

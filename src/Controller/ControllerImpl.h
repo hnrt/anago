@@ -6,6 +6,7 @@
 
 
 #include <glibmm.h>
+#include "Logger/Logger.h"
 #include "Controller.h"
 
 
@@ -25,6 +26,8 @@ namespace hnrt
 
         ControllerImpl(const ControllerImpl&);
         void operator =(const ControllerImpl&);
+
+        Logger& _log;
     };
 }
 
