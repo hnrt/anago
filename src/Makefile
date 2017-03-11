@@ -103,6 +103,7 @@ debug-clean::
 
 SUBDIRS=\
 App \
+Base \
 Controller \
 Env \
 Logger \
@@ -117,6 +118,9 @@ clean distclean::
 PROJ1=$(BINDIR)/$(TARGETEXE)
 LIBS1=$(STDLIBS) $(USRLIBS)
 OBJS1=$(OBJDIR)/App/Main.o \
+$(OBJDIR)/Base/InterlockedCompareExchange.o \
+$(OBJDIR)/Base/InterlockedExchange.o \
+$(OBJDIR)/Base/InterlockedExchangeAdd.o \
 $(OBJDIR)/Controller/Controller.o \
 $(OBJDIR)/Controller/ControllerImpl.o \
 $(OBJDIR)/Env/Env.o \
