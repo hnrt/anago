@@ -18,6 +18,7 @@ namespace hnrt
 
         ControllerImpl();
         ~ControllerImpl();
+        virtual void parseCommandLine(int argc, char *argv[]);
         virtual void quit();
 
     private:

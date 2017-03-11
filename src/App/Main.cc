@@ -46,7 +46,26 @@ int main(int argc, char *argv[])
         Controller::init();
         View::init();
 
-        Gtk::Main::run(View::instance().getWindow());
+        try
+        {
+            Controller::instance().parseCommandLine(argc, argv);
+            Gtk::Main::run(View::instance().getWindow());
+        }
+        catch (std::bad_alloc e)
+        {
+            g_printerr("Error: Out of memory.\n");
+            status = EXIT_FAILURE;
+        }
+        catch (std::runtime_error e)
+        {
+            g_printerr("Error: %s\n", e.what());
+            status = EXIT_FAILURE;
+        }
+        catch (...)
+        {
+            g_printerr("Error: Unhandled exception caught.\n");
+            status = EXIT_FAILURE;
+        }
 
         View::fini();
         Controller::fini();

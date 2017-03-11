@@ -15,6 +15,7 @@ namespace hnrt
         static void fini();
         static Controller& instance();
 
+        virtual void parseCommandLine(int argc, char *argv[]) = 0;
         virtual void quit() = 0;
     };
 }
