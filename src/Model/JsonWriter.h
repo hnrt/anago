@@ -21,27 +21,25 @@ namespace hnrt
 
     private:
 
+        typedef void (JsonWriter::*WriteValue)(const RefPtr<Json::Value>&, int);
+        typedef std::map<Json::Type, WriteValue> WriteValueMap;
+
         JsonWriter(const JsonWriter&);
         void operator =(const JsonWriter&);
-        void write(const RefPtr<Json::Object>&, int);
-        void write(const Json::Array&, int);
-        void write(const RefPtr<Json::Member>&, int);
-        void write(const RefPtr<Json::Value>&, int);
+        void writeValue(const RefPtr<Json::Value>&, int);
         void writeFalse(const RefPtr<Json::Value>&, int);
         void writeNull(const RefPtr<Json::Value>&, int);
         void writeTrue(const RefPtr<Json::Value>&, int);
         void writeString(const RefPtr<Json::Value>&, int);
         void writeNumber(const RefPtr<Json::Value>&, int);
         void writeObject(const RefPtr<Json::Value>&, int);
+        void writeMember(const RefPtr<Json::Member>&, int);
         void writeArray(const RefPtr<Json::Value>&, int);
         void indent(int);
 
-        typedef void (JsonWriter::*ValueWrite)(const RefPtr<Json::Value>&, int);
-        typedef std::map<Json::Type, ValueWrite> ValueWriteMap;
-
         FILE* _fp;
         const Json& _doc;
-        ValueWriteMap _map;
+        WriteValueMap _map;
     };
 }
 
