@@ -30,6 +30,16 @@ namespace hnrt
             VALUE_TRUE,
         };
 
+        enum Character
+        {
+            BEGIN_OBJECT = '{',
+            END_OBJECT = '}',
+            BEGIN_ARRAY = '[',
+            END_ARRAY = ']',
+            NAME_SEPARATOR = ':',
+            VALUE_SEPARATOR = ',',
+        };
+
         class Object;
 
         class Value;
@@ -104,12 +114,25 @@ namespace hnrt
                 RefPtr<Member> member(new Member());
                 member->set(Glib::ustring(key));
                 RefPtr<Value> valptr(new Value());
+                valptr->set(Json::ARRAY);
                 for (Array::const_iterator iter = value.begin(); iter != value.end(); iter++)
                 {
                     valptr->array().push_back(*iter);
                 }
                 member->set(valptr);
                 _members.push_back(member);
+            }
+
+            const RefPtr<Value> get(const char* key) const
+            {
+                for (MemberArray::size_type index = 0; index < _members.size(); index++)
+                {
+                    if (_members[index]->key() == key)
+                    {
+                        return _members[index]->value();
+                    }
+                }
+                return RefPtr<Value>();
             }
 
         private:
@@ -239,26 +262,17 @@ namespace hnrt
 
         Json();
         virtual ~Json();
+        virtual const RefPtr<Value>& root() const { return _root; }
+        virtual void set(const RefPtr<Value>& value) { _root = value; }
         virtual void load(FILE*);
         virtual void save(FILE*);
-        virtual void set(Type type) { _type = type; }
-        virtual void set(const RefPtr<Object>&);
-        virtual const Array& array() const { return _array; }
-        virtual Array& array();
 
     protected:
 
         Json(const Json&);
         void operator =(const Json&);
-        void write(FILE*, const RefPtr<Object>&, int);
-        void write(FILE*, const Array&, int);
-        void write(FILE*, const RefPtr<Member>&, int);
-        void write(FILE*, const RefPtr<Value>&, int);
-        void indent(FILE*, int);
 
-        Type _type;
-        RefPtr<Object> _object;
-        Array _array;
+        RefPtr<Value> _root;
     };
 }
 

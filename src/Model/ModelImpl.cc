@@ -21,6 +21,9 @@ static Glib::ustring GetConfigPath()
 
 ModelImpl::ModelImpl()
     : _path(GetConfigPath())
+    , _width(640)
+    , _height(480)
+    , _panelWidth(200)
 {
     Trace trace(__PRETTY_FUNCTION__);
 }
@@ -91,4 +94,46 @@ void ModelImpl::removeAllSessions()
         session.disconnect();
         session.unreference();
     }
+}
+
+
+int ModelImpl::getWidth()
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    return _width;
+}
+
+
+void ModelImpl::setWidth(int value)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    _width = value;
+}
+
+
+int ModelImpl::getHeight()
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    return _height;
+}
+
+
+void ModelImpl::setHeight(int value)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    _height = value;
+}
+
+
+int ModelImpl::getPanelWidth()
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    return _panelWidth;
+}
+
+
+void ModelImpl::setPanelWidth(int value)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    _panelWidth = value;
 }

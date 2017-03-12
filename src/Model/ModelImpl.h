@@ -12,6 +12,8 @@
 
 namespace hnrt
 {
+    class Json;
+
     class ModelImpl
         : public Model
     {
@@ -26,14 +28,26 @@ namespace hnrt
         virtual void remove(Session&);
         virtual void removeAllSessions();
 
+        virtual int getWidth();
+        virtual void setWidth(int);
+        virtual int getHeight();
+        virtual void setHeight(int);
+        virtual int getPanelWidth();
+        virtual void setPanelWidth(int);
+
     private:
 
         ModelImpl(const ModelImpl&);
         void operator =(const ModelImpl&);
+        void loadV1(const Json&);
 
         Glib::ustring _path;
         Glib::RecMutex _mutex;
         std::list<Session*> _sessions;
+
+        int _width;
+        int _height;
+        int _panelWidth;
     };
 }
 

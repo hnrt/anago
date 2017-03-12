@@ -18,14 +18,18 @@ void JsonParser::run()
 {
     _lex.next();
 
-    RefPtr<Json::Object> object;
+    RefPtr<Json::Value> value;
 
-    if (parseObject(object))
+    if (parseValue(value))
     {
-        _doc.set(object);
-    }
-    else if (parseArray(_doc.array()))
-    {
+        if (value->type() == Json::OBJECT || value->type() == Json::ARRAY)
+        {
+            _doc.set(value);
+        }
+        else
+        {
+            throw Glib::ustring::compose("Line %1: Value must be either object or array.", _lex.line());
+        }
     }
     else
     {

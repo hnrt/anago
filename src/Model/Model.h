@@ -27,6 +27,13 @@ namespace hnrt
         virtual void add(const ConnectSpec&) = 0;
         virtual void remove(Session&) = 0;
         virtual void removeAllSessions() = 0;
+
+        virtual int getWidth() = 0;
+        virtual void setWidth(int) = 0;
+        virtual int getHeight() = 0;
+        virtual void setHeight(int) = 0;
+        virtual int getPanelWidth() = 0;
+        virtual void setPanelWidth(int) = 0;
     };
 }
 
