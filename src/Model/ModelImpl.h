@@ -19,11 +19,21 @@ namespace hnrt
 
         ModelImpl();
         ~ModelImpl();
+        virtual void load();
+        virtual void save();
+        virtual int get(std::list<Session*>&);
+        virtual void add(const ConnectSpec&);
+        virtual void remove(Session&);
+        virtual void removeAllSessions();
 
     private:
 
         ModelImpl(const ModelImpl&);
         void operator =(const ModelImpl&);
+
+        Glib::ustring _path;
+        Glib::RecMutex _mutex;
+        std::list<Session*> _sessions;
     };
 }
 

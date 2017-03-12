@@ -31,8 +31,6 @@ XenObjectStore::XenObjectStore()
 XenObjectStore::~XenObjectStore()
 {
     clear();
-    //setHost(RefPtr<Host>());
-    //setPerformanceMonitor(RefPtr<PerformanceMonitor>());
 }
 
 
@@ -59,6 +57,8 @@ void XenObjectStore::clear()
         RefPtr<XenObject> object = *iter;
         Controller::instance().notify(RefPtr<RefObj>::castStatic(object), Controller::XO_DESTROYED);
     }
+    //setHost(RefPtr<Host>());
+    //setPerformanceMonitor(RefPtr<PerformanceMonitor>());
 }
 
 

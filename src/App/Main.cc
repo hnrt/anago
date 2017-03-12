@@ -48,17 +48,29 @@ int main(int argc, char *argv[])
 
         try
         {
+            Model::instance().load();
             Controller::instance().parseCommandLine(argc, argv);
             Gtk::Main::run(View::instance().getWindow());
+            Model::instance().save();
+        }
+        catch (Glib::ustring msg)
+        {
+            Logger::instance().error(msg.c_str());
+            View::instance().showError(msg);
+            status = EXIT_FAILURE;
         }
         catch (std::bad_alloc e)
         {
-            Logger::instance().error("Out of memory.");
+            Glib::ustring msg("Out of memory.");
+            Logger::instance().error(msg.c_str());
+            View::instance().showError(msg);
             status = EXIT_FAILURE;
         }
         catch (std::runtime_error e)
         {
-            Logger::instance().error("%s", e.what());
+            Glib::ustring msg(e.what());
+            Logger::instance().error(msg.c_str());
+            View::instance().showError(msg);
             status = EXIT_FAILURE;
         }
 
