@@ -37,7 +37,7 @@ void ModelImpl::save()
             RefPtr<Json::Object> object2(new Json::Object());
             object2->add("width", (long)getWidth());
             object2->add("height", (long)getHeight());
-            object2->add("panel_width", (long)getPanelWidth());
+            object2->add("pane1_width", (long)getPane1Width());
             object1->add("UI", object2);
             Json::Array array3;
             std::list<Session*> sessions;

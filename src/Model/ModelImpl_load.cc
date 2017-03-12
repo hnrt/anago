@@ -93,10 +93,10 @@ void ModelImpl::loadV1(const Json& json)
         {
             setHeight((int)value2->number());
         }
-        value2 = object2->get("panel_width");
+        value2 = object2->get("pane1_width");
         if (value2.ptr() && value2->type() == Json::NUMBER)
         {
-            setPanelWidth((int)value2->number());
+            setPane1Width((int)value2->number());
         }
     }
 

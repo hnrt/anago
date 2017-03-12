@@ -32,8 +32,8 @@ namespace hnrt
         virtual void setWidth(int);
         virtual int getHeight();
         virtual void setHeight(int);
-        virtual int getPanelWidth();
-        virtual void setPanelWidth(int);
+        virtual int getPane1Width();
+        virtual void setPane1Width(int);
 
     private:
 
@@ -47,7 +47,7 @@ namespace hnrt
 
         int _width;
         int _height;
-        int _panelWidth;
+        int _pane1Width;
     };
 }
 

@@ -21,9 +21,9 @@ static Glib::ustring GetConfigPath()
 
 ModelImpl::ModelImpl()
     : _path(GetConfigPath())
-    , _width(640)
-    , _height(480)
-    , _panelWidth(200)
+    , _width(WIDTH_DEFAULT)
+    , _height(HEIGHT_DEFAULT)
+    , _pane1Width(PANE1WIDTH_DEFAULT)
 {
     Trace trace(__PRETTY_FUNCTION__);
 }
@@ -125,15 +125,15 @@ void ModelImpl::setHeight(int value)
 }
 
 
-int ModelImpl::getPanelWidth()
+int ModelImpl::getPane1Width()
 {
     Glib::RecMutex::Lock lock(_mutex);
-    return _panelWidth;
+    return _pane1Width;
 }
 
 
-void ModelImpl::setPanelWidth(int value)
+void ModelImpl::setPane1Width(int value)
 {
     Glib::RecMutex::Lock lock(_mutex);
-    _panelWidth = value;
+    _pane1Width = value;
 }

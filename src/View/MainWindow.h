@@ -23,6 +23,10 @@ namespace hnrt
         MainWindow(const MainWindow&);
         void operator =(const MainWindow&);
         bool onClose(GdkEventAny*);
+        bool onWindowStateChange(GdkEventWindowState*);
+        void onResize(Gtk::Allocation&);
+
+        GdkWindowState _windowState;
     };
 }
 

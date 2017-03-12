@@ -32,8 +32,8 @@ namespace hnrt
         virtual void setWidth(int) = 0;
         virtual int getHeight() = 0;
         virtual void setHeight(int) = 0;
-        virtual int getPanelWidth() = 0;
-        virtual void setPanelWidth(int) = 0;
+        virtual int getPane1Width() = 0;
+        virtual void setPane1Width(int) = 0;
     };
 }
 

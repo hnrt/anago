@@ -1,7 +1,9 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "App/Constants.h"
 #include "Logger/Trace.h"
+#include "Model/Model.h"
 #include "ViewImpl.h"
 
 
@@ -18,6 +20,22 @@ ViewImpl::ViewImpl()
 ViewImpl::~ViewImpl()
 {
     Trace trace(__PRETTY_FUNCTION__);
+}
+
+
+void ViewImpl::resize()
+{
+    int cx = Model::instance().getWidth();
+    int cy = Model::instance().getHeight();
+    if (cx > WIDTH_DEFAULT && cy > HEIGHT_DEFAULT)
+    {
+        _mainWindow.set_default_size(cx, cy);
+    }
+    cx = Model::instance().getPane1Width();
+    if (cx > PANE1WIDTH_DEFAULT)
+    {
+        //_sw1.set_size_request(cx, -1);
+    }
 }
 
 
