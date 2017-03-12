@@ -11,6 +11,13 @@ JsonParser::JsonParser(JsonLexer& lex, Json& doc)
     : _lex(lex)
     , _doc(doc)
 {
+    _map.insert(ParseValueMap::value_type(Json::VALUE_FALSE, &JsonParser::parseConstant));
+    _map.insert(ParseValueMap::value_type(Json::VALUE_NULL, &JsonParser::parseConstant));
+    _map.insert(ParseValueMap::value_type(Json::VALUE_TRUE, &JsonParser::parseConstant));
+    _map.insert(ParseValueMap::value_type(Json::STRING, &JsonParser::parseString));
+    _map.insert(ParseValueMap::value_type(Json::NUMBER, &JsonParser::parseNumber));
+    _map.insert(ParseValueMap::value_type(Json::BEGIN_OBJECT, &JsonParser::parseObject));
+    _map.insert(ParseValueMap::value_type(Json::BEGIN_ARRAY, &JsonParser::parseArray));
 }
 
 
@@ -43,7 +50,49 @@ void JsonParser::run()
 }
 
 
-bool JsonParser::parseObject(RefPtr<Json::Object>& object)
+bool JsonParser::parseValue(RefPtr<Json::Value>& value)
+{
+    ParseValueMap::const_iterator iter = _map.find(_lex.sym());
+    if (iter != _map.end())
+    {
+        ParseValue func = iter->second;
+        return (this->*func)(value);
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool JsonParser::parseConstant(RefPtr<Json::Value>& value)
+{
+    value = RefPtr<Json::Value>(new Json::Value());
+    value->set((Json::Type)_lex.sym());
+    _lex.next();
+    return true;
+}
+
+
+bool JsonParser::parseString(RefPtr<Json::Value>& value)
+{
+    value = RefPtr<Json::Value>(new Json::Value());
+    value->set(Glib::ustring(_lex.str()));
+    _lex.next();
+    return true;
+}
+
+
+bool JsonParser::parseNumber(RefPtr<Json::Value>& value)
+{
+    value = RefPtr<Json::Value>(new Json::Value());
+    value->set(strtol(_lex.str(), NULL, 10));
+    _lex.next();
+    return true;
+}
+
+
+bool JsonParser::parseObject(RefPtr<Json::Value>& value)
 {
     if (_lex.sym() == Json::BEGIN_OBJECT)
     {
@@ -54,18 +103,25 @@ bool JsonParser::parseObject(RefPtr<Json::Object>& object)
         return false;
     }
 
-    object = RefPtr<Json::Object>(new Json::Object());
+    value = RefPtr<Json::Value>(new Json::Value());
+
+    RefPtr<Json::Object> object = RefPtr<Json::Object>(new Json::Object());
+
+    value->set(object);
+
+    Json::MemberArray& members = object->members();
 
     RefPtr<Json::Member> member;
+
     if (parseMember(member))
     {
-        object->members().push_back(member);
+        members.push_back(member);
         while (_lex.sym() == Json::VALUE_SEPARATOR)
         {
             _lex.next();
             if (parseMember(member))
             {
-                object->members().push_back(member);
+                members.push_back(member);
             }
             else
             {
@@ -123,48 +179,7 @@ bool JsonParser::parseMember(RefPtr<Json::Member>& member)
 }
 
 
-bool JsonParser::parseValue(RefPtr<Json::Value>& value)
-{
-    if (_lex.sym() == Json::VALUE_FALSE
-        || _lex.sym() == Json::VALUE_NULL
-        || _lex.sym() == Json::VALUE_TRUE)
-    {
-        value = RefPtr<Json::Value>(new Json::Value());
-        value->set((Json::Type)_lex.sym());
-        _lex.next();
-        return true;
-    }
-    else if (_lex.sym() == Json::NUMBER)
-    {
-        value = RefPtr<Json::Value>(new Json::Value());
-        value->set(strtol(_lex.str(), NULL, 10));
-        _lex.next();
-        return true;
-    }
-    else if (_lex.sym() == Json::STRING)
-    {
-        value = RefPtr<Json::Value>(new Json::Value());
-        value->set(Glib::ustring(_lex.str()));
-        _lex.next();
-        return true;
-    }
-    RefPtr<Json::Object> object;
-    if (parseObject(object))
-    {
-        value = RefPtr<Json::Value>(new Json::Value());
-        value->set(object);
-        return true;
-    }
-    value = RefPtr<Json::Value>(new Json::Value());
-    if (parseArray(value->array()))
-    {
-        return true;
-    }
-    return false;
-}
-
-
-bool JsonParser::parseArray(Json::Array& array)
+bool JsonParser::parseArray(RefPtr<Json::Value>& value)
 {
     if (_lex.sym() == Json::BEGIN_ARRAY)
     {
@@ -175,17 +190,21 @@ bool JsonParser::parseArray(Json::Array& array)
         return false;
     }
 
-    RefPtr<Json::Value> value;
+    value = RefPtr<Json::Value>(new Json::Value());
 
-    if (parseValue(value))
+    Json::Array& elements = value->array();
+
+    RefPtr<Json::Value> element;
+
+    if (parseValue(element))
     {
-        array.push_back(value);
+        elements.push_back(element);
         while (_lex.sym() == Json::VALUE_SEPARATOR)
         {
             _lex.next();
-            if (parseValue(value))
+            if (parseValue(element))
             {
-                array.push_back(value);
+                elements.push_back(element);
             }
             else
             {

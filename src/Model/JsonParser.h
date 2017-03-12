@@ -21,16 +21,23 @@ namespace hnrt
 
         JsonParser(const JsonParser&);
         void operator =(const JsonParser&);
-        bool parseObject(RefPtr<Json::Object>&);
-        bool parseMember(RefPtr<Json::Member>&);
         bool parseValue(RefPtr<Json::Value>&);
-        bool parseArray(Json::Array&);
+        bool parseConstant(RefPtr<Json::Value>&);
+        bool parseString(RefPtr<Json::Value>&);
+        bool parseNumber(RefPtr<Json::Value>&);
+        bool parseObject(RefPtr<Json::Value>&);
+        bool parseMember(RefPtr<Json::Member>&);
+        bool parseArray(RefPtr<Json::Value>&);
         int getNext();
         bool isWhitespace() const;
         int getChar();
 
+        typedef bool (JsonParser::*ParseValue)(RefPtr<Json::Value>&);
+        typedef std::map<int, ParseValue> ParseValueMap;
+
         JsonLexer& _lex;
         Json& _doc;
+        ParseValueMap _map;
     };
 }
 
