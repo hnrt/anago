@@ -16,7 +16,7 @@ using namespace hnrt;
 XenObject::XenObject(Type type, Session& session, const char* refid, const char* uuid, const char* name)
     : _type(type)
     , _session(session)
-    , _refid(refid)
+    , _refid(refid ? refid : NULLREFSTRING)
     , _uuid(uuid ? uuid : "")
     , _name(name ? name : "")
     , _busyCount(0)
