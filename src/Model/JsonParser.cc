@@ -45,7 +45,7 @@ void JsonParser::run()
 
 bool JsonParser::parseObject(RefPtr<Json::Object>& object)
 {
-    if (_lex.sym() == '{')
+    if (_lex.sym() == Json::BEGIN_OBJECT)
     {
         _lex.next();
     }
@@ -60,7 +60,7 @@ bool JsonParser::parseObject(RefPtr<Json::Object>& object)
     if (parseMember(member))
     {
         object->members().push_back(member);
-        while (_lex.sym() == ',')
+        while (_lex.sym() == Json::VALUE_SEPARATOR)
         {
             _lex.next();
             if (parseMember(member))
@@ -74,7 +74,7 @@ bool JsonParser::parseObject(RefPtr<Json::Object>& object)
         }
     }
 
-    if (_lex.sym() == '}')
+    if (_lex.sym() == Json::END_OBJECT)
     {
         _lex.next();
         return true;
@@ -100,7 +100,7 @@ bool JsonParser::parseMember(RefPtr<Json::Member>& member)
         return false;
     }
 
-    if (_lex.sym() == ':')
+    if (_lex.sym() == Json::NAME_SEPARATOR)
     {
         _lex.next();
     }
@@ -166,7 +166,7 @@ bool JsonParser::parseValue(RefPtr<Json::Value>& value)
 
 bool JsonParser::parseArray(Json::Array& array)
 {
-    if (_lex.sym() == '[')
+    if (_lex.sym() == Json::BEGIN_ARRAY)
     {
         _lex.next();
     }
@@ -180,7 +180,7 @@ bool JsonParser::parseArray(Json::Array& array)
     if (parseValue(value))
     {
         array.push_back(value);
-        while (_lex.sym() == ',')
+        while (_lex.sym() == Json::VALUE_SEPARATOR)
         {
             _lex.next();
             if (parseValue(value))
@@ -194,7 +194,7 @@ bool JsonParser::parseArray(Json::Array& array)
         }
     }
 
-    if (_lex.sym() == ']')
+    if (_lex.sym() == Json::END_ARRAY)
     {
         _lex.next();
         return true;
