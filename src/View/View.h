@@ -18,7 +18,11 @@ namespace hnrt
         static void fini();
         static View& instance();
 
+        virtual const Glib::ustring& getDisplayName() = 0;
         virtual Gtk::Window& getWindow() = 0;
+        virtual void showInfo(const Glib::ustring&) = 0;
+        virtual void showWarning(const Glib::ustring&) = 0;
+        virtual void showError(const Glib::ustring&) = 0;
     };
 }
 

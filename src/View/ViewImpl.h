@@ -18,13 +18,19 @@ namespace hnrt
 
         ViewImpl();
         ~ViewImpl();
+        virtual const Glib::ustring& getDisplayName() { return _displayName; }
         virtual Gtk::Window& getWindow() { return _mainWindow; }
+        virtual void showInfo(const Glib::ustring&);
+        virtual void showWarning(const Glib::ustring&);
+        virtual void showError(const Glib::ustring&);
 
     private:
 
         ViewImpl(const ViewImpl&);
         void operator =(const ViewImpl&);
+        void showMessageDialog(const Glib::ustring&, Gtk::MessageType);
 
+        Glib::ustring _displayName;
         MainWindow _mainWindow;
     };
 }
