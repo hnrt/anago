@@ -11,9 +11,8 @@ JsonWriter::JsonWriter(FILE* fp, const Json& doc)
     : _fp(fp)
     , _doc(doc)
 {
-    _map.insert(WriteValueMap::value_type(Json::VALUE_FALSE, &JsonWriter::writeFalse));
-    _map.insert(WriteValueMap::value_type(Json::VALUE_NULL, &JsonWriter::writeNull));
-    _map.insert(WriteValueMap::value_type(Json::VALUE_TRUE, &JsonWriter::writeTrue));
+    _map.insert(WriteValueMap::value_type(Json::NULLVALUE, &JsonWriter::writeNull));
+    _map.insert(WriteValueMap::value_type(Json::BOOLEAN, &JsonWriter::writeBoolean));
     _map.insert(WriteValueMap::value_type(Json::STRING, &JsonWriter::writeString));
     _map.insert(WriteValueMap::value_type(Json::NUMBER, &JsonWriter::writeNumber));
     _map.insert(WriteValueMap::value_type(Json::OBJECT, &JsonWriter::writeObject));
@@ -43,35 +42,66 @@ void JsonWriter::writeValue(const RefPtr<Json::Value>& value, int level)
 }
 
 
-void JsonWriter::writeFalse(const RefPtr<Json::Value>& value, int level)
-{
-    fputs("false", _fp);
-}
-
-
 void JsonWriter::writeNull(const RefPtr<Json::Value>& value, int level)
 {
     fputs("null", _fp);
 }
 
 
-void JsonWriter::writeTrue(const RefPtr<Json::Value>& value, int level)
+void JsonWriter::writeBoolean(const RefPtr<Json::Value>& value, int level)
 {
-    fputs("true", _fp);
+    fputs(value->boolean() ? "true" : "false", _fp);
 }
 
 
 void JsonWriter::writeString(const RefPtr<Json::Value>& value, int level)
 {
     putc('\"', _fp);
-    fputs(value->string().c_str(), _fp);
+    for (const char* s = value->string().c_str(); *s; s++)
+    {
+        int c = *s & 0xff;
+        if (c == '\"' || c == '\\')
+        {
+            putc('\\', _fp);
+            putc(c, _fp);
+        }
+        else if (c == '\b')
+        {
+            putc('\\', _fp);
+            putc('b', _fp);
+        }
+        else if (c == '\f')
+        {
+            putc('\\', _fp);
+            putc('f', _fp);
+        }
+        else if (c == '\n')
+        {
+            putc('\\', _fp);
+            putc('n', _fp);
+        }
+        else if (c == '\r')
+        {
+            putc('\\', _fp);
+            putc('r', _fp);
+        }
+        else if (c == '\t')
+        {
+            putc('\\', _fp);
+            putc('t', _fp);
+        }
+        else
+        {
+            putc(c, _fp);
+        }
+    }
     putc('\"', _fp);
 }
 
 
 void JsonWriter::writeNumber(const RefPtr<Json::Value>& value, int level)
 {
-    fprintf(_fp, "%ld", value->number());
+    fputs(value->string().c_str(), _fp);
 }
 
 

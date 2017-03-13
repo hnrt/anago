@@ -11,11 +11,10 @@ JsonParser::JsonParser(JsonLexer& lex, Json& doc)
     : _lex(lex)
     , _doc(doc)
 {
-    _map.insert(ParseValueMap::value_type(Json::VALUE_FALSE, &JsonParser::parseConstant));
-    _map.insert(ParseValueMap::value_type(Json::VALUE_NULL, &JsonParser::parseConstant));
-    _map.insert(ParseValueMap::value_type(Json::VALUE_TRUE, &JsonParser::parseConstant));
-    _map.insert(ParseValueMap::value_type(Json::STRING, &JsonParser::parseString));
-    _map.insert(ParseValueMap::value_type(Json::NUMBER, &JsonParser::parseNumber));
+    _map.insert(ParseValueMap::value_type(Json::NULLVALUE, &JsonParser::parseImmediateValue));
+    _map.insert(ParseValueMap::value_type(Json::BOOLEAN, &JsonParser::parseImmediateValue));
+    _map.insert(ParseValueMap::value_type(Json::STRING, &JsonParser::parseImmediateValue));
+    _map.insert(ParseValueMap::value_type(Json::NUMBER, &JsonParser::parseImmediateValue));
     _map.insert(ParseValueMap::value_type(Json::BEGIN_OBJECT, &JsonParser::parseObject));
     _map.insert(ParseValueMap::value_type(Json::BEGIN_ARRAY, &JsonParser::parseArray));
 }
@@ -65,28 +64,9 @@ bool JsonParser::parseValue(RefPtr<Json::Value>& value)
 }
 
 
-bool JsonParser::parseConstant(RefPtr<Json::Value>& value)
+bool JsonParser::parseImmediateValue(RefPtr<Json::Value>& value)
 {
-    value = RefPtr<Json::Value>(new Json::Value());
-    value->set((Json::Type)_lex.sym());
-    _lex.next();
-    return true;
-}
-
-
-bool JsonParser::parseString(RefPtr<Json::Value>& value)
-{
-    value = RefPtr<Json::Value>(new Json::Value());
-    value->set(Glib::ustring(_lex.str()));
-    _lex.next();
-    return true;
-}
-
-
-bool JsonParser::parseNumber(RefPtr<Json::Value>& value)
-{
-    value = RefPtr<Json::Value>(new Json::Value());
-    value->set(strtol(_lex.str(), NULL, 10));
+    value = RefPtr<Json::Value>(new Json::Value((Json::Type)_lex.sym(), _lex.str()));
     _lex.next();
     return true;
 }
@@ -103,13 +83,7 @@ bool JsonParser::parseObject(RefPtr<Json::Value>& value)
         return false;
     }
 
-    value = RefPtr<Json::Value>(new Json::Value());
-
-    RefPtr<Json::Object> object = RefPtr<Json::Object>(new Json::Object());
-
-    value->set(object);
-
-    Json::MemberArray& members = object->members();
+    Json::MemberArray members;
 
     RefPtr<Json::Member> member;
 
@@ -132,6 +106,7 @@ bool JsonParser::parseObject(RefPtr<Json::Value>& value)
 
     if (_lex.sym() == Json::END_OBJECT)
     {
+        value = RefPtr<Json::Value>(new Json::Value(RefPtr<Json::Object>(new Json::Object(members))));
         _lex.next();
         return true;
     }
@@ -190,9 +165,7 @@ bool JsonParser::parseArray(RefPtr<Json::Value>& value)
         return false;
     }
 
-    value = RefPtr<Json::Value>(new Json::Value());
-
-    Json::Array& elements = value->array();
+    Json::Array elements;
 
     RefPtr<Json::Value> element;
 
@@ -215,6 +188,7 @@ bool JsonParser::parseArray(RefPtr<Json::Value>& value)
 
     if (_lex.sym() == Json::END_ARRAY)
     {
+        value = RefPtr<Json::Value>(new Json::Value(elements));
         _lex.next();
         return true;
     }

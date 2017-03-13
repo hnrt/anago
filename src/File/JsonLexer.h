@@ -6,6 +6,7 @@
 
 
 #include <stdio.h>
+#include "Util/StringBuffer.h"
 #include "Json.h"
 
 
@@ -19,13 +20,18 @@ namespace hnrt
         void next();
         int sym() const { return _sym; }
         int line() const { return _line; }
-        const char* str() { return _buf; }
+        const char* str() { return _buf.str(); }
 
     private:
 
         JsonLexer(const JsonLexer&);
         void operator =(const JsonLexer&);
         bool isWhitespace() const;
+        bool isStructuralCharacter() const;
+        void readLiteralName();
+        void readNumber();
+        void readString();
+        void readEscapeSequence();
         void read();
 
         FILE* _fp;
@@ -33,7 +39,7 @@ namespace hnrt
         int _b;
         int _c;
         int _sym;
-        char _buf[1024];
+        StringBuffer _buf;
     };
 }
 

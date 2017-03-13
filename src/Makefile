@@ -190,9 +190,9 @@ $(OBJDIR)/Env/Locale.o: Env/Locale.cc Env/Locale.h Env/LocaleImpl.h
 $(OBJDIR)/Env/LocaleImpl.o: Env/LocaleImpl.cc Env/Locale.h Env/LocaleImpl.h Env/Process.h 
 $(OBJDIR)/Env/Process.o: Env/Process.cc Env/Process.h Env/ProcessImpl.h 
 $(OBJDIR)/Env/ProcessImpl.o: Env/ProcessImpl.cc Env/Process.h Env/ProcessImpl.h 
-$(OBJDIR)/File/Json.o: File/Json.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonLexer.h File/JsonParser.h File/JsonWriter.h 
-$(OBJDIR)/File/JsonLexer.o: File/JsonLexer.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonLexer.h 
-$(OBJDIR)/File/JsonParser.o: File/JsonParser.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonLexer.h File/JsonParser.h 
+$(OBJDIR)/File/Json.o: File/Json.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonLexer.h File/JsonParser.h File/JsonWriter.h Util/StringBuffer.h 
+$(OBJDIR)/File/JsonLexer.o: File/JsonLexer.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonLexer.h Util/StringBuffer.h 
+$(OBJDIR)/File/JsonParser.o: File/JsonParser.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonLexer.h File/JsonParser.h Util/StringBuffer.h 
 $(OBJDIR)/File/JsonWriter.o: File/JsonWriter.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonWriter.h 
 $(OBJDIR)/Logger/Debug.o: Logger/Debug.cc Logger/Debug.h Logger/LogLevel.h Logger/Logger.h 
 $(OBJDIR)/Logger/LogLevel.o: Logger/LogLevel.cc Logger/LogLevel.h 

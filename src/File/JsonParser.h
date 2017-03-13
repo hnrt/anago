@@ -25,9 +25,8 @@ namespace hnrt
         JsonParser(const JsonParser&);
         void operator =(const JsonParser&);
         bool parseValue(RefPtr<Json::Value>&);
-        bool parseConstant(RefPtr<Json::Value>&);
+        bool parseImmediateValue(RefPtr<Json::Value>&);
         bool parseString(RefPtr<Json::Value>&);
-        bool parseNumber(RefPtr<Json::Value>&);
         bool parseObject(RefPtr<Json::Value>&);
         bool parseMember(RefPtr<Json::Member>&);
         bool parseArray(RefPtr<Json::Value>&);

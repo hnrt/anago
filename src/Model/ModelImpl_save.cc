@@ -31,14 +31,10 @@ void ModelImpl::save()
         try
         {
             Json json;
-            RefPtr<Json::Value> root(new Json::Value());
-            RefPtr<Json::Object> object1(new Json::Object());
-            object1->add("version", 1L);
             RefPtr<Json::Object> object2(new Json::Object());
             object2->add("width", (long)getWidth());
             object2->add("height", (long)getHeight());
             object2->add("pane1_width", (long)getPane1Width());
-            object1->add("UI", object2);
             Json::Array array3;
             std::list<Session*> sessions;
             get(sessions);
@@ -46,22 +42,23 @@ void ModelImpl::save()
             {
                 const Session* pSession = *iter;
                 const ConnectSpec& cs = pSession->getConnectSpec();
-                RefPtr<Json::Object> object4(new Json::Object());
-                object4->add("uuid", cs.uuid.c_str());
-                object4->add("display_name", cs.displayname.c_str());
-                object4->add("host", cs.hostname.c_str());
-                object4->add("user", cs.username.c_str());
-                object4->add("password", cs.password.c_str());
-                object4->add("last_access", cs.lastAccess);
-                object4->add("auto_connect", cs.autoConnect);
-                object4->add("mac", cs.mac.toString().c_str());
-                object4->add("display_order", (long)cs.displayOrder);
-                RefPtr<Json::Value> value4(new Json::Value());
-                value4->set(object4);
-                array3.push_back(value4);
+                RefPtr<Json::Object> object3(new Json::Object());
+                object3->add("uuid", cs.uuid.c_str());
+                object3->add("display_name", cs.displayname.c_str());
+                object3->add("host", cs.hostname.c_str());
+                object3->add("user", cs.username.c_str());
+                object3->add("password", cs.password.c_str());
+                object3->add("last_access", cs.lastAccess);
+                object3->add("auto_connect", cs.autoConnect);
+                object3->add("mac", cs.mac.toString().c_str());
+                object3->add("display_order", (long)cs.displayOrder);
+                array3.push_back(RefPtr<Json::Value>(new Json::Value(object3)));
             }
+            RefPtr<Json::Object> object1(new Json::Object());
+            object1->add("version", 1L);
+            object1->add("UI", object2);
             object1->add("servers", array3);
-            root->set(object1);
+            RefPtr<Json::Value> root(new Json::Value(object1));
             json.set(root);
             json.save(fp);
         }

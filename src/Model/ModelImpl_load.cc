@@ -51,7 +51,7 @@ void ModelImpl::load()
                 RefPtr<Json::Value> valueVersion = object1->get("version");
                 if (valueVersion.ptr() && valueVersion->type() == Json::NUMBER)
                 {
-                    if (valueVersion->number() == 1L)
+                    if (valueVersion->integer() == 1L)
                     {
                         loadV1(json);
                     }
@@ -86,17 +86,17 @@ void ModelImpl::loadV1(const Json& json)
         RefPtr<Json::Value> value2 = object2->get("width");
         if (value2.ptr() && value2->type() == Json::NUMBER)
         {
-            setWidth((int)value2->number());
+            setWidth((int)value2->integer());
         }
         value2 = object2->get("height");
         if (value2.ptr() && value2->type() == Json::NUMBER)
         {
-            setHeight((int)value2->number());
+            setHeight((int)value2->integer());
         }
         value2 = object2->get("pane1_width");
         if (value2.ptr() && value2->type() == Json::NUMBER)
         {
-            setPane1Width((int)value2->number());
+            setPane1Width((int)value2->integer());
         }
     }
 
@@ -125,7 +125,7 @@ void ModelImpl::loadV1(const Json& json)
                     && valueUser.ptr() && valueUser->type() == Json::STRING
                     && valuePass.ptr() && valuePass->type() == Json::STRING
                     && valueLast.ptr() && valueLast->type() == Json::NUMBER
-                    && valueAuto.ptr() && (valueAuto->type() == Json::VALUE_TRUE || valueAuto->type() == Json::VALUE_FALSE)
+                    && valueAuto.ptr() && valueAuto->type() == Json::BOOLEAN
                     && valueMac.ptr() && valueMac->type() == Json::STRING
                     && valueOrder.ptr() && valueOrder->type() == Json::NUMBER)
                 {
@@ -135,10 +135,10 @@ void ModelImpl::loadV1(const Json& json)
                     cs.hostname = valueHost->string();
                     cs.username = valueUser->string();
                     cs.password = valuePass->string();
-                    cs.lastAccess = valueLast->number();
-                    cs.autoConnect = valueAuto->type() == Json::VALUE_TRUE ? true : false;
+                    cs.lastAccess = valueLast->integer();
+                    cs.autoConnect = valueAuto->boolean();
                     cs.mac.parse(valueMac->string().c_str());
-                    cs.displayOrder = (int)valueOrder->number();
+                    cs.displayOrder = (int)valueOrder->integer();
                     add(cs);
                 }
             }

@@ -25,9 +25,8 @@ namespace hnrt
             ARRAY,
             NUMBER,
             STRING,
-            VALUE_FALSE,
-            VALUE_NULL,
-            VALUE_TRUE,
+            BOOLEAN,
+            NULLVALUE,
         };
 
         enum Character
@@ -38,6 +37,10 @@ namespace hnrt
             END_ARRAY = ']',
             NAME_SEPARATOR = ':',
             VALUE_SEPARATOR = ',',
+            SPACE = 0x20, // whitespace
+            HORIZONTAL_TAB = 0x09, // whitespace
+            LINE_FEED = 0x0a, // whitespace
+            CARRIAGE_RETURN = 0x0d, // whitespace
         };
 
         class Object;
@@ -55,85 +58,18 @@ namespace hnrt
         {
         public:
 
-            Object()
-            {
-            }
-
-            const MemberArray& members() const
-            {
-                return _members;
-            }
-
-            MemberArray& members()
-            {
-                return _members;
-            }
-
-            void add(const char* key, bool value)
-            {
-                RefPtr<Member> member(new Member());
-                member->set(Glib::ustring(key));
-                RefPtr<Value> valptr(new Value());
-                valptr->set(value ? VALUE_TRUE : VALUE_FALSE);
-                member->set(valptr);
-                _members.push_back(member);
-            }
-
-            void add(const char* key, long value)
-            {
-                RefPtr<Member> member(new Member());
-                member->set(Glib::ustring(key));
-                RefPtr<Value> valptr(new Value());
-                valptr->set(value);
-                member->set(valptr);
-                _members.push_back(member);
-            }
-
-            void add(const char* key, const char* value)
-            {
-                RefPtr<Member> member(new Member());
-                member->set(Glib::ustring(key));
-                RefPtr<Value> valptr(new Value());
-                valptr->set(Glib::ustring(value));
-                member->set(valptr);
-                _members.push_back(member);
-            }
-
-            void add(const char* key, const RefPtr<Object>& value)
-            {
-                RefPtr<Member> member(new Member());
-                member->set(Glib::ustring(key));
-                RefPtr<Value> valptr(new Value());
-                valptr->set(value);
-                member->set(valptr);
-                _members.push_back(member);
-            }
-
-            void add(const char* key, const Array& value)
-            {
-                RefPtr<Member> member(new Member());
-                member->set(Glib::ustring(key));
-                RefPtr<Value> valptr(new Value());
-                valptr->set(Json::ARRAY);
-                for (Array::const_iterator iter = value.begin(); iter != value.end(); iter++)
-                {
-                    valptr->array().push_back(*iter);
-                }
-                member->set(valptr);
-                _members.push_back(member);
-            }
-
-            const RefPtr<Value> get(const char* key) const
-            {
-                for (MemberArray::size_type index = 0; index < _members.size(); index++)
-                {
-                    if (_members[index]->key() == key)
-                    {
-                        return _members[index]->value();
-                    }
-                }
-                return RefPtr<Value>();
-            }
+            Object();
+            Object(const MemberArray&);
+            ~Object();
+            const MemberArray& members() const { return _members; }
+            void add(const char*);
+            void add(const char*, const char*);
+            void add(const char*, long);
+            void add(const char*, double);
+            void add(const char*, bool);
+            void add(const char*, const RefPtr<Object>&);
+            void add(const char*, const Array&);
+            const RefPtr<Value> get(const char*) const;
 
         private:
 
@@ -148,72 +84,31 @@ namespace hnrt
         {
         public:
 
-            Value()
-                : _type(UNDEFINED)
-            {
-            }
-
-            Type type() const
-            {
-                return _type;
-            }
-
-            void set(Type type)
-            {
-                _type = type;
-            }
-
-            const RefPtr<Object>& object() const
-            {
-                return _object;
-            }
-
-            void set(const RefPtr<Object>& object)
-            {
-                _type = OBJECT;
-                _object = object;
-            }
-
-            const Array& array() const
-            {
-                return _array;
-            }
-
-            Array& array()
-            {
-                _type = ARRAY;
-                return _array;
-            }
-
-            long number() const
-            {
-                return _number;
-            }
-
-            void set(long number)
-            {
-                _type = NUMBER;
-                _number = number;
-            }
-
-            const Glib::ustring& string() const
-            {
-                return _string;
-            }
-
-            void set(const Glib::ustring& string)
-            {
-                _type = STRING;
-                _string = string;
-            }
+            Value();
+            Value(Type, const char*);
+            Value(const char*);
+            Value(long);
+            Value(double);
+            Value(bool);
+            Value(const RefPtr<Object>&);
+            Value(const Array&);
+            ~Value();
+            Type type() const { return _type; }
+            const Glib::ustring& string() const { return _string; }
+            bool isInteger() const;
+            bool isFloatingPoint() const;
+            long integer() const;
+            double floatingPoint() const;
+            bool boolean() const;
+            const RefPtr<Object>& object() const { return _object; }
+            const Array& array() const { return _array; }
 
         private:
 
             Type _type;
+            Glib::ustring _string;
             RefPtr<Object> _object;
             Array _array;
-            long _number;
-            Glib::ustring _string;
         };
 
         class Member
@@ -221,35 +116,10 @@ namespace hnrt
         {
         public:
 
-            Member()
-            {
-            }
-
-            Member(const Glib::ustring& key, const RefPtr<Value>& value)
-                : _key(key)
-                , _value(value)
-            {
-            }
-
-            const Glib::ustring& key() const
-            {
-                return _key;
-            }
-
-            void set(const Glib::ustring& key)
-            {
-                _key = key;
-            }
-
-            const RefPtr<Value>& value() const
-            {
-                return _value;
-            }
-
-            void set(const RefPtr<Value>& value)
-            {
-                _value = value;
-            }
+            Member(const Glib::ustring&, const RefPtr<Value>&);
+            ~Member();
+            const Glib::ustring& key() const { return _key; }
+            const RefPtr<Value>& value() const { return _value; }
 
         private:
 

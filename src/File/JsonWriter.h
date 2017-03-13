@@ -27,9 +27,8 @@ namespace hnrt
         JsonWriter(const JsonWriter&);
         void operator =(const JsonWriter&);
         void writeValue(const RefPtr<Json::Value>&, int);
-        void writeFalse(const RefPtr<Json::Value>&, int);
         void writeNull(const RefPtr<Json::Value>&, int);
-        void writeTrue(const RefPtr<Json::Value>&, int);
+        void writeBoolean(const RefPtr<Json::Value>&, int);
         void writeString(const RefPtr<Json::Value>&, int);
         void writeNumber(const RefPtr<Json::Value>&, int);
         void writeObject(const RefPtr<Json::Value>&, int);
