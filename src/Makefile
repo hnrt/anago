@@ -133,16 +133,16 @@ $(OBJDIR)/Env/Locale.o \
 $(OBJDIR)/Env/LocaleImpl.o \
 $(OBJDIR)/Env/Process.o \
 $(OBJDIR)/Env/ProcessImpl.o \
+$(OBJDIR)/File/Json.o \
+$(OBJDIR)/File/JsonLexer.o \
+$(OBJDIR)/File/JsonParser.o \
+$(OBJDIR)/File/JsonWriter.o \
 $(OBJDIR)/Logger/Debug.o \
 $(OBJDIR)/Logger/LogLevel.o \
 $(OBJDIR)/Logger/Logger.o \
 $(OBJDIR)/Logger/LoggerImpl.o \
 $(OBJDIR)/Logger/Trace.o \
 $(OBJDIR)/Model/ConnectSpec.o \
-$(OBJDIR)/Model/Json.o \
-$(OBJDIR)/Model/JsonLexer.o \
-$(OBJDIR)/Model/JsonParser.o \
-$(OBJDIR)/Model/JsonWriter.o \
 $(OBJDIR)/Model/Model.o \
 $(OBJDIR)/Model/ModelImpl.o \
 $(OBJDIR)/Model/ModelImpl_load.o \
@@ -190,20 +190,20 @@ $(OBJDIR)/Env/Locale.o: Env/Locale.cc Env/Locale.h Env/LocaleImpl.h
 $(OBJDIR)/Env/LocaleImpl.o: Env/LocaleImpl.cc Env/Locale.h Env/LocaleImpl.h Env/Process.h 
 $(OBJDIR)/Env/Process.o: Env/Process.cc Env/Process.h Env/ProcessImpl.h 
 $(OBJDIR)/Env/ProcessImpl.o: Env/ProcessImpl.cc Env/Process.h Env/ProcessImpl.h 
+$(OBJDIR)/File/Json.o: File/Json.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonLexer.h File/JsonParser.h File/JsonWriter.h 
+$(OBJDIR)/File/JsonLexer.o: File/JsonLexer.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonLexer.h 
+$(OBJDIR)/File/JsonParser.o: File/JsonParser.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonLexer.h File/JsonParser.h 
+$(OBJDIR)/File/JsonWriter.o: File/JsonWriter.cc Base/RefObj.h Base/RefPtr.h File/Json.h File/JsonWriter.h 
 $(OBJDIR)/Logger/Debug.o: Logger/Debug.cc Logger/Debug.h Logger/LogLevel.h Logger/Logger.h 
 $(OBJDIR)/Logger/LogLevel.o: Logger/LogLevel.cc Logger/LogLevel.h 
 $(OBJDIR)/Logger/Logger.o: Logger/Logger.cc Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h 
 $(OBJDIR)/Logger/LoggerImpl.o: Logger/LoggerImpl.cc App/Constants.h Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h 
 $(OBJDIR)/Logger/Trace.o: Logger/Trace.cc Logger/LogLevel.h Logger/Logger.h Logger/Trace.h 
 $(OBJDIR)/Model/ConnectSpec.o: Model/ConnectSpec.cc Base/RefObj.h Base/RefPtr.h Model/ConnectSpec.h Net/MacAddress.h Util/Base64.h Util/ByteString.h Util/Scrambler.h Util/ScramblerBase.h Util/StringBuffer.h Util/UUID.h 
-$(OBJDIR)/Model/Json.o: Model/Json.cc Base/RefObj.h Base/RefPtr.h Model/Json.h Model/JsonLexer.h Model/JsonParser.h Model/JsonWriter.h 
-$(OBJDIR)/Model/JsonLexer.o: Model/JsonLexer.cc Base/RefObj.h Base/RefPtr.h Model/Json.h Model/JsonLexer.h 
-$(OBJDIR)/Model/JsonParser.o: Model/JsonParser.cc Base/RefObj.h Base/RefPtr.h Model/Json.h Model/JsonLexer.h Model/JsonParser.h 
-$(OBJDIR)/Model/JsonWriter.o: Model/JsonWriter.cc Base/RefObj.h Base/RefPtr.h Model/Json.h Model/JsonWriter.h 
 $(OBJDIR)/Model/Model.o: Model/Model.cc Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/ModelImpl.h 
 $(OBJDIR)/Model/ModelImpl.o: Model/ModelImpl.cc App/Constants.h Base/RefObj.h Base/RefPtr.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ModelImpl.h Net/MacAddress.h XenServer/Api.h XenServer/Session.h XenServer/XenObject.h 
-$(OBJDIR)/Model/ModelImpl_load.o: Model/ModelImpl_load.cc Base/RefObj.h Base/RefPtr.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Json.h Model/Model.h Model/ModelImpl.h Net/MacAddress.h View/View.h 
-$(OBJDIR)/Model/ModelImpl_save.o: Model/ModelImpl_save.cc Base/RefObj.h Base/RefPtr.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Json.h Model/Model.h Model/ModelImpl.h Net/MacAddress.h XenServer/Api.h XenServer/Session.h XenServer/XenObject.h 
+$(OBJDIR)/Model/ModelImpl_load.o: Model/ModelImpl_load.cc Base/RefObj.h Base/RefPtr.h File/Json.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ModelImpl.h Net/MacAddress.h View/View.h 
+$(OBJDIR)/Model/ModelImpl_save.o: Model/ModelImpl_save.cc Base/RefObj.h Base/RefPtr.h File/Json.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ModelImpl.h Net/MacAddress.h XenServer/Api.h XenServer/Session.h XenServer/XenObject.h 
 $(OBJDIR)/Net/AddressResolution.o: Net/AddressResolution.cc Net/AddressResolution.h 
 $(OBJDIR)/Net/HostEntry.o: Net/HostEntry.cc Net/HostEntry.h 
 $(OBJDIR)/Net/MacAddress.o: Net/MacAddress.cc Net/AddressResolution.h Net/HostEntry.h Net/MacAddress.h 
