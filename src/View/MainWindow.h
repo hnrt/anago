@@ -17,14 +17,38 @@ namespace hnrt
 
         MainWindow();
         ~MainWindow();
+        void setPane1Width(int);
 
     private:
 
         MainWindow(const MainWindow&);
         void operator =(const MainWindow&);
+        void initStockItems();
         bool onClose(GdkEventAny*);
         bool onWindowStateChange(GdkEventWindowState*);
         void onResize(Gtk::Allocation&);
+        void onServerTreeViewSelectionChanged();
+        void updateSensitivity();
+
+        Glib::RefPtr<Gtk::IconFactory> _iconFactory;
+        Gtk::StockID _stockIdAddHost;
+        Gtk::StockID _stockIdPowerOn;
+        Gtk::StockID _stockIdPowerOff;
+        Gtk::StockID _stockIdAddVm;
+        Gtk::StockID _stockIdStartVm;
+        Gtk::StockID _stockIdShutdownVm;
+        Gtk::StockID _stockIdRebootVm;
+        Gtk::StockID _stockIdSuspendVm;
+        Gtk::StockID _stockIdResumeVm;
+        Gtk::StockID _stockIdChangeCd;
+        Gtk::StockID _stockIdAuth;
+
+        Glib::RefPtr<Gtk::UIManager> _uiManager;
+        Gtk::VBox _box;
+        Gtk::HPaned _hpaned;
+        Gtk::ScrolledWindow _sw1;
+        //ServerTreeView _serverTreeView;
+        Gtk::HBox _box2;
 
         GdkWindowState _windowState;
     };

@@ -6,11 +6,13 @@
 
 
 #include <list>
+#include "Base/RefPtr.h"
 
 
 namespace hnrt
 {
     class Session;
+    class XenObject;
     struct ConnectSpec;
 
     class Model
@@ -27,6 +29,10 @@ namespace hnrt
         virtual void add(const ConnectSpec&) = 0;
         virtual void remove(Session&) = 0;
         virtual void removeAllSessions() = 0;
+
+        virtual void deselectAll() = 0;
+        virtual void select(const RefPtr<XenObject>&) = 0;
+        virtual int getSelected(std::list<Session*>&) = 0;
 
         virtual int getWidth() = 0;
         virtual void setWidth(int) = 0;

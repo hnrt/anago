@@ -28,6 +28,10 @@ namespace hnrt
         virtual void remove(Session&);
         virtual void removeAllSessions();
 
+        virtual void deselectAll();
+        virtual void select(const RefPtr<XenObject>&);
+        virtual int getSelected(std::list<Session*>&);
+
         virtual int getWidth();
         virtual void setWidth(int);
         virtual int getHeight();
@@ -44,6 +48,7 @@ namespace hnrt
         Glib::ustring _path;
         Glib::RecMutex _mutex;
         std::list<Session*> _sessions;
+        std::list<RefPtr<XenObject> > _selected;
 
         int _width;
         int _height;

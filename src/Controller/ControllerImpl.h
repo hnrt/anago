@@ -23,6 +23,12 @@ namespace hnrt
         virtual void incBackgroundCount();
         virtual void decBackgroundCount();
         virtual void notify(RefPtr<RefObj>, Notification);
+        virtual void addHost();
+        virtual void editHost();
+        virtual void removeHost();
+        virtual void connect();
+        virtual void disconnect();
+        virtual void showAbout();
 
     private:
 

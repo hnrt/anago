@@ -100,3 +100,39 @@ void ControllerImpl::notify(RefPtr<RefObj> object, Notification notif)
 {
     //TODO: IMPLEMENT
 }
+
+
+void ControllerImpl::addHost()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::editHost()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::removeHost()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::connect()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::disconnect()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::showAbout()
+{
+    //TODO: IMPLEMENT
+}

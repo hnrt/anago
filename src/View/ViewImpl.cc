@@ -34,7 +34,7 @@ void ViewImpl::resize()
     cx = Model::instance().getPane1Width();
     if (cx > PANE1WIDTH_DEFAULT)
     {
-        //_sw1.set_size_request(cx, -1);
+        _mainWindow.setPane1Width(cx);
     }
 }
 

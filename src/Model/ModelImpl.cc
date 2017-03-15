@@ -97,6 +97,33 @@ void ModelImpl::removeAllSessions()
 }
 
 
+void ModelImpl::deselectAll()
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    _selected.clear();
+}
+
+
+void ModelImpl::select(const RefPtr<XenObject>& object)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    _selected.push_back(object);
+}
+
+
+int ModelImpl::getSelected(std::list<Session*>& list)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    std::list<Session*>::size_type count0 = list.size();
+    for (std::list<RefPtr<XenObject> >::iterator iter = _selected.begin(); iter != _selected.end(); iter++)
+    {
+        RefPtr<XenObject>& object = *iter;
+        list.push_back(&object->getSession());
+    }
+    return static_cast<int>(list.size() - count0);
+}
+
+
 int ModelImpl::getWidth()
 {
     Glib::RecMutex::Lock lock(_mutex);
