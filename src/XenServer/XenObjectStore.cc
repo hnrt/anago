@@ -5,7 +5,6 @@
 #include <list>
 #include "Controller/Controller.h"
 //#include "Controller/PerformanceMonitor.h"
-//#include "Host.h"
 //#include "Model.h"
 //#include "Network.h"
 //#include "PhysicalBlockDevice.h"
@@ -16,6 +15,7 @@
 //#include "VirtualDiskImage.h"
 //#include "VirtualInterface.h"
 //#include "VirtualMachine.h"
+#include "Host.h"
 #include "Macros.h"
 #include "XenObjectStore.h"
 
@@ -57,7 +57,7 @@ void XenObjectStore::clear()
         RefPtr<XenObject> object = *iter;
         Controller::instance().notify(RefPtr<RefObj>::castStatic(object), Controller::XO_DESTROYED);
     }
-    //setHost(RefPtr<Host>());
+    setHost(RefPtr<Host>());
     //setPerformanceMonitor(RefPtr<PerformanceMonitor>());
 }
 
@@ -234,8 +234,9 @@ void XenObjectStore::remove(const Glib::ustring& refid, XenObject::Type type)
     }
 }
 
-#if 0
+
 void XenObjectStore::add(const RefPtr<Host>& object) { add(RefPtr<XenObject>::castStatic(object)); }
+#if 0
 void XenObjectStore::add(const RefPtr<Network>& object) { add(RefPtr<XenObject>::castStatic(object)); }
 void XenObjectStore::add(const RefPtr<PhysicalBlockDevice>& object) { add(RefPtr<XenObject>::castStatic(object)); }
 void XenObjectStore::add(const RefPtr<PhysicalInterface>& object) { add(RefPtr<XenObject>::castStatic(object)); }
@@ -245,16 +246,11 @@ void XenObjectStore::add(const RefPtr<VirtualBlockDevice>& object) { add(RefPtr<
 void XenObjectStore::add(const RefPtr<VirtualDiskImage>& object) { add(RefPtr<XenObject>::castStatic(object)); }
 void XenObjectStore::add(const RefPtr<VirtualInterface>& object) { add(RefPtr<XenObject>::castStatic(object)); }
 void XenObjectStore::add(const RefPtr<VirtualMachine>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-
-
-RefPtr<Host> XenObjectStore::getHost() const
-{
-    return _host;
-}
-
+#endif
 
 RefPtr<Host> XenObjectStore::getHost()
 {
+    Glib::RecMutex::Lock lock(_mutex);
     return _host;
 }
 
@@ -270,15 +266,15 @@ void XenObjectStore::setHost(const RefPtr<Host>& host)
     }
     if (prev)
     {
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(prev), NOTIF_XO_DESTROYED);
+        Controller::instance().notify(RefPtr<RefObj>::castStatic(prev), Controller::XO_DESTROYED);
     }
     if (next)
     {
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(next), NOTIF_XO_CREATED);
+        Controller::instance().notify(RefPtr<RefObj>::castStatic(next), Controller::XO_CREATED);
     }
 }
 
-
+#if 0
 RefPtr<PerformanceMonitor> XenObjectStore::getPerformanceMonitor() const
 {
     Glib::RecMutex::Lock lock(_mutex);
