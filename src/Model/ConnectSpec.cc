@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include "Base/StringBuffer.h"
 #include "Util/Base64.h"
 #include "Util/Scrambler.h"
-#include "Util/StringBuffer.h"
 #include "Util/UUID.h"
 #include "ConnectSpec.h"
 

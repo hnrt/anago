@@ -9,7 +9,7 @@
 using namespace hnrt;
 
 
-void hnrt::FormatSize(StringBuffer& buffer, int64_t size)
+StringBuffer& hnrt::FormatSize(StringBuffer& buffer, int64_t size)
 {
     const int64_t kb = 1024L;
     const int64_t mb = 1024L * kb;
@@ -36,6 +36,8 @@ void hnrt::FormatSize(StringBuffer& buffer, int64_t size)
     {
         buffer.appendFormat("%ld bytes", size);
     }
+
+    return buffer;
 }
 
 
@@ -47,7 +49,7 @@ Glib::ustring hnrt::FormatSize(int64_t size)
 }
 
 
-void hnrt::FormatProgress(StringBuffer& buffer, const char* status, double progress)
+StringBuffer& hnrt::FormatProgress(StringBuffer& buffer, const char* status, double progress)
 {
     int n = -1;
     const char* p = strrchr(status, '(');
@@ -87,6 +89,7 @@ void hnrt::FormatProgress(StringBuffer& buffer, const char* status, double progr
     {
         buffer.appendFormat("%s (%u%%)", status, (int)progress);
     }
+    return buffer;
 }
 
 

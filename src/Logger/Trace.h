@@ -15,9 +15,10 @@ namespace hnrt
     {
     public:
 
-        Trace(const char* name);
+        Trace(const char*);
+        Trace(const char*, const char*, ...);
         ~Trace();
-        void put(const char* format, ...);
+        void put(const char*, ...);
 
     private:
 

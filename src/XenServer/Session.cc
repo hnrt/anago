@@ -7,6 +7,7 @@
 #include <libxml/parser.h>
 #include <curl/curl.h>
 #include "Base/Atomic.h"
+#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Session.h"
 #include "XenObjectStore.h"
@@ -81,8 +82,8 @@ Session::Session(const ConnectSpec& cs)
     , _objectStore(new XenObjectStore)
     , _monitoring(false)
 {
-    Trace trace(__PRETTY_FUNCTION__);
-    trace.put("display=%s hostname=%s username=%s", cs.displayname.c_str(), cs.hostname.c_str(), cs.username.c_str());
+    Trace trace(StringBuffer().format("Session@%zx::ctor", this),
+                "display=%s hostname=%s username=%s", cs.displayname.c_str(), cs.hostname.c_str(), cs.username.c_str());
 }
 
 
@@ -93,7 +94,7 @@ Session::Session()
     , _state(NONE)
     , _monitoring(false)
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace(StringBuffer().format("Session@%zx::dtor", this));
 }
 
 

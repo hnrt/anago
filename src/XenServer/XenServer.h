@@ -7,7 +7,7 @@
 
 #include <glibmm.h>
 #include <vector>
-#include "Util/StringBuffer.h"
+#include "Base/StringBuffer.h"
 #include "XenServer/Api.h"
 
 

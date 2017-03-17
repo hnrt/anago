@@ -11,9 +11,9 @@
 #include <curl/curl.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include "Base/StringBuffer.h"
 #include "Logger/Logger.h"
 #include "Model/Model.h"
-#include "Util/StringBuffer.h"
 #include "PatchBase.h"
 #include "PatchRecord.h"
 
