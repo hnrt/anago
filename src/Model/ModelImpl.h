@@ -32,6 +32,8 @@ namespace hnrt
         virtual void select(const RefPtr<XenObject>&);
         virtual int getSelected(std::list<Session*>&);
 
+        virtual const char* getAppDir() const { return _appDir.c_str(); }
+
         virtual int getWidth();
         virtual void setWidth(int);
         virtual int getHeight();
@@ -46,6 +48,7 @@ namespace hnrt
         void loadV1(const Json&);
 
         Glib::ustring _path;
+        Glib::ustring _appDir;
         Glib::RecMutex _mutex;
         std::list<Session*> _sessions;
         std::list<RefPtr<XenObject> > _selected;

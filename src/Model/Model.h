@@ -34,6 +34,8 @@ namespace hnrt
         virtual void select(const RefPtr<XenObject>&) = 0;
         virtual int getSelected(std::list<Session*>&) = 0;
 
+        virtual const char* getAppDir() const = 0;
+
         virtual int getWidth() = 0;
         virtual void setWidth(int) = 0;
         virtual int getHeight() = 0;

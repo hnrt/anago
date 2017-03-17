@@ -19,8 +19,17 @@ static Glib::ustring GetConfigPath()
 }
 
 
+static Glib::ustring GetAppDir()
+{
+    return Glib::ustring::compose("%1/.%2.d/",
+                                  getenv("HOME"),
+                                  APPNAME);
+}
+
+
 ModelImpl::ModelImpl()
     : _path(GetConfigPath())
+    , _appDir(GetAppDir())
     , _width(WIDTH_DEFAULT)
     , _height(HEIGHT_DEFAULT)
     , _pane1Width(PANE1WIDTH_DEFAULT)
