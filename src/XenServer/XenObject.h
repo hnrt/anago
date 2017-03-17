@@ -45,6 +45,7 @@ namespace hnrt
         Type getType() const { return _type; }
         const Session& getSession() const;
         Session& getSession();
+        void* getXenRef() const { return const_cast<void*>(reinterpret_cast<const void*>(_refid.c_str())); }
         const Glib::ustring& getREFID() const { return _refid; }
         const Glib::ustring& getUUID() const { return _uuid; }
         void lock();
