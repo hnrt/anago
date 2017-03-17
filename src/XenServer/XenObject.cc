@@ -21,7 +21,7 @@ XenObject::XenObject(Type type, Session& session, const char* refid, const char*
     , _name(name ? name : "")
     , _busyCount(0)
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    //Trace trace(__PRETTY_FUNCTION__);
 
     // trace.put("type=%s", );
     // DBG("type=%s", XenObjectTypeMap::toString(_type));
@@ -35,7 +35,7 @@ XenObject::XenObject(Type type, Session& session, const char* refid, const char*
 
 XenObject::~XenObject()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    //Trace trace(__PRETTY_FUNCTION__);
 
     //DBG("type=%s", XenObjectTypeMap::toString(_type));
 
