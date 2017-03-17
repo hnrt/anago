@@ -11,6 +11,7 @@
 
 namespace hnrt
 {
+    class PatchBase;
     class Session;
     class XenObject;
     struct ConnectSpec;
@@ -33,6 +34,8 @@ namespace hnrt
         virtual void deselectAll() = 0;
         virtual void select(const RefPtr<XenObject>&) = 0;
         virtual int getSelected(std::list<Session*>&) = 0;
+
+        virtual RefPtr<PatchBase> getPatchBase() = 0;
 
         virtual const char* getAppDir() const = 0;
 

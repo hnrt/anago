@@ -3,12 +3,15 @@
 
 #include <libintl.h>
 #include <time.h>
-//#include "PingAgent.h"
-//#include "PatchBase.h"
-//#include "PatchRecord.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "Base/Atomic.h"
 #include "Controller/Controller.h"
 #include "Logger/Trace.h"
+#include "Model/Model.h"
+#include "Model/PatchBase.h"
+#include "Model/PatchRecord.h"
 #include "Host.h"
 #include "Session.h"
 #include "XenRef.h"
@@ -36,19 +39,14 @@ RefPtr<Host> Host::create(Session& session)
 Host::Host(Session& session)
     : XenObject(XenObject::HOST, session, NULL, NULL, NULL)
     , _state(STATE_NONE)
-  //, _ping(PingAgent::create())
 {
     Trace trace(__PRETTY_FUNCTION__);
-
-    //_ping->open(_session.getConnectSpec().hostname);
 }
 
 
 Host:: ~Host()
 {
     Trace trace(__PRETTY_FUNCTION__);
-
-    //_ping->close();
 }
 
 
@@ -119,7 +117,7 @@ void Host::setRecord(const XenPtr<xen_host_record>& record)
     {
         return;
     }
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), Controller::XO_RECORD);
+    emit(Controller::XO_RECORD);
 }
 
 
@@ -141,7 +139,7 @@ void Host::setMetricsRecord(const XenPtr<xen_host_metrics_record>& record)
     {
         return;
     }
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), Controller::XO_RECORD);
+    emit(Controller::XO_RECORD);
 }
 
 
@@ -157,7 +155,6 @@ void Host::onConnected()
     _state = STATE_CONNECTED;
     _session.getConnectSpec().lastAccess = (long)time(NULL);
     setDisplayStatus(gettext("Connected"));
-    //_ping->close();
     XenRef<xen_host, xen_host_free_t> host;
     if (!xen_session_get_this_host(_session, &host, _session))
     {
@@ -187,7 +184,6 @@ void Host::onConnected()
         g_print("Host::connect: xen_host_get_metrics failed.\n");
         _session.clearError();
     }
-    //getMac();
     {
         Glib::RecMutex::Lock k(_mutex);
         _record = record;
@@ -195,9 +191,9 @@ void Host::onConnected()
         _uuid = record->uuid ? record->uuid : "";
         _name = record->name_label ? record->name_label : "";
     }
-    //initPatchList();
-    //updatePatchList();
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), Controller::XO_SESSION);
+    initPatchList();
+    updatePatchList();
+    emit(Controller::XO_SESSION);
 }
 
 
@@ -219,12 +215,8 @@ void Host::onDisconnected()
     {
         setDisplayStatus(gettext("Disconnected by peer"));
     }
-    //_patchList.clear();
+    _patchList.clear();
     _state = STATE_DISCONNECTED;
-    //if (!_ping->active())
-    //{
-    //    _ping->open();
-    //}
 }
 
 
@@ -250,8 +242,8 @@ bool Host::shutdown()
     }
     if (_session)
     {
-        if (xen_host_disable(_session, (xen_host)_refid.c_str()) &&
-            xen_host_shutdown(_session, (xen_host)_refid.c_str()))
+        if (xen_host_disable(_session, getXenRef()) &&
+            xen_host_shutdown(_session, getXenRef()))
         {
             setDisplayStatus(gettext("Shut down successfully"));
             _state = STATE_SHUTDOWN;
@@ -283,8 +275,8 @@ bool Host::reboot()
     }
     if (_session)
     {
-        if (xen_host_disable(_session, (xen_host)_refid.c_str()) &&
-            xen_host_reboot(_session, (xen_host)_refid.c_str()))
+        if (xen_host_disable(_session, getXenRef()) &&
+            xen_host_reboot(_session, getXenRef()))
         {
             setDisplayStatus(gettext("Rebooted successfully"));
             _state = STATE_REBOOTED;
@@ -311,12 +303,12 @@ bool Host::setName(const char* label, const char* description)
         return false;
     }
 
-    if (!xen_host_set_name_label(_session, (xen_host)_refid.c_str(), (char*)label))
+    if (!xen_host_set_name_label(_session, getXenRef(), (char*)label))
     {
         return false;
     }
 
-    if (!xen_host_set_name_description(_session, (xen_host)_refid.c_str(), (char*)description))
+    if (!xen_host_set_name_description(_session, getXenRef(), (char*)description))
     {
         return false;
     }
@@ -325,19 +317,6 @@ bool Host::setName(const char* label, const char* description)
 }
 
 
-bool Host::getMac()
-{
-    ConnectSpec& cs = _session.getConnectSpec();
-    return cs.mac.getByName(cs.hostname.c_str());
-}
-
-#if 0
-bool Host::getPing()
-{
-    return _ping->result();
-}
-#endif
-#if 0
 void Host::initPatchList()
 {
     XenPtr<xen_host_record> record = getRecord();
@@ -363,7 +342,7 @@ void Host::initPatchList()
                 _patchList.push_back(patchRecord2);
                 break;
             }
-            else if (strcasecmp((*i)->label, patchRecord->label) > 0)
+            else if (strcasecmp((*i)->label.c_str(), patchRecord->label.c_str()) > 0)
             {
                 RefPtr<PatchRecord> patchRecord2 = PatchRecord::create();
                 *patchRecord2 = *patchRecord;
@@ -373,7 +352,7 @@ void Host::initPatchList()
         }
     }
 }
-#endif
+
 #if 0
 static bool IsApplied(const char* refid, XenPtr<xen_host_patch_set> hostPatchSet)
 {
@@ -389,8 +368,8 @@ static bool IsApplied(const char* refid, XenPtr<xen_host_patch_set> hostPatchSet
     }
     return false;
 }
-#endif
-#if 0
+
+
 static bool IsApplied(XenPtr<xen_pool_patch_record> patchRecord, XenPtr<xen_host_patch_set> hostPatchSet)
 {
     if (patchRecord->host_patches && patchRecord->host_patches->size)
@@ -405,35 +384,35 @@ static bool IsApplied(XenPtr<xen_pool_patch_record> patchRecord, XenPtr<xen_host
     }
     return false;
 }
-#endif
-#if 0
+
+
 static void UpdateState(std::list<RefPtr<PatchRecord> >& patchList, XenPtr<xen_pool_patch_record> patchRecord, XenPtr<xen_host_patch_set> hostPatchSet)
 {
     PatchState state;
     if (patchRecord->pool_applied)
     {
-        state = PatchState::kApplied;
+        state = PatchState::APPLIED;
     }
     else if (IsApplied(patchRecord, hostPatchSet))
     {
-        state = PatchState::kApplied;
+        state = PatchState::APPLIED;
     }
     else
     {
-        state = PatchState::kUploaded;
+        state = PatchState::UPLOADED;
     }
     for (std::list<RefPtr<PatchRecord> >::iterator i = patchList.begin(); i != patchList.end(); i++)
     {
-        if (!strcmp((*i)->uuid, patchRecord->uuid))
+        if ((*i)->uuid == patchRecord->uuid)
         {
             switch ((*i)->state)
             {
-            case PatchState::kAvailable:
-            case PatchState::kDownloadFailure:
-            case PatchState::kDownloaded:
-            case PatchState::kUploadFailure:
-            case PatchState::kUploaded:
-            case PatchState::kApplied:
+            case PatchState::AVAILABLE:
+            case PatchState::DOWNLOAD_FAILURE:
+            case PatchState::DOWNLOADED:
+            case PatchState::UPLOAD_FAILURE:
+            case PatchState::UPLOADED:
+            case PatchState::APPLIED:
             {
                 (*i)->state = state;
                 break;
@@ -445,7 +424,7 @@ static void UpdateState(std::list<RefPtr<PatchRecord> >& patchList, XenPtr<xen_p
         }
     }
 }
-
+#endif
 
 void Host::updatePatchList()
 {
@@ -453,15 +432,14 @@ void Host::updatePatchList()
     {
         switch ((*i)->state)
         {
-        case PatchState::kAvailable:
-        case PatchState::kDownloaded:
+        case PatchState::AVAILABLE:
+        case PatchState::DOWNLOADED:
         {
-            String filename;
-            filename.format("%s.xsupdate", (*i)->label.str());
-            String path;
-            path.format("%s/%s", Model::instance().getAppDir().str(), filename.str());
-            RefPtr<File> file = File::create(path);
-            (*i)->state = file->size() ? PatchState::kDownloaded : PatchState::kAvailable;
+            Glib::ustring filename = Glib::ustring::compose("%1.xsupdate", (*i)->label);
+            Glib::ustring path = Glib::ustring::compose("%1%2", Model::instance().getAppDir(), filename);
+            struct stat sd = { 0 };
+            int rc = stat(path.c_str(), &sd);
+            (*i)->state = !rc && sd.st_size ? PatchState::DOWNLOADED : PatchState::AVAILABLE;
             break;
         }
         default:
@@ -488,11 +466,11 @@ void Host::updatePatchList()
                 //g_print("#Host::updatePatchList: poolPatch[%zu] uuid(%s) label(%s) size(%zu)\n", i, poolPatchRecord->uuid, poolPatchRecord->name_label, poolPatchRecord->size);
                 for (std::list<RefPtr<PatchRecord> >::iterator j = _patchList.begin(); j != _patchList.end(); j++)
                 {
-                    if (!strcmp((*j)->uuid, poolPatchRecord->uuid))
+                    if ((*j)->uuid == poolPatchRecord->uuid)
                     {
                         if (poolPatchRecord->size)
                         {
-                            (*j)->state = PatchState::kUploaded;
+                            (*j)->state = PatchState::UPLOADED;
                             (*j)->size = poolPatchRecord->size;
                         }
                         else
@@ -535,9 +513,9 @@ void Host::updatePatchList()
                 //g_print("#Host::updatePatchList: hostPatch[%zu] uuid(%s) label(%s) size(%zu)\n", i, hostPatchRecord->uuid, poolPatchRecord->name_label, hostPatchRecord->size);
                 for (std::list<RefPtr<PatchRecord> >::iterator j = _patchList.begin(); j != _patchList.end(); j++)
                 {
-                    if (!strcmp((*j)->uuid, poolPatchRecord->uuid))
+                    if ((*j)->uuid == poolPatchRecord->uuid)
                     {
-                        (*j)->state = PatchState::kApplied;
+                        (*j)->state = PatchState::APPLIED;
                         break;
                     }
                 }
@@ -563,12 +541,12 @@ int Host::getPatchList(std::list<RefPtr<PatchRecord> >& list) const
 }
 
 
-RefPtr<PatchRecord> Host::getPatchRecord(String uuid) const
+RefPtr<PatchRecord> Host::getPatchRecord(const Glib::ustring& uuid) const
 {
     RefPtr<PatchRecord> patchRecord;
     for (std::list<RefPtr<PatchRecord> >::const_iterator i = _patchList.begin(); i != _patchList.end(); i++)
     {
-        if (!strcmp((*i)->uuid, uuid))
+        if ((*i)->uuid == uuid)
         {
             patchRecord = *i;
             break;
@@ -578,15 +556,15 @@ RefPtr<PatchRecord> Host::getPatchRecord(String uuid) const
 }
 
 
-bool Host::applyPatch(String uuid)
+bool Host::applyPatch(const Glib::ustring& uuid)
 {
     XenRef<xen_pool_patch, xen_pool_patch_free_t> patchRefid;
-    if (!xen_pool_patch_get_by_uuid(_session, &patchRefid, uuid))
+    if (!xen_pool_patch_get_by_uuid(_session, &patchRefid, const_cast<char*>(uuid.c_str())))
     {
         return false;
     }
     char* result = NULL;
-    bool retval = xen_pool_patch_apply(_session, &result, patchRefid, _refid);
+    bool retval = xen_pool_patch_apply(_session, &result, patchRefid, getXenRef());
     if (retval)
     {
         free(result);
@@ -595,14 +573,13 @@ bool Host::applyPatch(String uuid)
 }
 
 
-bool Host::cleanPatch(String uuid)
+bool Host::cleanPatch(const Glib::ustring& uuid)
 {
     XenRef<xen_pool_patch, xen_pool_patch_free_t> patchRefid;
-    if (!xen_pool_patch_get_by_uuid(_session, &patchRefid, uuid))
+    if (!xen_pool_patch_get_by_uuid(_session, &patchRefid, const_cast<char*>(uuid.c_str())))
     {
         return false;
     }
     bool retval = xen_pool_patch_clean(_session, patchRefid);
     return retval;
 }
-#endif

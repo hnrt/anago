@@ -21,6 +21,8 @@ namespace hnrt
 
         ModelImpl();
         ~ModelImpl();
+        void init();
+        void fini();
         virtual void load();
         virtual void save();
         virtual int get(std::list<Session*>&);
@@ -31,6 +33,8 @@ namespace hnrt
         virtual void deselectAll();
         virtual void select(const RefPtr<XenObject>&);
         virtual int getSelected(std::list<Session*>&);
+
+        virtual RefPtr<PatchBase> getPatchBase();
 
         virtual const char* getAppDir() const { return _appDir.c_str(); }
 
@@ -52,6 +56,7 @@ namespace hnrt
         Glib::RecMutex _mutex;
         std::list<Session*> _sessions;
         std::list<RefPtr<XenObject> > _selected;
+        RefPtr<PatchBase> _patchBase;
 
         int _width;
         int _height;

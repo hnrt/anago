@@ -1,8 +1,8 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
-#ifndef ANAGO_HOST_H
-#define ANAGO_HOST_H
+#ifndef HNRT_HOST_H
+#define HNRT_HOST_H
 
 
 #include <list>
@@ -12,7 +12,6 @@
 
 namespace hnrt
 {
-    class PingAgent;
     struct PatchRecord;
 
     class Host
@@ -55,14 +54,12 @@ namespace hnrt
         bool shutdown();
         bool reboot();
         bool setName(const char* label, const char* description);
-        bool getMac();
-        //bool getPing();
-        //void initPatchList();
-        //void updatePatchList();
-        //int getPatchList(std::list<RefPtr<PatchRecord> >&) const;
-        //RefPtr<PatchRecord> getPatchRecord(String) const;
-        //bool applyPatch(String);
-        //bool cleanPatch(String);
+        void initPatchList();
+        void updatePatchList();
+        int getPatchList(std::list<RefPtr<PatchRecord> >&) const;
+        RefPtr<PatchRecord> getPatchRecord(const Glib::ustring&) const;
+        bool applyPatch(const Glib::ustring&);
+        bool cleanPatch(const Glib::ustring&);
 
     protected:
 
@@ -73,10 +70,9 @@ namespace hnrt
         State _state;
         XenPtr<xen_host_record> _record;
         XenPtr<xen_host_metrics_record> _metricsRecord;
-        //RefPtr<PingAgent> _ping;
-        //std::list<RefPtr<PatchRecord> > _patchList;
+        std::list<RefPtr<PatchRecord> > _patchList;
     };
 }
 
 
-#endif //!ANAGO_HOST_H
+#endif //!HNRT_HOST_H

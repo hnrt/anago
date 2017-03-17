@@ -13,11 +13,13 @@ static ModelImpl* _singleton = NULL;
 void Model::init()
 {
     _singleton = new ModelImpl();
+    _singleton->init();
 }
 
 
 void Model::fini()
 {
+    _singleton->fini();
     delete _singleton;
 }
 

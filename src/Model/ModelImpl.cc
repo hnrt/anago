@@ -6,6 +6,7 @@
 #include "Logger/Trace.h"
 #include "XenServer/Session.h"
 #include "ModelImpl.h"
+#include "PatchBase.h"
 
 
 using namespace hnrt;
@@ -30,6 +31,7 @@ static Glib::ustring GetAppDir()
 ModelImpl::ModelImpl()
     : _path(GetConfigPath())
     , _appDir(GetAppDir())
+    , _patchBase(PatchBase::create())
     , _width(WIDTH_DEFAULT)
     , _height(HEIGHT_DEFAULT)
     , _pane1Width(PANE1WIDTH_DEFAULT)
@@ -41,6 +43,18 @@ ModelImpl::ModelImpl()
 ModelImpl::~ModelImpl()
 {
     Trace trace(__PRETTY_FUNCTION__);
+}
+
+
+void ModelImpl::init()
+{
+    _patchBase->init();
+}
+
+
+void ModelImpl::fini()
+{
+    _patchBase->fini();
 }
 
 
@@ -130,6 +144,13 @@ int ModelImpl::getSelected(std::list<Session*>& list)
         list.push_back(&object->getSession());
     }
     return static_cast<int>(list.size() - count0);
+}
+
+
+RefPtr<PatchBase> ModelImpl::getPatchBase()
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    return _patchBase;
 }
 
 
