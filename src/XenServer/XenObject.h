@@ -55,6 +55,7 @@ namespace hnrt
         virtual void setDisplayStatus(const char* value);
         bool isBusy() const { return _busyCount > 0; }
         virtual void setBusy(bool value = true);
+        void emit(int);
 
         class Busy
         {

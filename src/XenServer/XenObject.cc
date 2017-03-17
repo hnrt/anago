@@ -21,6 +21,7 @@ XenObject::XenObject(Type type, Session& session, const char* refid, const char*
     , _name(name ? name : "")
     , _busyCount(0)
 {
+    Trace trace(__PRETTY_FUNCTION__);
 
     // trace.put("type=%s", );
     // DBG("type=%s", XenObjectTypeMap::toString(_type));
@@ -86,7 +87,7 @@ void XenObject::setName(const char* value)
         }
         _name = value;
     }
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), Controller::XO_NAME);
+    emit(Controller::XO_NAME);
 }
 
 
@@ -107,7 +108,7 @@ void XenObject::setDisplayStatus(const char* value)
         }
         _displayStatus = value;
     }
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), Controller::XO_STATUS);
+    emit(Controller::XO_STATUS);
 }
 
 
@@ -124,5 +125,11 @@ void XenObject::setBusy(bool value)
     {
         return;
     }
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), Controller::XO_BUSY);
+    emit(Controller::XO_BUSY);
+}
+
+
+void XenObject::emit(int notification)
+{
+    Controller::instance().notify(RefPtr<RefObj>(this, 1), static_cast<Controller::Notification>(notification));
 }
