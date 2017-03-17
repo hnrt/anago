@@ -36,13 +36,13 @@ ModelImpl::ModelImpl()
     , _height(HEIGHT_DEFAULT)
     , _pane1Width(PANE1WIDTH_DEFAULT)
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("ModelImpl::ctor");
 }
 
 
 ModelImpl::~ModelImpl()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("ModelImpl::dtor");
 }
 
 

@@ -13,13 +13,13 @@ using namespace hnrt;
 ViewImpl::ViewImpl()
     : _displayName("Anago")
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("ViewImpl::ctor");
 }
 
 
 ViewImpl::~ViewImpl()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("ViewImpl::dtor");
 }
 
 

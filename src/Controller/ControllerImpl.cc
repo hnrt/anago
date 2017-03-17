@@ -15,13 +15,13 @@ ControllerImpl::ControllerImpl()
     : _backgroundCount(0)
     , _quitInProgress(false)
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("ControllerImpl::ctor");
 }
 
 
 ControllerImpl::~ControllerImpl()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("ControllerImpl::dtor");
 }
 
 
