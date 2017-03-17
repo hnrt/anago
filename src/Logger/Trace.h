@@ -5,6 +5,7 @@
 #define HNRT_LOGGER_TRACE_H
 
 
+#include <glibmm.h>
 #include "Logger.h"
 
 
@@ -24,7 +25,7 @@ namespace hnrt
         void operator =(const Trace&);
 
         Logger& _log;
-        const char* _name;
+        Glib::ustring _name;
     };
 }
 

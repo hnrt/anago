@@ -12,13 +12,13 @@ Trace::Trace(const char* name)
     : _log(Logger::instance())
     , _name(name)
 {
-    _log.trace("%s: Started.", _name);
+    _log.trace("%s: Started.", _name.c_str());
 }
 
 
 Trace::~Trace()
 {
-    _log.trace("%s: Finished.", _name);
+    _log.trace("%s: Finished.", _name.c_str());
 }
 
 
@@ -26,6 +26,6 @@ void Trace::put(const char* format, ...)
 {
     va_list argList;
     va_start(argList, format);
-    _log.trace2(_name, format, argList);
+    _log.trace2(_name.c_str(), format, argList);
     va_end(argList);
 }
