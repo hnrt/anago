@@ -49,10 +49,10 @@ MainWindow::MainWindow()
 
     actionGroup->add(Gtk::Action::create("EditHost", gettext("_Host")));
 
-    actionGroup->add(Gtk::Action::create("Connect", Gtk::Stock::CONNECT),
+    actionGroup->add(Gtk::Action::create("Connect", Gtk::Stock::DISCONNECT),
                      Gtk::AccelKey("<control><shift>c"),
                      sigc::mem_fun(Controller::instance(), &Controller::connect));
-    actionGroup->add(Gtk::Action::create("Disconnect", Gtk::Stock::DISCONNECT),
+    actionGroup->add(Gtk::Action::create("Disconnect", Gtk::Stock::CONNECT),
                      Gtk::AccelKey("<control><shift>d"),
                      sigc::mem_fun(Controller::instance(), &Controller::disconnect));
 
