@@ -1,6 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "PixStore.h"
 #include "ViewImpl.h"
 
 
@@ -12,6 +13,8 @@ static ViewImpl* _singleton = NULL;
 
 void View::init()
 {
+    PixStore::init();
+
     _singleton = new ViewImpl();
 }
 
@@ -19,6 +22,8 @@ void View::init()
 void View::fini()
 {
     delete _singleton;
+
+    PixStore::fini();
 }
 
 

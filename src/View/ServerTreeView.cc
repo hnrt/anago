@@ -9,7 +9,7 @@
 //#include "XenServer/StorageRepository.h"
 //#include "XenServer/VirtualMachine.h"
 #include "XenServer/XenObjectStore.h"
-//#include "PixStore.h"
+#include "PixStore.h"
 #include "ServerTreeStore.h"
 #include "ServerTreeView.h"
 
@@ -55,13 +55,13 @@ bool ServerTreeView::add(RefPtr<XenObject>& object)
             RefPtr<XenObject> object2 = row[_store->record().colXenObject];
             if (object2 == object)
             {
-                //row[_store->record().colPix] = PixStore::instance().get(host);
+                row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
                 row[_store->record().colVal] = object->getDisplayStatus();
                 return false;
             }
             else if (object2->getSession().getConnectSpec().uuid == object->getSession().getConnectSpec().uuid)
             {
-                //row[_store->record().colPix] = PixStore::instance().get(host);
+                row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
                 row[_store->record().colVal] = object->getDisplayStatus();
                 row[_store->record().colXenObject] = object;
                 return true;
@@ -85,7 +85,7 @@ bool ServerTreeView::add(RefPtr<XenObject>& object)
             }
             iter++;
         }
-        //row[_store->record().colPix] = PixStore::instance().get(host);
+        row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
         row[_store->record().colKey] = object->getSession().getConnectSpec().displayname;
         row[_store->record().colVal] = object->getDisplayStatus();
         row[_store->record().colXenObject] = object;
@@ -375,14 +375,14 @@ void ServerTreeView::update(RefPtr<XenObject>& object, int what)
                     row[_store->record().colKey] = object->getSession().getConnectSpec().displayname;
                     break;
                 case XenObject::BUSY_UPDATED:
-                    //row[_store->record().colPix] = PixStore::instance().get(host);
+                    row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
                     break;
                 case XenObject::CONNECTED:
-                    //row[_store->record().colPix] = PixStore::instance().get(host);
+                    row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
                     break;
                 case XenObject::DISCONNECTED:
-                    //row[_store->record().colPix] = PixStore::instance().get(host);
                 {
+                    row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
                     Gtk::TreeIter iter2 = row.children().begin();
                     while (iter2)
                     {

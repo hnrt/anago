@@ -4,6 +4,7 @@
 #include "App/Constants.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
+#include "PixStore.h"
 #include "ViewImpl.h"
 
 
