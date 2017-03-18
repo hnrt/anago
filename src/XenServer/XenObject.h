@@ -41,6 +41,23 @@ namespace hnrt
             VM_GUEST_METRICS,
         };
 
+        enum Notification
+        {
+            CREATED = 100,
+            BUSY_UPDATED,
+            NAME_UPDATED,
+            STATUS_UPDATED,
+            SESSION_UPDATED,
+            CONNECTED,
+            DISCONNECTED,
+            POWER_STATE_UPDATED,
+            RECORD_UPDATED,
+            SNAPSHOT_UPDATED,
+            DESTROYED = 199,
+            NOTIFICATION_MIN = CREATED,
+            NOTIFICATION_MAX = DESTROYED,
+        };
+
         virtual ~XenObject();
         Type getType() const { return _type; }
         const Session& getSession() const;
@@ -56,7 +73,7 @@ namespace hnrt
         virtual void setDisplayStatus(const char* value);
         bool isBusy() const { return _busyCount > 0; }
         virtual void setBusy(bool value = true);
-        void emit(int);
+        void emit(Notification);
 
         class Busy
         {

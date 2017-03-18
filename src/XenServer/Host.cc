@@ -20,15 +20,6 @@
 using namespace hnrt;
 
 
-#ifdef _DEBUG_HOST
-#define DBG(format,...) Debug::putMF(__PRETTY_FUNCTION__,this,format,##__VA_ARGS__)
-#define DBG2(format,...) Debug::put(__FUNCTION__,format,##__VA_ARGS__)
-#else
-#define DBG(format,...) (void)0
-#define DBG2(format,...) (void)0
-#endif
-
-
 RefPtr<Host> Host::create(Session& session)
 {
     RefPtr<Host> host(new Host(session));
@@ -40,13 +31,13 @@ Host::Host(Session& session)
     : XenObject(XenObject::HOST, session, NULL, NULL, NULL)
     , _state(STATE_NONE)
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("Host::ctor");
 }
 
 
 Host:: ~Host()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("Host::dtor");
 }
 
 
@@ -69,7 +60,7 @@ void Host::setBusy(bool value)
             return;
         }
     }
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), Controller::XO_BUSY);
+    Controller::instance().notify(RefPtr<RefObj>(this, 1), BUSY_UPDATED);
     if (count == 0)
     {
         switch (_state)
@@ -117,7 +108,7 @@ void Host::setRecord(const XenPtr<xen_host_record>& record)
     {
         return;
     }
-    emit(Controller::XO_RECORD);
+    emit(RECORD_UPDATED);
 }
 
 
@@ -139,7 +130,7 @@ void Host::setMetricsRecord(const XenPtr<xen_host_metrics_record>& record)
     {
         return;
     }
-    emit(Controller::XO_RECORD);
+    emit(RECORD_UPDATED);
 }
 
 
@@ -193,7 +184,7 @@ void Host::onConnected()
     }
     initPatchList();
     updatePatchList();
-    emit(Controller::XO_SESSION);
+    emit(CONNECTED);
 }
 
 
@@ -206,7 +197,7 @@ void Host::onConnectFailed()
 
 void Host::onDisconnected()
 {
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), Controller::XO_SESSION);
+    emit(DISCONNECTED);
     if (_state == STATE_CONNECTED || _state == STATE_DISCONNECT_PENDING)
     {
         setDisplayStatus(gettext("Disconnected"));

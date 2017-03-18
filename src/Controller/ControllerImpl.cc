@@ -1,6 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include <libintl.h>
 #include <stdexcept>
 #include "Base/Atomic.h"
 #include "Logger/Trace.h"
@@ -56,7 +57,7 @@ void ControllerImpl::quit()
     if (!_quitInProgress)
     {
         _quitInProgress = true;
-        View::instance().getWindow().set_title("Quitting..."); //TODO: LOCALIZE
+        View::instance().getWindow().set_title(gettext("Quitting..."));
         if (quit1())
         {
             Glib::signal_timeout().connect(sigc::mem_fun(*this, &ControllerImpl::quit1), 100); // 100 milleseconds
@@ -96,7 +97,7 @@ void ControllerImpl::decBackgroundCount()
 }
 
 
-void ControllerImpl::notify(RefPtr<RefObj> object, Notification notif)
+void ControllerImpl::notify(const RefPtr<RefObj>& object, int notification)
 {
     //TODO: IMPLEMENT
 }

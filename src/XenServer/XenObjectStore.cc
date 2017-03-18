@@ -38,7 +38,7 @@ void XenObjectStore::clear()
 {
     std::list<RefPtr<XenObject> > a;
     {
-        Glib::RecMutex::Lock lock(_mutex);
+        Glib::RecMutex::Lock k(_mutex);
         for (TypeMapMap::iterator iter2 = _typeMapMap.begin(); iter2 != _typeMapMap.end(); iter2++)
         {
             HandleObjectMap* map = iter2->second;
@@ -55,9 +55,14 @@ void XenObjectStore::clear()
     for (std::list<RefPtr<XenObject> >::const_iterator iter = a.begin(); iter != a.end(); iter++)
     {
         RefPtr<XenObject> object = *iter;
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(object), Controller::XO_DESTROYED);
+        object->emit(XenObject::DESTROYED);
     }
-    setHost(RefPtr<Host>());
+    if (_host)
+    {
+        Glib::RecMutex::Lock k(_mutex);
+        _host->emit(XenObject::DESTROYED);
+        _host = RefPtr<Host>();
+    }
     //setPerformanceMonitor(RefPtr<PerformanceMonitor>());
 }
 
@@ -129,7 +134,7 @@ RefPtr<XenObject> XenObjectStore::get(const char* key, XenObject::Type type)
 }
 
 
-void XenObjectStore::add(const RefPtr<XenObject>& object)
+void XenObjectStore::addObject(RefPtr<XenObject>& object)
 {
     if (!object)
     {
@@ -140,10 +145,17 @@ void XenObjectStore::add(const RefPtr<XenObject>& object)
     {
         return;
     }
-    XenObject::Type type = object->getType();
     RefPtr<XenObject> old;
+    XenObject::Type type = object->getType();
+    if (type == XenObject::HOST)
     {
-        Glib::RecMutex::Lock lock(_mutex);
+        Glib::RecMutex::Lock k(_mutex);
+        old = RefPtr<XenObject>::castStatic(_host);
+        _host = RefPtr<Host>::castStatic(object);
+    }
+    else
+    {
+        Glib::RecMutex::Lock k(_mutex);
         TypeMapMap::const_iterator iter2 = _typeMapMap.find(type);
         if (iter2 != _typeMapMap.end())
         {
@@ -173,9 +185,9 @@ void XenObjectStore::add(const RefPtr<XenObject>& object)
     {
         if (old)
         {
-            Controller::instance().notify(RefPtr<RefObj>::castStatic(old), Controller::XO_DESTROYED);
+            old->emit(XenObject::DESTROYED);
         }
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(object), Controller::XO_CREATED);
+        object->emit(XenObject::CREATED);
     }
 }
 
@@ -230,48 +242,15 @@ void XenObjectStore::remove(const Glib::ustring& refid, XenObject::Type type)
     }
     if (object)
     {
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(object), Controller::XO_DESTROYED);
+        object->emit(XenObject::DESTROYED);
     }
 }
 
-
-void XenObjectStore::add(const RefPtr<Host>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-#if 0
-void XenObjectStore::add(const RefPtr<Network>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-void XenObjectStore::add(const RefPtr<PhysicalBlockDevice>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-void XenObjectStore::add(const RefPtr<PhysicalInterface>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-void XenObjectStore::add(const RefPtr<StorageRepository>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-void XenObjectStore::add(const RefPtr<Task>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-void XenObjectStore::add(const RefPtr<VirtualBlockDevice>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-void XenObjectStore::add(const RefPtr<VirtualDiskImage>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-void XenObjectStore::add(const RefPtr<VirtualInterface>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-void XenObjectStore::add(const RefPtr<VirtualMachine>& object) { add(RefPtr<XenObject>::castStatic(object)); }
-#endif
 
 RefPtr<Host> XenObjectStore::getHost()
 {
     Glib::RecMutex::Lock lock(_mutex);
     return _host;
-}
-
-
-void XenObjectStore::setHost(const RefPtr<Host>& host)
-{
-    RefPtr<Host> prev;
-    RefPtr<Host> next;
-    {
-        Glib::RecMutex::Lock lock(_mutex);
-        prev = _host;
-        next = _host = host;
-    }
-    if (prev)
-    {
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(prev), Controller::XO_DESTROYED);
-    }
-    if (next)
-    {
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(next), Controller::XO_CREATED);
-    }
 }
 
 #if 0

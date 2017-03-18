@@ -160,6 +160,7 @@ $(OBJDIR)/Util/ScramblerBase.o \
 $(OBJDIR)/Util/Util.o \
 $(OBJDIR)/Util/UUID.o \
 $(OBJDIR)/View/MainWindow.o \
+$(OBJDIR)/View/ServerTreeStore.o \
 $(OBJDIR)/View/View.o \
 $(OBJDIR)/View/ViewImpl.o \
 $(OBJDIR)/XenServer/Host.o \

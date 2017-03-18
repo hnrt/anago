@@ -42,22 +42,11 @@ namespace hnrt
         void clear();
         RefPtr<XenObject> get(const Glib::ustring& key, XenObject::Type type = XenObject::ANY);
         RefPtr<XenObject> get(const char* key, XenObject::Type type = XenObject::ANY);
-        void add(const RefPtr<XenObject>& object);
         void remove(const RefPtr<XenObject>& object);
         void remove(const Glib::ustring& refid, XenObject::Type type = XenObject::ANY);
         void remove(const char* refid, XenObject::Type type = XenObject::ANY) { return remove(Glib::ustring(refid), type); }
-        void add(const RefPtr<Host>& object);
-        //void add(const RefPtr<Network>& object);
-        //void add(const RefPtr<PhysicalBlockDevice>& object);
-        //void add(const RefPtr<PhysicalInterface>& object);
-        //void add(const RefPtr<StorageRepository>& object);
-        //void add(const RefPtr<Task>& object);
-        //void add(const RefPtr<VirtualBlockDevice>& object);
-        //void add(const RefPtr<VirtualDiskImage>& object);
-        //void add(const RefPtr<VirtualInterface>& object);
-        //void add(const RefPtr<VirtualMachine>& object);
+        template<typename T> void add(RefPtr<T>& object) { addObject(RefPtr<XenObject>::castStatic(object)); }
         RefPtr<Host> getHost();
-        void setHost(const RefPtr<Host>&);
         //RefPtr<PerformanceMonitor> getPerformanceMonitor() const;
         //void setPerformanceMonitor(const RefPtr<PerformanceMonitor>&);
         //RefPtr<Network> getNw(const Glib::ustring& key) const;
@@ -101,6 +90,7 @@ namespace hnrt
 
         XenObjectStore(const XenObjectStore&);
         void operator =(const XenObjectStore&);
+        void addObject(RefPtr<XenObject>&);
         template<typename T> int getList(std::list<RefPtr<T> >& list, XenObject::Type type) const;
 
         Glib::RecMutex _mutex;

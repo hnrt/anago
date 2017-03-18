@@ -22,7 +22,7 @@ namespace hnrt
         virtual void quit();
         virtual void incBackgroundCount();
         virtual void decBackgroundCount();
-        virtual void notify(RefPtr<RefObj>, Notification);
+        virtual void notify(const RefPtr<RefObj>&, int);
         virtual void addHost();
         virtual void editHost();
         virtual void removeHost();

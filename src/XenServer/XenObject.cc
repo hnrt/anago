@@ -87,7 +87,7 @@ void XenObject::setName(const char* value)
         }
         _name = value;
     }
-    emit(Controller::XO_NAME);
+    emit(NAME_UPDATED);
 }
 
 
@@ -108,7 +108,7 @@ void XenObject::setDisplayStatus(const char* value)
         }
         _displayStatus = value;
     }
-    emit(Controller::XO_STATUS);
+    emit(STATUS_UPDATED);
 }
 
 
@@ -125,11 +125,11 @@ void XenObject::setBusy(bool value)
     {
         return;
     }
-    emit(Controller::XO_BUSY);
+    emit(BUSY_UPDATED);
 }
 
 
-void XenObject::emit(int notification)
+void XenObject::emit(Notification notification)
 {
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), static_cast<Controller::Notification>(notification));
+    Controller::instance().notify(RefPtr<RefObj>(this, 1), notification);
 }
