@@ -25,17 +25,28 @@ ViewImpl::~ViewImpl()
 
 void ViewImpl::resize()
 {
+    Trace trace("ViewImpl::resize");
     int cx = Model::instance().getWidth();
     int cy = Model::instance().getHeight();
     if (cx > WIDTH_DEFAULT && cy > HEIGHT_DEFAULT)
     {
+        trace.put("cx=%d cy=%d", cx, cy);
         _mainWindow.set_default_size(cx, cy);
     }
     cx = Model::instance().getPane1Width();
     if (cx > PANE1WIDTH_DEFAULT)
     {
+        trace.put("pane1.cx=%d", cx);
         _mainWindow.setPane1Width(cx);
     }
+}
+
+
+void ViewImpl::clear()
+{
+    Trace trace("ViewImpl::clear");
+    _mainWindow.clear();
+    View::update();
 }
 
 

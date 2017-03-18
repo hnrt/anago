@@ -26,3 +26,12 @@ View& View::instance()
 {
     return *_singleton;
 }
+
+
+void View::update()
+{
+    while (Gtk::Main::events_pending())
+    {
+        Gtk::Main::iteration();
+    }
+}

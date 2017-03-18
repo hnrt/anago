@@ -47,6 +47,8 @@ namespace hnrt
         void remove(const char* refid, XenObject::Type type = XenObject::ANY) { return remove(Glib::ustring(refid), type); }
         template<typename T> void add(RefPtr<T>& object) { addObject(RefPtr<XenObject>::castStatic(object)); }
         RefPtr<Host> getHost();
+        void setHost(const RefPtr<Host>&);
+        void removeHost();
         //RefPtr<PerformanceMonitor> getPerformanceMonitor() const;
         //void setPerformanceMonitor(const RefPtr<PerformanceMonitor>&);
         //RefPtr<Network> getNw(const Glib::ustring& key) const;
@@ -90,7 +92,7 @@ namespace hnrt
 
         XenObjectStore(const XenObjectStore&);
         void operator =(const XenObjectStore&);
-        void addObject(RefPtr<XenObject>&);
+        void addObject(RefPtr<XenObject>);
         template<typename T> int getList(std::list<RefPtr<T> >& list, XenObject::Type type) const;
 
         Glib::RecMutex _mutex;

@@ -57,12 +57,6 @@ void XenObjectStore::clear()
         RefPtr<XenObject> object = *iter;
         object->emit(XenObject::DESTROYED);
     }
-    if (_host)
-    {
-        Glib::RecMutex::Lock k(_mutex);
-        _host->emit(XenObject::DESTROYED);
-        _host = RefPtr<Host>();
-    }
     //setPerformanceMonitor(RefPtr<PerformanceMonitor>());
 }
 
@@ -134,7 +128,7 @@ RefPtr<XenObject> XenObjectStore::get(const char* key, XenObject::Type type)
 }
 
 
-void XenObjectStore::addObject(RefPtr<XenObject>& object)
+void XenObjectStore::addObject(RefPtr<XenObject> object)
 {
     if (!object)
     {
@@ -249,9 +243,45 @@ void XenObjectStore::remove(const Glib::ustring& refid, XenObject::Type type)
 
 RefPtr<Host> XenObjectStore::getHost()
 {
-    Glib::RecMutex::Lock lock(_mutex);
+    Glib::RecMutex::Lock k(_mutex);
     return _host;
 }
+
+
+void XenObjectStore::setHost(const RefPtr<Host>& host)
+{
+    RefPtr<Host> prev;
+    RefPtr<Host> next;
+    {
+        Glib::RecMutex::Lock k(_mutex);
+        prev = _host;
+        next = _host = host;
+    }
+    if (prev)
+    {
+        prev->emit(XenObject::DESTROYED);
+    }
+    if (next)
+    {
+        next->emit(XenObject::CREATED);
+    }
+}
+
+
+void XenObjectStore::removeHost()
+{
+    RefPtr<Host> prev;
+    {
+        Glib::RecMutex::Lock k(_mutex);
+        prev = _host;
+        _host = RefPtr<Host>();
+    }
+    if (prev)
+    {
+        prev->emit(XenObject::DESTROYED);
+    }
+}
+
 
 #if 0
 RefPtr<PerformanceMonitor> XenObjectStore::getPerformanceMonitor() const

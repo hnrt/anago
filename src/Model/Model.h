@@ -11,6 +11,7 @@
 
 namespace hnrt
 {
+    class Host;
     class PatchBase;
     class Session;
     class XenObject;
@@ -26,14 +27,15 @@ namespace hnrt
 
         virtual void load() = 0;
         virtual void save() = 0;
-        virtual int get(std::list<Session*>&) = 0;
+        virtual void clear() = 0;
+        virtual int get(std::list<RefPtr<Host> >&) = 0;
         virtual void add(const ConnectSpec&) = 0;
         virtual void remove(Session&) = 0;
         virtual void removeAllSessions() = 0;
 
         virtual void deselectAll() = 0;
         virtual void select(const RefPtr<XenObject>&) = 0;
-        virtual int getSelected(std::list<Session*>&) = 0;
+        virtual int getSelected(std::list<RefPtr<Host> >&) = 0;
 
         virtual RefPtr<PatchBase> getPatchBase() = 0;
 

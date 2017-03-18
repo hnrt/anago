@@ -13,6 +13,7 @@
 namespace hnrt
 {
     class Json;
+    class Host;
 
     class ModelImpl
         : public Model
@@ -25,14 +26,15 @@ namespace hnrt
         void fini();
         virtual void load();
         virtual void save();
-        virtual int get(std::list<Session*>&);
+        virtual void clear();
+        virtual int get(std::list<RefPtr<Host> >&);
         virtual void add(const ConnectSpec&);
         virtual void remove(Session&);
         virtual void removeAllSessions();
 
         virtual void deselectAll();
         virtual void select(const RefPtr<XenObject>&);
-        virtual int getSelected(std::list<Session*>&);
+        virtual int getSelected(std::list<RefPtr<Host> >&);
 
         virtual RefPtr<PatchBase> getPatchBase();
 
@@ -54,7 +56,7 @@ namespace hnrt
         Glib::ustring _path;
         Glib::ustring _appDir;
         Glib::RecMutex _mutex;
-        std::list<Session*> _sessions;
+        std::list<RefPtr<Host> > _hosts;
         std::list<RefPtr<XenObject> > _selected;
         RefPtr<PatchBase> _patchBase;
 

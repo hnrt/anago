@@ -75,6 +75,10 @@ int main(int argc, char *argv[])
             status = EXIT_FAILURE;
         }
 
+        View::instance().clear();
+        Controller::instance().clear();
+        Model::instance().clear();
+
         View::fini();
         Controller::fini();
         Model::fini();

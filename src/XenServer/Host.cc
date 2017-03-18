@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "Base/Atomic.h"
+#include "Base/StringBuffer.h"
 #include "Controller/Controller.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
@@ -20,9 +21,10 @@
 using namespace hnrt;
 
 
-RefPtr<Host> Host::create(Session& session)
+RefPtr<Host> Host::create(const ConnectSpec& cs)
 {
-    RefPtr<Host> host(new Host(session));
+    RefPtr<Session> session = RefPtr<Session>(new Session(cs));
+    RefPtr<Host> host(new Host(*session));
     return host;
 }
 
@@ -31,13 +33,13 @@ Host::Host(Session& session)
     : XenObject(XenObject::HOST, session, NULL, NULL, NULL)
     , _state(STATE_NONE)
 {
-    Trace trace("Host::ctor");
+    Trace trace(StringBuffer().format("Host@%zx::ctor", this));
 }
 
 
 Host:: ~Host()
 {
-    Trace trace("Host::dtor");
+    Trace trace(StringBuffer().format("Host@%zx::dtor", this));
 }
 
 

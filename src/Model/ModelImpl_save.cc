@@ -6,6 +6,7 @@
 #include <string.h>
 #include "File/Json.h"
 #include "Logger/Trace.h"
+#include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "ConnectSpec.h"
 #include "ModelImpl.h"
@@ -16,7 +17,7 @@ using namespace hnrt;
 
 void ModelImpl::save()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("ModelImpl::save");
 
     FILE* fp = NULL;
 
@@ -36,12 +37,12 @@ void ModelImpl::save()
             object2->add("height", (long)getHeight());
             object2->add("pane1_width", (long)getPane1Width());
             Json::Array array3;
-            std::list<Session*> sessions;
-            get(sessions);
-            for (std::list<Session*>::const_iterator iter = sessions.begin(); iter != sessions.end(); iter++)
+            std::list<RefPtr<Host> > hosts;
+            get(hosts);
+            for (std::list<RefPtr<Host> >::const_iterator iter = hosts.begin(); iter != hosts.end(); iter++)
             {
-                const Session* pSession = *iter;
-                const ConnectSpec& cs = pSession->getConnectSpec();
+                const Session& session = (*iter)->getSession();
+                const ConnectSpec& cs = session.getConnectSpec();
                 RefPtr<Json::Object> object3(new Json::Object());
                 object3->add("uuid", cs.uuid.c_str());
                 object3->add("display_name", cs.displayname.c_str());

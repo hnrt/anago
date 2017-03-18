@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include "App/Constants.h"
 #include "Logger/Trace.h"
+#include "XenServer/Host.h"
 #include "XenServer/Session.h"
+#include "XenServer/XenObjectStore.h"
 #include "ModelImpl.h"
 #include "PatchBase.h"
 
@@ -58,11 +60,19 @@ void ModelImpl::fini()
 }
 
 
-int ModelImpl::get(std::list<Session*>& list)
+void ModelImpl::clear()
+{
+    Trace trace("ModelImpl::clear");
+    deselectAll();
+    removeAllSessions();
+}
+
+
+int ModelImpl::get(std::list<RefPtr<Host> >& list)
 {
     Glib::RecMutex::Lock lock(_mutex);
     int count = 0;
-    for (std::list<Session*>::const_iterator iter = _sessions.begin(); iter != _sessions.end(); iter++)
+    for (std::list<RefPtr<Host> >::iterator iter = _hosts.begin(); iter != _hosts.end(); iter++)
     {
         list.push_back(*iter);
     }
@@ -72,10 +82,11 @@ int ModelImpl::get(std::list<Session*>& list)
 
 void ModelImpl::add(const ConnectSpec& cs)
 {
-    Glib::RecMutex::Lock lock(_mutex);
-    for (std::list<Session*>::iterator iter = _sessions.begin(); iter != _sessions.end(); iter++)
+    Glib::RecMutex::Lock k(_mutex);
+    for (std::list<RefPtr<Host> >::iterator iter = _hosts.begin(); iter != _hosts.end(); iter++)
     {
-        Session& session = **iter;
+        RefPtr<Host>& host = *iter;
+        Session& session = host->getSession();
         ConnectSpec& cs2 = session.getConnectSpec();
         if (cs2.uuid == cs.uuid)
         {
@@ -87,20 +98,30 @@ void ModelImpl::add(const ConnectSpec& cs)
             return;
         }
     }
-    _sessions.push_back(new Session(cs));
+    RefPtr<Host> host = Host::create(cs);
+    Session& session = host->getSession();
+    session.getStore().add(host);
+    _hosts.push_back(host);
 }
 
 
 void ModelImpl::ModelImpl::remove(Session& session)
 {
-    Glib::RecMutex::Lock lock(_mutex);
-    for (std::list<Session*>::iterator iter = _sessions.begin(); iter != _sessions.end(); iter++)
+    Glib::RecMutex::Lock k(_mutex);
+    for (std::list<RefPtr<Host> >::iterator iter = _hosts.begin(); iter != _hosts.end(); iter++)
     {
-        if (**iter == session)
+        RefPtr<Host>& host = *iter;
+        if (host->getSession() == session)
         {
-            _sessions.erase(iter);
-            session.disconnect();
-            session.unreference();
+            _hosts.erase(iter);
+            if (session.isConnected())
+            {
+                if (session.disconnect())
+                {
+                    host->onDisconnected();
+                }
+            }
+            session.getStore().removeHost();
             return;
         }
     }
@@ -109,13 +130,20 @@ void ModelImpl::ModelImpl::remove(Session& session)
 
 void ModelImpl::removeAllSessions()
 {
-    Glib::RecMutex::Lock lock(_mutex);
-    while (!_sessions.empty())
+    Glib::RecMutex::Lock k(_mutex);
+    while (!_hosts.empty())
     {
-        Session& session = *_sessions.front();
-        _sessions.pop_front();
-        session.disconnect();
-        session.unreference();
+        RefPtr<Host> host = _hosts.front();
+        _hosts.pop_front();
+        Session& session = host->getSession();
+        if (session.isConnected())
+        {
+            if (session.disconnect())
+            {
+                session.disconnect();
+            }
+        }
+        session.getStore().removeHost();
     }
 }
 
@@ -134,14 +162,26 @@ void ModelImpl::select(const RefPtr<XenObject>& object)
 }
 
 
-int ModelImpl::getSelected(std::list<Session*>& list)
+int ModelImpl::getSelected(std::list<RefPtr<Host> >& list)
 {
     Glib::RecMutex::Lock lock(_mutex);
-    std::list<Session*>::size_type count0 = list.size();
+    std::list<RefPtr<Host> >::size_type count0 = list.size();
     for (std::list<RefPtr<XenObject> >::iterator iter = _selected.begin(); iter != _selected.end(); iter++)
     {
         RefPtr<XenObject>& object = *iter;
-        list.push_back(&object->getSession());
+        RefPtr<Host> host = object->getSession().getStore().getHost();
+        for (std::list<RefPtr<Host> >::iterator iter2 = list.begin();; iter2++)
+        {
+            if (iter2 == list.end())
+            {
+                list.push_back(host);
+                break;
+            }
+            else if ((*iter2).ptr() == host.ptr())
+            {
+                break;
+            }
+        }
     }
     return static_cast<int>(list.size() - count0);
 }

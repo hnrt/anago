@@ -6,6 +6,9 @@
 
 
 #include <gtkmm.h>
+#include "Base/RefObj.h"
+#include "Base/RefPtr.h"
+#include "ServerTreeView.h"
 
 
 namespace hnrt
@@ -18,6 +21,7 @@ namespace hnrt
         MainWindow();
         ~MainWindow();
         void setPane1Width(int);
+        void clear();
 
     private:
 
@@ -27,6 +31,10 @@ namespace hnrt
         bool onClose(GdkEventAny*);
         bool onWindowStateChange(GdkEventWindowState*);
         void onResize(Gtk::Allocation&);
+        void onObjectCreated(RefPtr<RefObj>, int);
+        void onObjectUpdated(RefPtr<RefObj>, int);
+        void removeObject(RefPtr<RefObj>&);
+        void updateObject(RefPtr<RefObj>&, int);
         void onServerTreeViewSelectionChanged();
         void updateSensitivity();
 
@@ -47,7 +55,7 @@ namespace hnrt
         Gtk::VBox _box;
         Gtk::HPaned _hpaned;
         Gtk::ScrolledWindow _sw1;
-        //ServerTreeView _serverTreeView;
+        ServerTreeView _serverTreeView;
         Gtk::HBox _box2;
 
         GdkWindowState _windowState;

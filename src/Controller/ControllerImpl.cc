@@ -5,7 +5,11 @@
 #include <stdexcept>
 #include "Base/Atomic.h"
 #include "Logger/Trace.h"
+#include "Model/Model.h"
 #include "View/View.h"
+#include "XenServer/Host.h"
+#include "XenServer/Session.h"
+#include "XenServer/XenObject.h"
 #include "ControllerImpl.h"
 
 
@@ -26,8 +30,22 @@ ControllerImpl::~ControllerImpl()
 }
 
 
+void ControllerImpl::clear()
+{
+    Trace trace("ControllerImpl::clear");
+    Glib::RecMutex::Lock k(_mutex);
+    _notified.clear();
+    _notificationSignalMap.clear();
+    _refObjSignalMap.clear();
+}
+
+
 void ControllerImpl::parseCommandLine(int argc, char *argv[])
 {
+    Trace trace("ControllerImpl::parseCommandLine");
+
+    _dispatcher.connect(sigc::mem_fun(*this, &ControllerImpl::onNotify));
+
     for (int index = 1; index < argc; index++)
     {
         if (!strcmp(argv[index], "-log"))
@@ -52,26 +70,47 @@ void ControllerImpl::parseCommandLine(int argc, char *argv[])
 
 void ControllerImpl::quit()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("ControllerImpl::quit");
 
     if (!_quitInProgress)
     {
         _quitInProgress = true;
         View::instance().getWindow().set_title(gettext("Quitting..."));
-        if (quit1())
+        if (quit2())
         {
-            Glib::signal_timeout().connect(sigc::mem_fun(*this, &ControllerImpl::quit1), 100); // 100 milleseconds
+            Glib::signal_timeout().connect(sigc::mem_fun(*this, &ControllerImpl::quit2), 100); // 100 milleseconds
         }
     }
 }
 
 
-bool ControllerImpl::quit1()
+bool ControllerImpl::quit2()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("ControllerImpl::quit2");
 
     int busyCount = 0;
-    //TODO: DISCONNECT SESSIONS
+    std::list<RefPtr<Host> > hosts;
+    Model::instance().get(hosts);
+    for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
+    {
+        RefPtr<Host>& host = *iter;
+        if (host->isBusy())
+        {
+            busyCount++;
+        }
+        else
+        {
+            Session& session = host->getSession();
+            if (session.isConnected())
+            {
+                if (session.disconnect())
+                {
+                    host->onDisconnected();
+                }
+            }
+        }
+    }
+    hosts.clear();
     if (busyCount || _backgroundCount)
     {
         trace.put("busy=%d background=%d", busyCount, _backgroundCount);
@@ -97,9 +136,87 @@ void ControllerImpl::decBackgroundCount()
 }
 
 
+Controller::Signal ControllerImpl::signalNotified(int notification)
+{
+    Glib::RecMutex::Lock k(_mutex);
+    NotificationSignalMap::iterator iter = _notificationSignalMap.find(notification);
+    if (iter == _notificationSignalMap.end())
+    {
+        _notificationSignalMap.insert(NotificationSignalMapEntry(notification, Signal()));
+        iter = _notificationSignalMap.find(notification);
+    }
+    return iter->second;
+}
+
+
+Controller::Signal ControllerImpl::signalNotified(const RefPtr<RefObj>& object)
+{
+    Glib::RecMutex::Lock k(_mutex);
+    void* key = const_cast<RefObj*>(object.ptr());
+    RefObjSignalMap::iterator iter = _refObjSignalMap.find(key);
+    if (iter == _refObjSignalMap.end())
+    {
+        _refObjSignalMap.insert(RefObjSignalMapEntry(key, Signal()));
+        iter = _refObjSignalMap.find(key);
+    }
+    return iter->second;
+}
+
+
 void ControllerImpl::notify(const RefPtr<RefObj>& object, int notification)
 {
-    //TODO: IMPLEMENT
+    Trace trace("ControllerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
+    if (_quitInProgress)
+    {
+        trace.put("cancelled.");
+        return;
+    }
+    Glib::RecMutex::Lock k(_mutex);
+    _notified.push_back(RefPtrNotificationPair(object, notification));
+    if (_notified.size() == 1)
+    {
+        _dispatcher();
+    }
+}
+
+
+void ControllerImpl::onNotify()
+{
+    Trace trace("ControllerImpl::onNotify");
+
+    for (;;)
+    {
+        RefPtrNotificationPair entry;
+        {
+            Glib::RecMutex::Lock k(_mutex);
+            if (!_notified.size())
+            {
+                break;
+            }
+            entry = _notified.front();
+            _notified.pop_front();
+        }
+        {
+            int key = entry.second;
+            NotificationSignalMap::iterator iter = _notificationSignalMap.find(key);
+            if (iter != _notificationSignalMap.end())
+            {
+                iter->second.emit(entry.first, entry.second);
+            }
+        }
+        {
+            void* key = entry.first.ptr();
+            RefObjSignalMap::iterator iter = _refObjSignalMap.find(key);
+            if (iter != _refObjSignalMap.end())
+            {
+                iter->second.emit(entry.first, entry.second);
+                if (entry.second == XenObject::DESTROYED)
+                {
+                    _refObjSignalMap.erase(key);
+                }
+            }
+        }
+    }
 }
 
 

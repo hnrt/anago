@@ -12,6 +12,7 @@
 
 namespace hnrt
 {
+    struct ConnectSpec;
     struct PatchRecord;
 
     class Host
@@ -37,7 +38,7 @@ namespace hnrt
             STATE_REBOOT_FAILED,
         };
 
-        static RefPtr<Host> create(Session& session);
+        static RefPtr<Host> create(const ConnectSpec&);
 
         virtual ~Host();
         virtual void setBusy(bool value = true);

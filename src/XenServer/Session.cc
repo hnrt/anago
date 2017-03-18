@@ -94,13 +94,13 @@ Session::Session()
     , _state(NONE)
     , _monitoring(false)
 {
-    Trace trace(StringBuffer().format("Session@%zx::dtor", this));
+    Trace trace(StringBuffer().format("Session@%zx::ctor", this));
 }
 
 
 Session::~Session()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace(StringBuffer().format("Session@%zx::dtor", this));
     if (_state != NONE)
     {
         disconnect();
@@ -116,7 +116,7 @@ bool Session::isConnected() const
 
 bool Session::connect()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace(StringBuffer().format("Session@%zx::connect", this));
     if (_state != NONE)
     {
         disconnect();
@@ -137,7 +137,7 @@ bool Session::connect()
 
 bool Session::connect(const Session& other)
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace(StringBuffer().format("Session@%zx::connect", this));
     if (_state != NONE)
     {
         disconnect();
@@ -160,7 +160,7 @@ bool Session::connect(const Session& other)
 
 bool Session::disconnect()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace(StringBuffer().format("Session@%zx::disconnect", this));
     bool retval = false;
     switch (InterlockedExchange((int32_t*)&_state, NONE))
     {

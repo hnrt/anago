@@ -6,6 +6,7 @@
 #include "Controller/Controller.h"
 #include "Logger/Logger.h"
 #include "Model/Model.h"
+#include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "MainWindow.h"
 
@@ -134,11 +135,9 @@ MainWindow::MainWindow()
 
     _box.pack_start(_hpaned);
 
-    //_serverTreeView.signalSelectionChanged().connect(sigc::mem_fun(*this, &MainWindow::onServerTreeViewSelectionChanged));
-
     _sw1.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
     _sw1.set_size_request(PANE1WIDTH_DEFAULT, -1);
-    //_sw1.add(_serverTreeView);
+    _sw1.add(_serverTreeView);
 
     _hpaned.pack1(_sw1, false, true);
     _hpaned.pack2(_box2, true, true);
@@ -146,6 +145,10 @@ MainWindow::MainWindow()
     signal_delete_event().connect(sigc::mem_fun(*this, &MainWindow::onClose));
     signal_window_state_event().connect(sigc::mem_fun(*this, &MainWindow::onWindowStateChange));
     signal_size_allocate().connect(sigc::mem_fun(*this, &MainWindow::onResize));
+
+    _serverTreeView.signalSelectionChanged().connect(sigc::mem_fun(*this, &MainWindow::onServerTreeViewSelectionChanged));
+
+    Controller::instance().signalNotified(XenObject::CREATED).connect(sigc::mem_fun(*this, &MainWindow::onObjectCreated));
 
     show_all_children();
 
@@ -270,18 +273,151 @@ void MainWindow::onResize(Gtk::Allocation& a)
 }
 
 
+void MainWindow::onObjectCreated(RefPtr<RefObj> object, int what)
+{
+    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
+    if (_serverTreeView.add(xenObject))
+    {
+        //RefPtr<Notebook> notebook = NotebookFactory::create(xenObject);
+        //_notebookStore.set(xenObject, notebook);
+        //notebook->update();
+        //addNotebook(notebook);
+        updateSensitivity();
+        Controller::instance().signalNotified(object).connect(sigc::mem_fun(*this, &MainWindow::onObjectUpdated));
+    }
+}
+
+
+void MainWindow::onObjectUpdated(RefPtr<RefObj> object, int what)
+{
+    if (what == XenObject::DESTROYED)
+    {
+        removeObject(object);
+    }
+    else
+    {
+        updateObject(object, what);
+    }
+}
+
+
+void MainWindow::removeObject(RefPtr<RefObj>& object)
+{
+    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
+    _serverTreeView.remove(xenObject);
+#if 0
+    RefPtr<Notebook> notebook = _notebookStore.remove(xenObject);
+    if (!notebook)
+    {
+        return;
+    }
+    if (notebook == _currentNotebook)
+    {
+        onServerTreeViewSelectionChanged();
+    }
+    removeNotebook(notebook);
+#endif
+    updateSensitivity();
+}
+
+
+void MainWindow::updateObject(RefPtr<RefObj>& object, int what)
+{
+    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
+    _serverTreeView.update(xenObject, what);
+#if 0
+    RefPtr<Notebook> notebook = _notebookStore.get(xenObject);
+    if (notebook)
+    {
+        switch (what)
+        {
+        case XenObject::CONNECTED:
+        case XenObject::DISCONNECTED:
+        case XenObject::RECORD_UPDATED:
+            notebook->update();
+            break;
+        case XenObject::BUSY_UPDATED:
+        case XenObject::POWER_STATE_UPDATED:
+        case XenObject::SNAPSHOT_UPDATED:
+            notebook->updateSnapshots();
+            break;
+        default:
+            break;
+        }
+    }
+    switch (what)
+    {
+    case XenObject::BUSY_UPDATED:
+    case XenObject::CONNECTED:
+    case XenObject::DISCONNECTED:
+    case XenObject::RECORD_UPDATED:
+        updateSensitivity();
+        break;
+    default:
+        break;
+    }
+#endif
+}
+
+
+void MainWindow::onServerTreeViewSelectionChanged()
+{
+    RefPtr<XenObject> node;
+    Model::instance().deselectAll();
+    Gtk::TreeIter iter = _serverTreeView.getFirst();
+    while (iter)
+    {
+        if (_serverTreeView.isSelected(iter))
+        {
+            Model::instance().select(_serverTreeView.getObject(iter));
+            if (!node)
+            {
+                node = _serverTreeView.getObject(iter);
+            }
+        }
+        Gtk::TreeIter iter2 = iter->children().begin();
+        while (iter2)
+        {
+            if (_serverTreeView.isSelected(iter2))
+            {
+                Model::instance().select(_serverTreeView.getObject(iter2));
+                if (!node)
+                {
+                    node = _serverTreeView.getObject(iter2);
+                }
+            }
+            iter2++;
+        }
+        iter++;
+    }
+#if 0
+    RefPtr<Notebook> notebook;
+    if (node)
+    {
+        notebook = _notebookStore.get(node);
+    }
+    if (!notebook)
+    {
+        notebook = _defaultNotebook;
+    }
+    showNotebook(notebook);
+#endif
+    updateSensitivity();
+}
+
+
 void MainWindow::updateSensitivity()
 {
     bool bRemoveHost, bConnect, bDisconnect, bTurnOnHost, bChangeHost;
-    std::list<Session*> sessions;
-    if (Model::instance().getSelected(sessions))
+    std::list<RefPtr<Host> > hosts;
+    if (Model::instance().getSelected(hosts))
     {
         bConnect = true;
         bDisconnect = true;
-        for (std::list<Session*>::iterator iter = sessions.begin(); iter != sessions.end() && (bConnect || bDisconnect); iter++)
+        for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end() && (bConnect || bDisconnect); iter++)
         {
-            Session* pSession = *iter;
-            if (pSession->isConnected())
+            Session& session = (*iter)->getSession();
+            if (session.isConnected())
             {
                 bConnect = false;
             }
@@ -296,8 +432,8 @@ void MainWindow::updateSensitivity()
         bConnect = false;
         bDisconnect = false;
     }
-    bRemoveHost = sessions.size() == 1 && !sessions.front()->isConnected();
-    bTurnOnHost = sessions.size() == 1 && !sessions.front()->isConnected() && !sessions.front()->getConnectSpec().mac.isNull();
+    bRemoveHost = hosts.size() == 1 && !hosts.front()->getSession().isConnected();
+    bTurnOnHost = hosts.size() == 1 && !hosts.front()->getSession().isConnected() && !hosts.front()->getSession().getConnectSpec().mac.isNull();
     if (bTurnOnHost)
     {
         //RefPtr<Host> host = hostList.front();
@@ -306,7 +442,7 @@ void MainWindow::updateSensitivity()
         //    bTurnOnHost = false;
         //}
     }
-    bChangeHost = sessions.size() == 1 && sessions.front()->isConnected() && !sessions.front()->isBusy();
+    bChangeHost = hosts.size() == 1 && hosts.front()->getSession().isConnected() && !hosts.front()->isBusy();
 #if 0
     bool bStartVm, bShutdownVm, bResumeVm, bChangeCd, bLive, bChangeVM;
     std::list<RefPtr<VirtualMachine> > vmList;
@@ -400,7 +536,7 @@ void MainWindow::updateSensitivity()
     //_uiManager->get_widget("/MenuBar/Edit/SR/AddHdd")->set_sensitive(bAddHdd);
     //_uiManager->get_widget("/MenuBar/Edit/SR/AddCIFS")->set_sensitive(bAddSR);
     //_uiManager->get_widget("/MenuBar/Edit/SR/DeleteCifs")->set_sensitive(bDeleteSR);
-    if (!sessions.size())
+    if (!hosts.size())
     {
         _uiManager->get_widget("/ToolBar/AddHost")->show();
         _uiManager->get_widget("/ToolBar/Connect")->hide();
@@ -450,4 +586,10 @@ void MainWindow::updateSensitivity()
 void MainWindow::setPane1Width(int cx)
 {
     _sw1.set_size_request(cx, -1);
+}
+
+
+void MainWindow::clear()
+{
+    _serverTreeView.clear();
 }

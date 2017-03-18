@@ -20,7 +20,7 @@ using namespace hnrt;
 
 void ModelImpl::load()
 {
-    Trace trace(__PRETTY_FUNCTION__);
+    Trace trace("ModelImpl::load");
 
     FILE* fp = NULL;
 
@@ -51,6 +51,7 @@ void ModelImpl::load()
                 RefPtr<Json::Value> valueVersion = object1->get("version");
                 if (valueVersion.ptr() && valueVersion->type() == Json::NUMBER)
                 {
+                    trace.put("version=%ld", valueVersion->integer());
                     if (valueVersion->integer() == 1L)
                     {
                         loadV1(json);
@@ -77,6 +78,8 @@ void ModelImpl::load()
 
 void ModelImpl::loadV1(const Json& json)
 {
+    Trace trace("ModelImpl::loadV1");
+
     RefPtr<Json::Object> object1 = json.root()->object();
 
     RefPtr<Json::Value> value1 = object1->get("UI");
@@ -86,16 +89,19 @@ void ModelImpl::loadV1(const Json& json)
         RefPtr<Json::Value> value2 = object2->get("width");
         if (value2.ptr() && value2->type() == Json::NUMBER)
         {
+            trace.put("width=%ld", value2->integer());
             setWidth((int)value2->integer());
         }
         value2 = object2->get("height");
         if (value2.ptr() && value2->type() == Json::NUMBER)
         {
+            trace.put("height=%ld", value2->integer());
             setHeight((int)value2->integer());
         }
         value2 = object2->get("pane1_width");
         if (value2.ptr() && value2->type() == Json::NUMBER)
         {
+            trace.put("pane1_width=%ld", value2->integer());
             setPane1Width((int)value2->integer());
         }
     }
