@@ -11,15 +11,15 @@
 
 namespace hnrt
 {
-    class ThreadNameMap
+    class ThreadManager
     {
     public:
 
         static void init();
         static void fini();
-        static ThreadNameMap& instance();
+        static ThreadManager& instance();
 
-        virtual ~ThreadNameMap();
+        virtual ~ThreadManager();
         int count();
         Glib::ustring add(const char*);
         Glib::ustring add(const Glib::ustring&);
@@ -28,9 +28,9 @@ namespace hnrt
 
     private:
 
-        ThreadNameMap();
-        ThreadNameMap(const ThreadNameMap&);
-        void operator =(const ThreadNameMap&);
+        ThreadManager();
+        ThreadManager(const ThreadManager&);
+        void operator =(const ThreadManager&);
 
         Glib::Mutex _mutex;
         Glib::Thread* _mainThread;

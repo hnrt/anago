@@ -2,59 +2,59 @@
 
 
 #include "Base/StringBuffer.h"
-#include "ThreadNameMap.h"
+#include "ThreadManager.h"
 
 
 using namespace hnrt;
 
 
-static ThreadNameMap* _singleton;
+static ThreadManager* _singleton;
 
 
-void ThreadNameMap::init()
+void ThreadManager::init()
 {
-    _singleton = new ThreadNameMap();
+    _singleton = new ThreadManager();
 }
 
 
-void ThreadNameMap::fini()
+void ThreadManager::fini()
 {
     delete _singleton;
 }
 
 
-ThreadNameMap& ThreadNameMap::instance()
+ThreadManager& ThreadManager::instance()
 {
     return *_singleton;
 }
 
 
-ThreadNameMap::ThreadNameMap()
+ThreadManager::ThreadManager()
     : _mainThread(Glib::Thread::self())
 {
 }
 
 
-ThreadNameMap::~ThreadNameMap()
+ThreadManager::~ThreadManager()
 {
 }
 
 
-int ThreadNameMap::count()
+int ThreadManager::count()
 {
     Glib::Mutex::Lock lock(_mutex);
     return static_cast<int>(_nameMap.size());
 }
 
 
-Glib::ustring ThreadNameMap::add(const char* basename)
+Glib::ustring ThreadManager::add(const char* basename)
 {
     Glib::ustring key(basename);
     return add(key);
 }
 
 
-Glib::ustring ThreadNameMap::add(const Glib::ustring& basename)
+Glib::ustring ThreadManager::add(const Glib::ustring& basename)
 {
     Glib::Thread* thread = Glib::Thread::self();
     Glib::Mutex::Lock lock(_mutex);
@@ -70,7 +70,7 @@ Glib::ustring ThreadNameMap::add(const Glib::ustring& basename)
         iter2 = _countMap.find(basename);
         if (iter2 == _countMap.end())
         {
-            g_printerr("ERROR: ThreadNameMap::add(%zx,%s): Entry just inserted not found.\n", (size_t)thread, basename.c_str());
+            g_printerr("ERROR: ThreadManager::add(%zx,%s): Entry just inserted not found.\n", (size_t)thread, basename.c_str());
             return basename;
         }
     }
@@ -82,7 +82,7 @@ Glib::ustring ThreadNameMap::add(const Glib::ustring& basename)
 }
 
 
-void ThreadNameMap::remove()
+void ThreadManager::remove()
 {
     Glib::Thread* thread = Glib::Thread::self();
     if (thread == _mainThread)
@@ -98,7 +98,7 @@ void ThreadNameMap::remove()
 }
 
 
-Glib::ustring ThreadNameMap::find()
+Glib::ustring ThreadManager::find()
 {
     Glib::Thread* thread = Glib::Thread::self();
     if (thread == _mainThread)

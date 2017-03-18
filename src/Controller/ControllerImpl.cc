@@ -6,7 +6,7 @@
 #include "Base/Atomic.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
-#include "Model/ThreadNameMap.h"
+#include "Model/ThreadManager.h"
 #include "View/View.h"
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
@@ -112,7 +112,7 @@ bool ControllerImpl::quit2()
         }
     }
     hosts.clear();
-    int backgroundCount = ThreadNameMap::instance().count();
+    int backgroundCount = ThreadManager::instance().count();
     if (busyCount || backgroundCount)
     {
         trace.put("busy=%d background=%d", busyCount, backgroundCount);

@@ -11,7 +11,7 @@
 #include "Env/Locale.h"
 #include "Logger/Logger.h"
 #include "Model/Model.h"
-#include "Model/ThreadNameMap.h"
+#include "Model/ThreadManager.h"
 #include "View/View.h"
 #include "XenServer/Api.h"
 #include "Constants.h"
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
         xen_init();
         curl_global_init(CURL_GLOBAL_ALL);
 
-        ThreadNameMap::init();
+        ThreadManager::init();
         Logger::init();
         Env::init();
 
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
         Model::fini();
         Env::fini();
         Logger::fini();
-        ThreadNameMap::fini();
+        ThreadManager::fini();
 
         // cleanup for Xen API
         curl_global_cleanup();
