@@ -37,8 +37,6 @@ static size_t rpcReceive(void* ptr, size_t size, size_t nmemb, xen_comms* pcomms
 
 static int rpcExecute(const void* data, size_t size, void* user_handle, void* result_handle, xen_result_func result_func)
 {
-    Trace trace(__PRETTY_FUNCTION__);
-
     Session* x = (Session*)user_handle;
 
     CURL* curl = curl_easy_init();
