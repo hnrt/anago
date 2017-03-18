@@ -10,6 +10,8 @@
 
 namespace hnrt
 {
+    struct ConnectSpec;
+
     class View
     {
     public:
@@ -26,6 +28,8 @@ namespace hnrt
         virtual void showInfo(const Glib::ustring&) = 0;
         virtual void showWarning(const Glib::ustring&) = 0;
         virtual void showError(const Glib::ustring&) = 0;
+        virtual bool getConnectSpec(ConnectSpec&) = 0;
+        virtual bool confirmServerToRemove(const char*) = 0;
     };
 }
 

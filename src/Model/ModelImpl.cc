@@ -187,6 +187,20 @@ int ModelImpl::getSelected(std::list<RefPtr<Host> >& list)
 }
 
 
+RefPtr<Host> ModelImpl::getSelectedHost()
+{
+    std::list<RefPtr<Host> > hosts;
+    if (getSelected(hosts) == 1)
+    {
+        return hosts.front();
+    }
+    else
+    {
+        return RefPtr<Host>();
+    }
+}
+
+
 RefPtr<PatchBase> ModelImpl::getPatchBase()
 {
     return _patchBase;

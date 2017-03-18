@@ -160,6 +160,7 @@ $(OBJDIR)/Util/Scrambler.o \
 $(OBJDIR)/Util/ScramblerBase.o \
 $(OBJDIR)/Util/Util.o \
 $(OBJDIR)/Util/UUID.o \
+$(OBJDIR)/View/ConnectDialog.o \
 $(OBJDIR)/View/MainWindow.o \
 $(OBJDIR)/View/PixStore.o \
 $(OBJDIR)/View/ServerTreeStore.o \
@@ -225,12 +226,13 @@ $(OBJDIR)/Util/Scrambler.o: Util/Scrambler.cc Base/RefObj.h Base/RefPtr.h Util/S
 $(OBJDIR)/Util/ScramblerBase.o: Util/ScramblerBase.cc Base/RefObj.h Base/RefPtr.h Util/ScramblerBase.h 
 $(OBJDIR)/Util/UUID.o: Util/UUID.cc Util/UUID.h 
 $(OBJDIR)/Util/Util.o: Util/Util.cc Base/StringBuffer.h Util/Util.h 
+$(OBJDIR)/View/ConnectDialog.o: View/ConnectDialog.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Model/Model.h Net/MacAddress.h Util/Base64.h Util/ByteString.h Util/Scrambler.h Util/ScramblerBase.h View/ConnectDialog.h XenServer/Api.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenServer.h 
 $(OBJDIR)/View/MainWindow.o: View/MainWindow.cc App/Constants.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h Logger/LogLevel.h Logger/Logger.h Model/ConnectSpec.h Model/Model.h Net/MacAddress.h View/MainWindow.h View/ServerTreeView.h XenServer/Api.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenServer.h 
 $(OBJDIR)/View/PixStore.o: View/PixStore.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Net/MacAddress.h View/PixStore.h XenServer/Api.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenServer.h 
 $(OBJDIR)/View/ServerTreeStore.o: View/ServerTreeStore.cc Base/RefObj.h Base/RefPtr.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h View/ServerTreeStore.h XenServer/Api.h XenServer/Session.h XenServer/XenObject.h 
 $(OBJDIR)/View/ServerTreeView.o: View/ServerTreeView.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Net/MacAddress.h View/PixStore.h View/ServerTreeStore.h View/ServerTreeView.h XenServer/Api.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenServer.h 
 $(OBJDIR)/View/View.o: View/View.cc Base/RefObj.h Base/RefPtr.h View/MainWindow.h View/PixStore.h View/ServerTreeView.h View/View.h View/ViewImpl.h 
-$(OBJDIR)/View/ViewImpl.o: View/ViewImpl.cc App/Constants.h Base/RefObj.h Base/RefPtr.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/Model.h View/MainWindow.h View/PixStore.h View/ServerTreeView.h View/View.h View/ViewImpl.h 
+$(OBJDIR)/View/ViewImpl.o: View/ViewImpl.cc App/Constants.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Net/MacAddress.h View/ConnectDialog.h View/MainWindow.h View/PixStore.h View/ServerTreeView.h View/View.h View/ViewImpl.h 
 $(OBJDIR)/XenServer/Host.o: XenServer/Host.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/PatchBase.h Model/PatchRecord.h Model/PatchState.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/XenServer/Session.o: XenServer/Session.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/XenObject.h XenServer/XenObjectStore.h 
 $(OBJDIR)/XenServer/XenObject.o: XenServer/XenObject.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Controller/Controller.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/XenObject.h 

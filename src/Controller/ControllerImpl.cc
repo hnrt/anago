@@ -211,19 +211,43 @@ void ControllerImpl::onNotify()
 
 void ControllerImpl::addHost()
 {
-    //TODO: IMPLEMENT
+    ConnectSpec cs;
+    if (View::instance().getConnectSpec(cs))
+    {
+        Model::instance().add(cs);
+    }
 }
 
 
 void ControllerImpl::editHost()
 {
-    //TODO: IMPLEMENT
+    RefPtr<Host> host = Model::instance().getSelectedHost();
+    ConnectSpec cs = host->getSession().getConnectSpec();
+    if (View::instance().getConnectSpec(cs))
+    {
+        Model::instance().add(cs);
+    }
 }
 
 
 void ControllerImpl::removeHost()
 {
-    //TODO: IMPLEMENT
+    RefPtr<Host> host = Model::instance().getSelectedHost();
+    Session& session = host->getSession();
+    ConnectSpec cs = session.getConnectSpec();
+    StringBuffer text;
+    if (cs.displayname == cs.hostname)
+    {
+        text.format("%s", cs.displayname.c_str());
+    }
+    else
+    {
+        text.format("%s (%s)", cs.displayname.c_str(), cs.hostname.c_str());
+    }
+    if (View::instance().confirmServerToRemove(text))
+    {
+        Model::instance().remove(session);
+    }
 }
 
 

@@ -16,7 +16,7 @@ using namespace hnrt;
 
 
 ConnectSpec::ConnectSpec()
-    : uuid(UUID::generate())
+    : uuid()
     , displayname()
     , hostname()
     , username()

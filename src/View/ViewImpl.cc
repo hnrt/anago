@@ -1,9 +1,13 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include <libintl.h>
 #include "App/Constants.h"
+#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
+#include "Model/ConnectSpec.h"
 #include "Model/Model.h"
+#include "ConnectDialog.h"
 #include "PixStore.h"
 #include "ViewImpl.h"
 
@@ -74,4 +78,46 @@ void ViewImpl::showMessageDialog(const Glib::ustring& message, Gtk::MessageType 
     Gtk::MessageDialog dialog(_mainWindow, message, false, type);
     dialog.set_title(_displayName);
     dialog.run();
+}
+
+
+bool ViewImpl::getConnectSpec(ConnectSpec& cs)
+{
+    bool edit = cs.hostname.bytes() ? true : false;
+    const char* title = edit ? gettext("Edit host") : gettext("Add host");
+    ConnectDialog dialog(_mainWindow, title, Gtk::Stock::OK);
+    if (edit)
+    {
+        dialog.select(cs);
+    }
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_OK)
+    {
+        cs = dialog.getConnectSpec();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::confirmServerToRemove(const char* name)
+{
+    StringBuffer message;
+    message.format(gettext("Do you really wish to remove the following host from the list?\n"));
+    message += "\n";
+    message += name;
+    Gtk::MessageDialog dialog(_mainWindow, message.str(), false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_YES_NO);
+    dialog.set_title(_displayName);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_YES)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }

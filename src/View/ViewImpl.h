@@ -25,6 +25,8 @@ namespace hnrt
         virtual void showInfo(const Glib::ustring&);
         virtual void showWarning(const Glib::ustring&);
         virtual void showError(const Glib::ustring&);
+        virtual bool getConnectSpec(ConnectSpec&);
+        virtual bool confirmServerToRemove(const char*);
 
     private:
 
