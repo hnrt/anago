@@ -9,6 +9,7 @@
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "MainWindow.h"
+#include "PixStore.h"
 #include "View.h"
 
 
@@ -30,6 +31,8 @@ MainWindow::MainWindow()
     , _windowState((GdkWindowState)0)
 {
     initStockItems();
+
+    set_icon(PixStore::instance().getApp());
 
     Glib::RefPtr<Gtk::ActionGroup> actionGroup = Gtk::ActionGroup::create();
 

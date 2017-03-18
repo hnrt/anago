@@ -22,7 +22,7 @@ namespace hnrt
         static PixStore& instance();
 
         virtual ~PixStore() {}
-        Glib::RefPtr<Gdk::Pixbuf> getApp() const { return _pixYes; }
+        Glib::RefPtr<Gdk::Pixbuf> getApp() const { return _pixApp; }
         Glib::RefPtr<Gdk::Pixbuf> getYes() const { return _pixYes; }
         Glib::RefPtr<Gdk::Pixbuf> getNo() const { return _pixNo; }
         Glib::RefPtr<Gdk::Pixbuf> get(const RefPtr<Host>);
@@ -33,6 +33,7 @@ namespace hnrt
         PixStore(const PixStore&);
         void operator =(const PixStore&);
 
+        Glib::RefPtr<Gdk::Pixbuf> _pixApp;
         Glib::RefPtr<Gdk::Pixbuf> _pixYes;
         Glib::RefPtr<Gdk::Pixbuf> _pixNo;
     };

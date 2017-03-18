@@ -31,6 +31,7 @@ PixStore& PixStore::instance()
 
 
 PixStore::PixStore()
+    : _pixApp(Gdk::Pixbuf::create_from_file("/usr/share/icons/gnome/32x32/apps/preferences-desktop-remote-desktop.png"))
 {
     Gtk::Invisible w;
     _pixYes = w.render_icon(Gtk::Stock::YES, Gtk::ICON_SIZE_SMALL_TOOLBAR);
