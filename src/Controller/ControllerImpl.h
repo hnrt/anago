@@ -30,8 +30,6 @@ namespace hnrt
         virtual void clear();
         virtual void parseCommandLine(int argc, char *argv[]);
         virtual void quit();
-        virtual void incBackgroundCount();
-        virtual void decBackgroundCount();
         virtual Signal signalNotified(int);
         virtual Signal signalNotified(const RefPtr<RefObj>&);
         virtual void notify(const RefPtr<RefObj>&, int);
@@ -49,7 +47,6 @@ namespace hnrt
         bool quit2();
         void onNotify();
 
-        volatile int _backgroundCount;
         bool _quitInProgress;
         Glib::RecMutex _mutex;
         std::list<RefPtrNotificationPair> _notified;

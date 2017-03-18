@@ -12,6 +12,7 @@
 #include <sys/time.h>
 #include <stdexcept>
 #include "App/Constants.h"
+#include "Model/ThreadNameMap.h"
 #include "LoggerImpl.h"
 
 
@@ -60,7 +61,7 @@ static char* GetHeader(char* buf, size_t len, LogLevel level)
     gettimeofday(&now, NULL);
     struct tm lt;
     localtime_r(&now.tv_sec, &lt);
-    snprintf(buf, len, "%d-%02d-%02d %02d:%02d:%02d.%06ld [%s] ",
+    snprintf(buf, len, "%d-%02d-%02d %02d:%02d:%02d.%06ld [%s] %s ",
              lt.tm_year + 1900,
              lt.tm_mon + 1,
              lt.tm_mday,
@@ -68,7 +69,8 @@ static char* GetHeader(char* buf, size_t len, LogLevel level)
              lt.tm_min,
              lt.tm_sec,
              now.tv_usec,
-             level.toLocalizedString());
+             level.toLocalizedString(),
+             ThreadNameMap::instance().find().c_str());
     return buf;
 }
 

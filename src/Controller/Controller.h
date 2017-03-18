@@ -25,8 +25,6 @@ namespace hnrt
         virtual void clear() = 0;
         virtual void parseCommandLine(int argc, char *argv[]) = 0;
         virtual void quit() = 0;
-        virtual void incBackgroundCount() = 0;
-        virtual void decBackgroundCount() = 0;
         virtual Signal signalNotified(int) = 0;
         virtual Signal signalNotified(const RefPtr<RefObj>&) = 0;
         virtual void notify(const RefPtr<RefObj>&, int) = 0;

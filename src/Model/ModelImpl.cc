@@ -189,7 +189,6 @@ int ModelImpl::getSelected(std::list<RefPtr<Host> >& list)
 
 RefPtr<PatchBase> ModelImpl::getPatchBase()
 {
-    Glib::RecMutex::Lock lock(_mutex);
     return _patchBase;
 }
 

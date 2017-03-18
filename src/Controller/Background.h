@@ -11,7 +11,7 @@ namespace hnrt
     {
     public:
 
-        Background();
+        Background(const char*);
         ~Background();
     };
 }

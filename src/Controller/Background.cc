@@ -1,20 +1,20 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "Model/ThreadNameMap.h"
 #include "Background.h"
-#include "Controller.h"
 
 
 using namespace hnrt;
 
 
-Background::Background()
+Background::Background(const char* name)
 {
-    Controller::instance().incBackgroundCount();
+    ThreadNameMap::instance().add(name);
 }
 
 
 Background::~Background()
 {
-    Controller::instance().decBackgroundCount();
+    ThreadNameMap::instance().remove();
 }

@@ -149,6 +149,7 @@ $(OBJDIR)/Model/ModelImpl.o \
 $(OBJDIR)/Model/ModelImpl_load.o \
 $(OBJDIR)/Model/ModelImpl_save.o \
 $(OBJDIR)/Model/PatchBase.o \
+$(OBJDIR)/Model/ThreadNameMap.o \
 $(OBJDIR)/Net/AddressResolution.o \
 $(OBJDIR)/Net/HostEntry.o \
 $(OBJDIR)/Net/MacAddress.o \
@@ -186,12 +187,12 @@ clean::
 
 ######################################################################
 
-$(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Base/RefObj.h Base/RefPtr.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h View/View.h XenServer/Api.h 
+$(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Base/RefObj.h Base/RefPtr.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/ThreadNameMap.h View/View.h XenServer/Api.h 
 $(OBJDIR)/Base/RefObj.o: Base/RefObj.cc Base/Atomic.h Base/RefObj.h 
 $(OBJDIR)/Base/StringBuffer.o: Base/StringBuffer.cc Base/StringBuffer.h 
-$(OBJDIR)/Controller/Background.o: Controller/Background.cc Base/RefObj.h Base/RefPtr.h Controller/Background.h Controller/Controller.h 
+$(OBJDIR)/Controller/Background.o: Controller/Background.cc Controller/Background.h Model/ThreadNameMap.h 
 $(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Base/RefObj.h Base/RefPtr.h Controller/Controller.h Controller/ControllerImpl.h 
-$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Net/MacAddress.h View/View.h XenServer/Api.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenServer.h 
+$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ThreadNameMap.h Net/MacAddress.h View/View.h XenServer/Api.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenServer.h 
 $(OBJDIR)/Env/Env.o: Env/Env.cc Env/Env.h Env/Locale.h Env/Process.h 
 $(OBJDIR)/Env/Locale.o: Env/Locale.cc Env/Locale.h Env/LocaleImpl.h 
 $(OBJDIR)/Env/LocaleImpl.o: Env/LocaleImpl.cc Env/Locale.h Env/LocaleImpl.h Env/Process.h 
@@ -204,7 +205,7 @@ $(OBJDIR)/File/JsonWriter.o: File/JsonWriter.cc Base/RefObj.h Base/RefPtr.h File
 $(OBJDIR)/Logger/Debug.o: Logger/Debug.cc Logger/Debug.h Logger/LogLevel.h Logger/Logger.h 
 $(OBJDIR)/Logger/LogLevel.o: Logger/LogLevel.cc Logger/LogLevel.h 
 $(OBJDIR)/Logger/Logger.o: Logger/Logger.cc Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h 
-$(OBJDIR)/Logger/LoggerImpl.o: Logger/LoggerImpl.cc App/Constants.h Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h 
+$(OBJDIR)/Logger/LoggerImpl.o: Logger/LoggerImpl.cc App/Constants.h Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h Model/ThreadNameMap.h 
 $(OBJDIR)/Logger/Trace.o: Logger/Trace.cc Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h 
 $(OBJDIR)/Model/ConnectSpec.o: Model/ConnectSpec.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Net/MacAddress.h Util/Base64.h Util/ByteString.h Util/Scrambler.h Util/ScramblerBase.h Util/UUID.h 
 $(OBJDIR)/Model/Model.o: Model/Model.cc Base/RefPtr.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/ModelImpl.h 
@@ -212,6 +213,7 @@ $(OBJDIR)/Model/ModelImpl.o: Model/ModelImpl.cc App/Constants.h Base/RefObj.h Ba
 $(OBJDIR)/Model/ModelImpl_load.o: Model/ModelImpl_load.cc Base/RefObj.h Base/RefPtr.h File/Json.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ModelImpl.h Net/MacAddress.h View/View.h 
 $(OBJDIR)/Model/ModelImpl_save.o: Model/ModelImpl_save.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h File/Json.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ModelImpl.h Net/MacAddress.h XenServer/Api.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenServer.h 
 $(OBJDIR)/Model/PatchBase.o: Model/PatchBase.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/PatchBase.h Model/PatchRecord.h Model/PatchState.h 
+$(OBJDIR)/Model/ThreadNameMap.o: Model/ThreadNameMap.cc Base/StringBuffer.h Model/ThreadNameMap.h 
 $(OBJDIR)/Net/AddressResolution.o: Net/AddressResolution.cc Net/AddressResolution.h 
 $(OBJDIR)/Net/HostEntry.o: Net/HostEntry.cc Net/HostEntry.h 
 $(OBJDIR)/Net/MacAddress.o: Net/MacAddress.cc Net/AddressResolution.h Net/HostEntry.h Net/MacAddress.h 

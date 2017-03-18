@@ -6,6 +6,7 @@
 #include "Base/Atomic.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
+#include "Model/ThreadNameMap.h"
 #include "View/View.h"
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
@@ -17,8 +18,7 @@ using namespace hnrt;
 
 
 ControllerImpl::ControllerImpl()
-    : _backgroundCount(0)
-    , _quitInProgress(false)
+    : _quitInProgress(false)
 {
     Trace trace("ControllerImpl::ctor");
 }
@@ -111,9 +111,10 @@ bool ControllerImpl::quit2()
         }
     }
     hosts.clear();
-    if (busyCount || _backgroundCount)
+    int backgroundCount = ThreadNameMap::instance().count();
+    if (busyCount || backgroundCount)
     {
-        trace.put("busy=%d background=%d", busyCount, _backgroundCount);
+        trace.put("busy=%d background=%d", busyCount, backgroundCount);
         return true; // to be invoked again
     }
     else
@@ -121,18 +122,6 @@ bool ControllerImpl::quit2()
         View::instance().getWindow().hide();
         return false; // done
     }
-}
-
-
-void ControllerImpl::incBackgroundCount()
-{
-    InterlockedIncrement(&_backgroundCount);
-}
-
-
-void ControllerImpl::decBackgroundCount()
-{
-    InterlockedDecrement(&_backgroundCount);
 }
 
 
