@@ -11,6 +11,7 @@
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "XenServer/XenObject.h"
+#include "Background.h"
 #include "ControllerImpl.h"
 
 
@@ -185,6 +186,11 @@ void ControllerImpl::onNotify()
             entry = _notified.front();
             _notified.pop_front();
         }
+        if (entry.second == XenObject::CREATED)
+        {
+            onObjectCreated(entry.first);
+            continue;
+        }
         {
             int key = entry.second;
             NotificationSignalMap::iterator iter = _notificationSignalMap.find(key);
@@ -205,6 +211,38 @@ void ControllerImpl::onNotify()
                 }
             }
         }
+    }
+}
+
+
+void ControllerImpl::onObjectCreated(RefPtr<RefObj> object)
+{
+    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
+    if (View::instance().addObject(xenObject))
+    {
+        signalNotified(object).connect(sigc::mem_fun(*this, &ControllerImpl::onObjectUpdated));
+    }
+}
+
+
+void ControllerImpl::onObjectUpdated(RefPtr<RefObj> object, int what)
+{
+    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
+    if (what == XenObject::DESTROYED)
+    {
+        View::instance().removeObject(xenObject);
+    }
+    else if (what == XenObject::CONNECT_FAILED)
+    {
+        Session& session = xenObject->getSession();
+        StringBuffer message;
+        message.format(gettext("Failed to connect to %s.\n"), session.getConnectSpec().hostname.c_str());
+        XenServer::getError(session, message, "\n");
+        View::instance().showWarning(message.str());
+    }
+    else
+    {
+        View::instance().updateObject(xenObject, what);
     }
 }
 
@@ -253,13 +291,95 @@ void ControllerImpl::removeHost()
 
 void ControllerImpl::connect()
 {
-    //TODO: IMPLEMENT
+    std::list<RefPtr<Host> > hosts;
+    if (!Model::instance().getSelected(hosts))
+    {
+        return;
+    }
+    std::list<Glib::ustring> busyHosts;
+    for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
+    {
+        RefPtr<Host>& host = *iter;
+        Session& session = host->getSession();
+        if (session.isConnected())
+        {
+            continue;
+        }
+        else if (host->isBusy())
+        {
+            ConnectSpec& cs = session.getConnectSpec();
+            busyHosts.push_back(cs.hostname);
+            continue;
+        }
+        Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::connectInBackground), host), false);
+    }
+    if (busyHosts.size())
+    {
+        View::instance().showBusyServers(busyHosts);
+    }
+}
+
+
+void ControllerImpl::connectInBackground(RefPtr<Host> host)
+{
+    Background bg("Connect");
+    Trace trace("ControllerImpl::connectInBackground", "host=%s", host->getSession().getConnectSpec().hostname.c_str());
+    Session& session = host->getSession();
+    {
+        XenObject::Busy busy(host);
+        host->onConnectPending();
+        Session::Lock lock(session);
+        if (session.connect())
+        {
+            trace.put("Connected successfully.");
+            host->onConnected();
+        }
+        else
+        {
+            trace.put("Connect failed.");
+            host->onConnectFailed();
+            return;
+        }
+    }
 }
 
 
 void ControllerImpl::disconnect()
 {
-    //TODO: IMPLEMENT
+    std::list<RefPtr<Host> > hosts;
+    if (!Model::instance().getSelected(hosts))
+    {
+        return;
+    }
+    for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
+    {
+        RefPtr<Host>& host = *iter;
+        Session& session = host->getSession();
+        if (!session.isConnected() || host->isBusy())
+        {
+            continue;
+        }
+        Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false);
+    }
+}
+
+
+void ControllerImpl::disconnectInBackground(RefPtr<Host> host)
+{
+    Background bg("Disconnect");
+    Trace trace("ControllerImpl::disconnectInBackground", "host=%s", host->getSession().getConnectSpec().hostname.c_str());
+    Session& session = host->getSession();
+    XenObject::Busy busy(host);
+    Session::Lock lock(session);
+    if (session.disconnect())
+    {
+        trace.put("Disconnected successfully.");
+        host->onDisconnected();
+    }
+    else
+    {
+        trace.put("Disconnect failed.");
+    }
 }
 
 

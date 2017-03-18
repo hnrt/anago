@@ -9,6 +9,7 @@
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "MainWindow.h"
+#include "View.h"
 
 
 using namespace hnrt;
@@ -148,8 +149,6 @@ MainWindow::MainWindow()
 
     _serverTreeView.signalSelectionChanged().connect(sigc::mem_fun(*this, &MainWindow::onServerTreeViewSelectionChanged));
 
-    Controller::instance().signalNotified(XenObject::CREATED).connect(sigc::mem_fun(*this, &MainWindow::onObjectCreated));
-
     show_all_children();
 
     updateSensitivity();
@@ -273,40 +272,29 @@ void MainWindow::onResize(Gtk::Allocation& a)
 }
 
 
-void MainWindow::onObjectCreated(RefPtr<RefObj> object, int what)
+bool MainWindow::addObject(RefPtr<XenObject>& object)
 {
-    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
-    if (_serverTreeView.add(xenObject))
+    if (_serverTreeView.add(object))
     {
         //RefPtr<Notebook> notebook = NotebookFactory::create(xenObject);
         //_notebookStore.set(xenObject, notebook);
         //notebook->update();
         //addNotebook(notebook);
         updateSensitivity();
-        Controller::instance().signalNotified(object).connect(sigc::mem_fun(*this, &MainWindow::onObjectUpdated));
-    }
-}
-
-
-void MainWindow::onObjectUpdated(RefPtr<RefObj> object, int what)
-{
-    if (what == XenObject::DESTROYED)
-    {
-        removeObject(object);
+        return true;
     }
     else
     {
-        updateObject(object, what);
+        return false;
     }
 }
 
 
-void MainWindow::removeObject(RefPtr<RefObj>& object)
+void MainWindow::removeObject(RefPtr<XenObject>& object)
 {
-    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
-    _serverTreeView.remove(xenObject);
+    _serverTreeView.remove(object);
 #if 0
-    RefPtr<Notebook> notebook = _notebookStore.remove(xenObject);
+    RefPtr<Notebook> notebook = _notebookStore.remove(object);
     if (!notebook)
     {
         return;
@@ -321,12 +309,11 @@ void MainWindow::removeObject(RefPtr<RefObj>& object)
 }
 
 
-void MainWindow::updateObject(RefPtr<RefObj>& object, int what)
+void MainWindow::updateObject(RefPtr<XenObject>& object, int what)
 {
-    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
-    _serverTreeView.update(xenObject, what);
+    _serverTreeView.update(object, what);
 #if 0
-    RefPtr<Notebook> notebook = _notebookStore.get(xenObject);
+    RefPtr<Notebook> notebook = _notebookStore.get(object);
     if (notebook)
     {
         switch (what)
@@ -345,6 +332,7 @@ void MainWindow::updateObject(RefPtr<RefObj>& object, int what)
             break;
         }
     }
+#endif
     switch (what)
     {
     case XenObject::BUSY_UPDATED:
@@ -356,7 +344,6 @@ void MainWindow::updateObject(RefPtr<RefObj>& object, int what)
     default:
         break;
     }
-#endif
 }
 
 

@@ -7,6 +7,7 @@
 #include "Logger/Trace.h"
 #include "Model/ConnectSpec.h"
 #include "Model/Model.h"
+#include "XenServer/XenObject.h"
 #include "ConnectDialog.h"
 #include "PixStore.h"
 #include "ViewImpl.h"
@@ -52,6 +53,24 @@ void ViewImpl::clear()
     Trace trace("ViewImpl::clear");
     _mainWindow.clear();
     View::update();
+}
+
+
+bool ViewImpl::addObject(RefPtr<XenObject>& object)
+{
+    return _mainWindow.addObject(object);
+}
+
+
+void ViewImpl::removeObject(RefPtr<XenObject>& object)
+{
+    _mainWindow.removeObject(object);
+}
+
+
+void ViewImpl::updateObject(RefPtr<XenObject>& object, int what)
+{
+    _mainWindow.updateObject(object, what);
 }
 
 
@@ -120,4 +139,20 @@ bool ViewImpl::confirmServerToRemove(const char* name)
     {
         return false;
     }
+}
+
+
+void ViewImpl::showBusyServers(const std::list<Glib::ustring>& names)
+{
+    StringBuffer message;
+    message =
+        names.size() > 1 ?
+        gettext("The following servers are busy now.\n") :
+        gettext("The following server is busy now.\n");
+    for (std::list<Glib::ustring>::const_iterator iter = names.begin(); iter != names.end(); iter++)
+    {
+        message += "\n";
+        message += (*iter).c_str();
+    }
+    showWarning(message.str());
 }

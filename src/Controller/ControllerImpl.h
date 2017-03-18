@@ -13,6 +13,8 @@
 
 namespace hnrt
 {
+    class Host;
+
     class ControllerImpl
         : public sigc::trackable
         , public Controller
@@ -46,6 +48,10 @@ namespace hnrt
         void operator =(const ControllerImpl&);
         bool quit2();
         void onNotify();
+        void onObjectCreated(RefPtr<RefObj>);
+        void onObjectUpdated(RefPtr<RefObj>, int);
+        void connectInBackground(RefPtr<Host>);
+        void disconnectInBackground(RefPtr<Host>);
 
         bool _quitInProgress;
         Glib::RecMutex _mutex;

@@ -6,13 +6,14 @@
 
 
 #include <gtkmm.h>
-#include "Base/RefObj.h"
 #include "Base/RefPtr.h"
 #include "ServerTreeView.h"
 
 
 namespace hnrt
 {
+    class XenObject;
+
     class MainWindow
         : public Gtk::Window
     {
@@ -22,6 +23,9 @@ namespace hnrt
         ~MainWindow();
         void setPane1Width(int);
         void clear();
+        bool addObject(RefPtr<XenObject>&);
+        void removeObject(RefPtr<XenObject>&);
+        void updateObject(RefPtr<XenObject>&, int);
 
     private:
 
@@ -31,10 +35,6 @@ namespace hnrt
         bool onClose(GdkEventAny*);
         bool onWindowStateChange(GdkEventWindowState*);
         void onResize(Gtk::Allocation&);
-        void onObjectCreated(RefPtr<RefObj>, int);
-        void onObjectUpdated(RefPtr<RefObj>, int);
-        void removeObject(RefPtr<RefObj>&);
-        void updateObject(RefPtr<RefObj>&, int);
         void onServerTreeViewSelectionChanged();
         void updateSensitivity();
 

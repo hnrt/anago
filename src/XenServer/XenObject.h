@@ -49,6 +49,7 @@ namespace hnrt
             STATUS_UPDATED,
             SESSION_UPDATED,
             CONNECTED,
+            CONNECT_FAILED,
             DISCONNECTED,
             POWER_STATE_UPDATED,
             RECORD_UPDATED,

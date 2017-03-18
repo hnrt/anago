@@ -53,6 +53,15 @@ namespace hnrt
         bool operator ==(const Session&) const;
         void setMonitoring(bool value) { _monitoring = value; }
 
+        class Lock
+        {
+        public:
+            Lock(Session& session) : _session(session) { _session.lock(); }
+            ~Lock() { _session.unlock(); }
+        private:
+            Session& _session;
+        };
+
     protected:
 
         Session(const Session&);

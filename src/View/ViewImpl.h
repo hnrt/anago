@@ -22,11 +22,15 @@ namespace hnrt
         virtual Gtk::Window& getWindow() { return _mainWindow; }
         virtual void resize();
         virtual void clear();
+        virtual bool addObject(RefPtr<XenObject>&);
+        virtual void removeObject(RefPtr<XenObject>&);
+        virtual void updateObject(RefPtr<XenObject>&, int);
         virtual void showInfo(const Glib::ustring&);
         virtual void showWarning(const Glib::ustring&);
         virtual void showError(const Glib::ustring&);
         virtual bool getConnectSpec(ConnectSpec&);
         virtual bool confirmServerToRemove(const char*);
+        virtual void showBusyServers(const std::list<Glib::ustring>&);
 
     private:
 

@@ -194,6 +194,7 @@ void Host::onConnectFailed()
 {
     _state = STATE_CONNECT_FAILED;
     setDisplayStatus(gettext("Failed to connect"));
+    emit(CONNECT_FAILED);
 }
 
 

@@ -6,10 +6,13 @@
 
 
 #include <gtkmm.h>
+#include <list>
+#include "Base/RefPtr.h"
 
 
 namespace hnrt
 {
+    class XenObject;
     struct ConnectSpec;
 
     class View
@@ -25,11 +28,15 @@ namespace hnrt
         virtual Gtk::Window& getWindow() = 0;
         virtual void resize() = 0;
         virtual void clear() = 0;
+        virtual bool addObject(RefPtr<XenObject>&) = 0;
+        virtual void removeObject(RefPtr<XenObject>&) = 0;
+        virtual void updateObject(RefPtr<XenObject>&, int) = 0;
         virtual void showInfo(const Glib::ustring&) = 0;
         virtual void showWarning(const Glib::ustring&) = 0;
         virtual void showError(const Glib::ustring&) = 0;
         virtual bool getConnectSpec(ConnectSpec&) = 0;
         virtual bool confirmServerToRemove(const char*) = 0;
+        virtual void showBusyServers(const std::list<Glib::ustring>&) = 0;
     };
 }
 
