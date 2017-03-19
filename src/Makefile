@@ -111,6 +111,7 @@ Model \
 Net \
 Util \
 View \
+View/Icon \
 XenServer
 
 clean distclean::
@@ -171,6 +172,9 @@ $(OBJDIR)/XenServer/Host.o \
 $(OBJDIR)/XenServer/PhysicalBlockDevice.o \
 $(OBJDIR)/XenServer/Session.o \
 $(OBJDIR)/XenServer/StorageRepository.o \
+$(OBJDIR)/XenServer/VirtualBlockDevice.o \
+$(OBJDIR)/XenServer/VirtualDiskImage.o \
+$(OBJDIR)/XenServer/VirtualMachine.o \
 $(OBJDIR)/XenServer/XenObject.o \
 $(OBJDIR)/XenServer/XenObjectStore.o \
 $(OBJDIR)/XenServer/XenServer.o \
@@ -197,7 +201,7 @@ $(OBJDIR)/Base/RefObj.o: Base/RefObj.cc Base/Atomic.h Base/RefObj.h
 $(OBJDIR)/Base/StringBuffer.o: Base/StringBuffer.cc Base/StringBuffer.h 
 $(OBJDIR)/Controller/Background.o: Controller/Background.cc Controller/Background.h Model/ThreadManager.h 
 $(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Base/RefObj.h Base/RefPtr.h Controller/Controller.h Controller/ControllerImpl.h 
-$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Background.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ThreadManager.h Net/MacAddress.h View/View.h XenServer/Api.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenServer.h 
+$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Background.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ThreadManager.h Net/MacAddress.h View/View.h XenServer/Api.h XenServer/Host.h XenServer/PhysicalBlockDevice.h XenServer/Session.h XenServer/StorageRepository.h XenServer/VirtualBlockDevice.h XenServer/VirtualDiskImage.h XenServer/VirtualMachine.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenServer.h 
 $(OBJDIR)/Env/Env.o: Env/Env.cc Env/Env.h Env/Locale.h Env/Process.h 
 $(OBJDIR)/Env/Locale.o: Env/Locale.cc Env/Locale.h Env/LocaleImpl.h 
 $(OBJDIR)/Env/LocaleImpl.o: Env/LocaleImpl.cc Env/Locale.h Env/LocaleImpl.h Env/Process.h 
@@ -240,8 +244,10 @@ $(OBJDIR)/XenServer/Host.o: XenServer/Host.cc Base/Atomic.h Base/RefObj.h Base/R
 $(OBJDIR)/XenServer/PhysicalBlockDevice.o: XenServer/PhysicalBlockDevice.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Net/MacAddress.h XenServer/Api.h XenServer/PhysicalBlockDevice.h XenServer/Session.h XenServer/StorageRepository.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenServer.h 
 $(OBJDIR)/XenServer/Session.o: XenServer/Session.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/XenObject.h XenServer/XenObjectStore.h 
 $(OBJDIR)/XenServer/StorageRepository.o: XenServer/StorageRepository.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Net/MacAddress.h Util/Util.h XenServer/Api.h XenServer/Constants.h XenServer/PhysicalBlockDevice.h XenServer/Session.h XenServer/StorageRepository.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
-$(OBJDIR)/XenServer/VirtualMachine.o: XenServer/VirtualMachine.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h XenServer/Api.h XenServer/Constants.h XenServer/VirtualMachine.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h XenServer/XenTask.h 
+$(OBJDIR)/XenServer/VirtualBlockDevice.o: XenServer/VirtualBlockDevice.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Net/MacAddress.h XenServer/Api.h XenServer/Session.h XenServer/VirtualBlockDevice.h XenServer/VirtualDiskImage.h XenServer/VirtualMachine.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenServer.h 
+$(OBJDIR)/XenServer/VirtualDiskImage.o: XenServer/VirtualDiskImage.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/StorageRepository.h XenServer/VirtualBlockDevice.h XenServer/VirtualDiskImage.h XenServer/VirtualMachine.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h XenServer/XenTask.h 
+$(OBJDIR)/XenServer/VirtualMachine.o: XenServer/VirtualMachine.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Macros.h XenServer/Session.h XenServer/StorageRepository.h XenServer/VirtualBlockDevice.h XenServer/VirtualDiskImage.h XenServer/VirtualMachine.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h XenServer/XenTask.h 
 $(OBJDIR)/XenServer/XenObject.o: XenServer/XenObject.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Controller/Controller.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/XenObject.h 
-$(OBJDIR)/XenServer/XenObjectStore.o: XenServer/XenObjectStore.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h Model/Model.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Macros.h XenServer/PhysicalBlockDevice.h XenServer/StorageRepository.h XenServer/VirtualMachine.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenServer.h XenServer/XenTask.h 
+$(OBJDIR)/XenServer/XenObjectStore.o: XenServer/XenObjectStore.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Macros.h XenServer/PhysicalBlockDevice.h XenServer/StorageRepository.h XenServer/VirtualBlockDevice.h XenServer/VirtualDiskImage.h XenServer/VirtualMachine.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenServer.h XenServer/XenTask.h 
 $(OBJDIR)/XenServer/XenServer.o: XenServer/XenServer.cc Base/RefObj.h Base/StringBuffer.h Util/Util.h XenServer/Api.h XenServer/Constants.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/XenServer/XenTask.o: XenServer/XenTask.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Net/MacAddress.h Util/Util.h XenServer/Api.h XenServer/Session.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenTask.h 

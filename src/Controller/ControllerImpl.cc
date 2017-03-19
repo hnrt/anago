@@ -9,7 +9,12 @@
 #include "Model/ThreadManager.h"
 #include "View/View.h"
 #include "XenServer/Host.h"
+#include "XenServer/PhysicalBlockDevice.h"
 #include "XenServer/Session.h"
+#include "XenServer/StorageRepository.h"
+#include "XenServer/VirtualBlockDevice.h"
+#include "XenServer/VirtualDiskImage.h"
+#include "XenServer/VirtualMachine.h"
 #include "XenServer/XenObject.h"
 #include "Background.h"
 #include "ControllerImpl.h"
@@ -339,6 +344,169 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
             trace.put("Connect failed.");
             host->onConnectFailed();
             return;
+        }
+        //
+        // enumerate all resources
+        //
+        XenPtr<xen_pbd_set> pbdSet;
+        if (xen_pbd_get_all(session, pbdSet.address()))
+        {
+            for (size_t i = 0; i < pbdSet->size; i++)
+            {
+                XenPtr<xen_pbd_record> pbdRecord;
+                if (xen_pbd_get_record(session, pbdRecord.address(), pbdSet->contents[i]))
+                {
+                    PhysicalBlockDevice::create(session, pbdSet->contents[i], pbdRecord);
+                }
+                else
+                {
+                    session.clearError();
+                }
+            }
+        }
+        else
+        {
+            session.clearError();
+        }
+        XenPtr<xen_vbd_set> vbdSet;
+        if (xen_vbd_get_all(session, vbdSet.address()))
+        {
+            for (size_t i = 0; i < vbdSet->size; i++)
+            {
+                XenPtr<xen_vbd_record> vbdRecord;
+                if (xen_vbd_get_record(session, vbdRecord.address(), vbdSet->contents[i]))
+                {
+                    VirtualBlockDevice::create(session, vbdSet->contents[i], vbdRecord);
+                }
+                else
+                {
+                    session.clearError();
+                }
+            }
+        }
+        else
+        {
+            session.clearError();
+        }
+        XenPtr<xen_vdi_set> vdiSet;
+        if (xen_vdi_get_all(session, vdiSet.address()))
+        {
+            for (size_t i = 0; i < vdiSet->size; i++)
+            {
+                XenPtr<xen_vdi_record> vdiRecord;
+                if (xen_vdi_get_record(session, vdiRecord.address(), vdiSet->contents[i]))
+                {
+                    VirtualDiskImage::create(session, vdiSet->contents[i], vdiRecord);
+                }
+                else
+                {
+                    session.clearError();
+                }
+            }
+        }
+        else
+        {
+            session.clearError();
+        }
+        XenPtr<xen_pif_set> pifSet;
+        if (xen_pif_get_all(session, pifSet.address()))
+        {
+            for (size_t i = 0; i < pifSet->size; i++)
+            {
+                XenPtr<xen_pif_record> pifRecord;
+                if (xen_pif_get_record(session, pifRecord.address(), pifSet->contents[i]))
+                {
+                    //PhysicalInterface::create(session, pifSet->contents[i], pifRecord);
+                }
+                else
+                {
+                    session.clearError();
+                }
+            }
+        }
+        else
+        {
+            session.clearError();
+        }
+        XenPtr<xen_network_set> nwSet;
+        if (xen_network_get_all(session, nwSet.address()))
+        {
+            for (size_t i = 0; i < nwSet->size; i++)
+            {
+                XenPtr<xen_network_record> nwRecord;
+                if (xen_network_get_record(session, nwRecord.address(), nwSet->contents[i]))
+                {
+                    //Network::create(session, nwSet->contents[i], nwRecord);
+                }
+                else
+                {
+                    session.clearError();
+                }
+            }
+        }
+        else
+        {
+            session.clearError();
+        }
+        XenPtr<xen_vif_set> vifSet;
+        if (xen_vif_get_all(session, vifSet.address()))
+        {
+            for (size_t i = 0; i < vifSet->size; i++)
+            {
+                XenPtr<xen_vif_record> vifRecord;
+                if (xen_vif_get_record(session, vifRecord.address(), vifSet->contents[i]))
+                {
+                    //VirtualInterface::create(session, vifSet->contents[i], vifRecord);
+                }
+                else
+                {
+                    session.clearError();
+                }
+            }
+        }
+        else
+        {
+            session.clearError();
+        }
+        XenPtr<xen_vm_set> vmSet;
+        if (xen_vm_get_all(session, vmSet.address()))
+        {
+            for (size_t i = 0; i < vmSet->size; i++)
+            {
+                XenPtr<xen_vm_record> vmRecord;
+                if (xen_vm_get_record(session, vmRecord.address(), vmSet->contents[i]))
+                {
+                    VirtualMachine::create(session, vmSet->contents[i], vmRecord);
+                }
+                else
+                {
+                    session.clearError();
+                }
+            }
+        }
+        else
+        {
+            session.clearError();
+        }
+        XenPtr<xen_sr_set> srSet;
+        if (xen_sr_get_all(session, srSet.address()))
+        {
+            for (size_t i = 0; i < srSet->size; i++)
+            {
+                XenPtr<xen_sr_record> srRecord;
+                if (xen_sr_get_record(session, srRecord.address(), srSet->contents[i]))
+                {
+                    StorageRepository::create(session, srSet->contents[i], srRecord);
+                }
+                else
+                {
+                    session.clearError();
+                }
+            }
+        }
+        else
+        {
+            session.clearError();
         }
     }
 }

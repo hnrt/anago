@@ -6,8 +6,8 @@
 #include "XenServer/Host.h"
 //#include "XenServer/Network.h"
 #include "XenServer/Session.h"
-//#include "XenServer/StorageRepository.h"
-//#include "XenServer/VirtualMachine.h"
+#include "XenServer/StorageRepository.h"
+#include "XenServer/VirtualMachine.h"
 #include "XenServer/XenObjectStore.h"
 #include "PixStore.h"
 #include "ServerTreeStore.h"
@@ -44,55 +44,17 @@ void ServerTreeView::clear()
 
 bool ServerTreeView::add(RefPtr<XenObject>& object)
 {
-    XenObject::Type type = object->getType();
-    if (type == XenObject::HOST)
+    switch (object->getType())
     {
-        Gtk::TreeModel::Row row;
-        Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
-        while (iter)
-        {
-            row = *iter;
-            RefPtr<XenObject> object2 = row[_store->record().colXenObject];
-            if (object2 == object)
-            {
-                row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
-                row[_store->record().colVal] = object->getDisplayStatus();
-                return false;
-            }
-            else if (object2->getSession().getConnectSpec().uuid == object->getSession().getConnectSpec().uuid)
-            {
-                row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
-                row[_store->record().colVal] = object->getDisplayStatus();
-                row[_store->record().colXenObject] = object;
-                return true;
-            }
-            iter++;
-        }
-        iter = _store->get_iter("0"); // point to first item
-        while (1)
-        {
-            if (!iter)
-            {
-                row = *_store->append();
-                break;
-            }
-            row = *iter;
-            RefPtr<XenObject> object2 = row[_store->record().colXenObject];
-            if (object->getSession().getConnectSpec().displayOrder < object2->getSession().getConnectSpec().displayOrder)
-            {
-                row = *_store->insert(iter);
-                break;
-            }
-            iter++;
-        }
-        row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
-        row[_store->record().colKey] = object->getSession().getConnectSpec().displayname;
-        row[_store->record().colVal] = object->getDisplayStatus();
-        row[_store->record().colXenObject] = object;
-        return true;
-    }
-    else
-    {
+    case XenObject::HOST:
+        return add(RefPtr<Host>::castStatic(object));
+    case XenObject::VM:
+        return add(RefPtr<VirtualMachine>::castStatic(object));
+    case XenObject::SR:
+        return add(RefPtr<StorageRepository>::castStatic(object));
+    case XenObject::NETWORK:
+        //return add(RefPtr<Network>::castStatic(object));
+    default:
         return false;
     }
 }
@@ -113,7 +75,6 @@ void ServerTreeView::remove(const RefPtr<XenObject>& object)
                 return;
             }
             break;
-#if 0
         case XenObject::VM:
         case XenObject::SR:
         case XenObject::NETWORK:
@@ -131,7 +92,6 @@ void ServerTreeView::remove(const RefPtr<XenObject>& object)
             }
             break;
         }
-#endif
         default:
             break;
         }
@@ -140,8 +100,56 @@ void ServerTreeView::remove(const RefPtr<XenObject>& object)
 }
 
 
-#if 0
-bool ServerTreeView::add(const RefPtr<VirtualMachine> vm)
+bool ServerTreeView::add(RefPtr<Host> host)
+{
+    RefPtr<XenObject> object = RefPtr<XenObject>::castStatic(host);
+    Gtk::TreeModel::Row row;
+    Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
+    while (iter)
+    {
+        row = *iter;
+        RefPtr<XenObject> object2 = row[_store->record().colXenObject];
+        if (object2 == object)
+        {
+            row[_store->record().colPix] = PixStore::instance().get(host);
+            row[_store->record().colVal] = object->getDisplayStatus();
+            return false;
+        }
+        else if (object2->getSession().getConnectSpec().uuid == object->getSession().getConnectSpec().uuid)
+        {
+            row[_store->record().colPix] = PixStore::instance().get(host);
+            row[_store->record().colVal] = object->getDisplayStatus();
+            row[_store->record().colXenObject] = object;
+            return true;
+        }
+        iter++;
+    }
+    iter = _store->get_iter("0"); // point to first item
+    while (1)
+    {
+        if (!iter)
+        {
+            row = *_store->append();
+            break;
+        }
+        row = *iter;
+        RefPtr<XenObject> object2 = row[_store->record().colXenObject];
+        if (object->getSession().getConnectSpec().displayOrder < object2->getSession().getConnectSpec().displayOrder)
+        {
+            row = *_store->insert(iter);
+            break;
+        }
+        iter++;
+    }
+    row[_store->record().colPix] = PixStore::instance().get(host);
+    row[_store->record().colKey] = object->getSession().getConnectSpec().displayname;
+    row[_store->record().colVal] = object->getDisplayStatus();
+    row[_store->record().colXenObject] = object;
+    return true;
+}
+
+
+bool ServerTreeView::add(RefPtr<VirtualMachine> vm)
 {
     XenPtr<xen_vm_record> vmRecord = vm->getRecord();
     if (!vmRecord ||
@@ -151,7 +159,6 @@ bool ServerTreeView::add(const RefPtr<VirtualMachine> vm)
     {
         return false;
     }
-    //printf("#%p ServerTreeView::add(%s): Started.\n", Glib::Thread::self(), vm->getName().str());
     RefPtr<Host> host = vm->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
     while (iter)
@@ -165,7 +172,7 @@ bool ServerTreeView::add(const RefPtr<VirtualMachine> vm)
             {
                 if (!iter2)
                 {
-                    row = *_store->append((*iter).children());
+                    row = *_store->append(iter->children());
                     expand_row(_store->get_path(iter), true);
                     break;
                 }
@@ -175,7 +182,7 @@ bool ServerTreeView::add(const RefPtr<VirtualMachine> vm)
                 {
                     return false;
                 }
-                else if (object->getType() == XENOBJECT_VM)
+                else if (object->getType() == XenObject::VM)
                 {
                     Glib::ustring key = row[_store->record().colKey];
                     if (key > vm->getName())
@@ -192,22 +199,19 @@ bool ServerTreeView::add(const RefPtr<VirtualMachine> vm)
                 iter2++;
             }
             row[_store->record().colPix] = PixStore::instance().get(vm);
-            row[_store->record().colKey] = Glib::ustring(vm->getName().str());
-            row[_store->record().colVal] = Glib::ustring(vm->getDisplayStatus().str());
+            row[_store->record().colKey] = vm->getName();
+            row[_store->record().colVal] = vm->getDisplayStatus();
             row[_store->record().colXenObject] = RefPtr<XenObject>::castStatic(vm);
-            //printf("#%p ServerTreeView::add(%s): Finished.\n", Glib::Thread::self(), vm->getName().str());
             return true;
         }
         iter++;
     }
-    // cannot find appropriate insertion point
     return false;
 }
 
 
-bool ServerTreeView::add(const RefPtr<StorageRepository> sr)
+bool ServerTreeView::add(RefPtr<StorageRepository> sr)
 {
-    //printf("#%p ServerTreeView::add(%s): Started.\n", Glib::Thread::self(), sr->getName().str());
     RefPtr<Host> host = sr->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
     while (iter)
@@ -221,7 +225,7 @@ bool ServerTreeView::add(const RefPtr<StorageRepository> sr)
             {
                 if (!iter2)
                 {
-                    row = *_store->append((*iter).children());
+                    row = *_store->append(iter->children());
                     expand_row(_store->get_path(iter), true);
                     break;
                 }
@@ -231,15 +235,15 @@ bool ServerTreeView::add(const RefPtr<StorageRepository> sr)
                 {
                     return false;
                 }
-                else if (object->getType() == XENOBJECT_VM)
+                else if (object->getType() == XenObject::VM)
                 {
                 }
-                else if (object->getType() == XENOBJECT_SR)
+                else if (object->getType() == XenObject::SR)
                 {
                     Glib::ustring key = row[_store->record().colKey];
-                    if (sr->getSubType() == SR_ISO)
+                    if (sr->getSubType() == StorageRepository::ISO)
                     {
-                        if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == SR_ISO)
+                        if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::ISO)
                         {
                             if (key > sr->getName())
                             {
@@ -248,14 +252,14 @@ bool ServerTreeView::add(const RefPtr<StorageRepository> sr)
                             }
                         }
                     }
-                    else if (sr->getSubType() == SR_DEV)
+                    else if (sr->getSubType() == StorageRepository::DEV)
                     {
-                        if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == SR_ISO)
+                        if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::ISO)
                         {
                             row = *_store->insert(iter2);
                             break;
                         }
-                        else if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == SR_DEV)
+                        else if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::DEV)
                         {
                             if (key > sr->getName())
                             {
@@ -264,8 +268,8 @@ bool ServerTreeView::add(const RefPtr<StorageRepository> sr)
                             }
                         }
                     }
-                    else if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == SR_ISO ||
-                             RefPtr<StorageRepository>::castStatic(object)->getSubType() == SR_DEV ||
+                    else if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::ISO ||
+                             RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::DEV ||
                              key > sr->getName())
                     {
                         row = *_store->insert(iter2);
@@ -280,19 +284,17 @@ bool ServerTreeView::add(const RefPtr<StorageRepository> sr)
                 iter2++;
             }
             row[_store->record().colPix] = PixStore::instance().get(sr);
-            row[_store->record().colKey] = Glib::ustring(sr->getName().str());
-            row[_store->record().colVal] = Glib::ustring(sr->getDisplayStatus().str());
+            row[_store->record().colKey] = sr->getName();
+            row[_store->record().colVal] = sr->getDisplayStatus();
             row[_store->record().colXenObject] = RefPtr<XenObject>::castStatic(sr);
-            //printf("#%p ServerTreeView::add(%s): Finished.\n", Glib::Thread::self(), sr->getName().str());
             return true;
         }
         iter++;
     }
-    // cannot find appropriate insertion point
     return false;
 }
 
-
+#if 0
 bool ServerTreeView::add(const RefPtr<Network> nw)
 {
     //printf("#%p ServerTreeView::add(%s): Started.\n", Glib::Thread::self(), nw->getName().str());
@@ -311,7 +313,7 @@ bool ServerTreeView::add(const RefPtr<Network> nw)
             {
                 if (!iter2)
                 {
-                    row = *_store->append((*iter).children());
+                    row = *_store->append(iter->children());
                     expand_row(_store->get_path(iter), true);
                     break;
                 }
@@ -321,13 +323,13 @@ bool ServerTreeView::add(const RefPtr<Network> nw)
                 {
                     return false;
                 }
-                else if (object->getType() == XENOBJECT_VM)
+                else if (object->getType() == XenObject::VM)
                 {
                 }
-                else if (object->getType() == XENOBJECT_SR)
+                else if (object->getType() == XenObject::SR)
                 {
                 }
-                else if (object->getType() == XENOBJECT_NETWORK)
+                else if (object->getType() == XenObject::NETWORK)
                 {
                     Glib::ustring key = row[_store->record().colKey];
                     if (!isInternal && key > nwRecord->name_label)
@@ -403,10 +405,8 @@ void ServerTreeView::update(RefPtr<XenObject>& object, int what)
         }
         break;
     }
-#if 0
     case XenObject::VM:
     {
-        //printf("#ServerTreeView::update: VM finished.\n");
         RefPtr<VirtualMachine> vm = RefPtr<VirtualMachine>::castStatic(object);
         RefPtr<Host> host = vm->getSession().getStore().getHost();
         Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -424,15 +424,16 @@ void ServerTreeView::update(RefPtr<XenObject>& object, int what)
                     {
                         switch (what)
                         {
-                        case NOTIF_XO_BUSY:
-                        case NOTIF_XO_POWER_STATE:
+                        case XenObject::BUSY_SET:
+                        case XenObject::BUSY_RESET:
+                        case XenObject::POWER_STATE_UPDATED:
                             row[_store->record().colPix] = PixStore::instance().get(vm);
                             break;
-                        case NOTIF_XO_STATUS:
-                            row[_store->record().colVal] = Glib::ustring(vm->getDisplayStatus().str());
+                        case XenObject::STATUS_UPDATED:
+                            row[_store->record().colVal] = vm->getDisplayStatus();
                             break;
-                        case NOTIF_XO_NAME:
-                            row[_store->record().colKey] = Glib::ustring(vm->getName().str());
+                        case XenObject::NAME_UPDATED:
+                            row[_store->record().colKey] = vm->getName();
                             reorder(vm, iter2);
                             break;
                         default:
@@ -446,12 +447,10 @@ void ServerTreeView::update(RefPtr<XenObject>& object, int what)
             }
             iter++;
         }
-        //printf("#ServerTreeView::update: VM finished.\n");
         break;
     }
     case XenObject::SR:
     {
-        //printf("#ServerTreeView::update: SR Started.\n");
         RefPtr<StorageRepository> sr = RefPtr<StorageRepository>::castStatic(object);
         RefPtr<Host> host = sr->getSession().getStore().getHost();
         Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -469,14 +468,15 @@ void ServerTreeView::update(RefPtr<XenObject>& object, int what)
                     {
                         switch (what)
                         {
-                        case NOTIF_XO_BUSY:
+                        case XenObject::BUSY_SET:
+                        case XenObject::BUSY_RESET:
                             row[_store->record().colPix] = PixStore::instance().get(sr);
                             break;
-                        case NOTIF_XO_STATUS:
-                            row[_store->record().colVal] = Glib::ustring(sr->getDisplayStatus().str());
+                        case XenObject::STATUS_UPDATED:
+                            row[_store->record().colVal] = sr->getDisplayStatus();
                             break;
-                        case NOTIF_XO_NAME:
-                            row[_store->record().colKey] = Glib::ustring(sr->getName().str());
+                        case XenObject::NAME_UPDATED:
+                            row[_store->record().colKey] = sr->getName();
                             reorder(sr, iter2);
                             break;
                         default:
@@ -490,10 +490,8 @@ void ServerTreeView::update(RefPtr<XenObject>& object, int what)
             }
             iter++;
         }
-        //printf("#ServerTreeView::update: SR finished.\n");
         break;
     }
-#endif
     default:
         break;
     }
@@ -505,8 +503,8 @@ Gtk::TreeIter ServerTreeView::getFirst() const
     return _store->get_iter("0");
 }
 
-#if 0
-void ServerTreeView::reorder(const RefPtr<VirtualMachine> vm, Gtk::TreeIter& iterSource)
+
+void ServerTreeView::reorder(RefPtr<VirtualMachine>& vm, Gtk::TreeIter& iterSource)
 {
     RefPtr<Host> host = vm->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -525,7 +523,7 @@ void ServerTreeView::reorder(const RefPtr<VirtualMachine> vm, Gtk::TreeIter& ite
                 {
                     // nothing to do
                 }
-                else if (object->getType() == XENOBJECT_VM)
+                else if (object->getType() == XenObject::VM)
                 {
                     Glib::ustring key = row[_store->record().colKey];
                     if (key > vm->getName())
@@ -534,25 +532,24 @@ void ServerTreeView::reorder(const RefPtr<VirtualMachine> vm, Gtk::TreeIter& ite
                         return;
                     }
                 }
-                else if (object->getType() == XENOBJECT_SR)
+                else if (object->getType() == XenObject::SR)
                 {
                     _store->move(iterSource, iter2);
                     return;
                 }
                 iter2++;
             }
-            iter2 = _store->append((*iter).children());
+            iter2 = _store->append(iter->children());
             _store->move(iterSource, iter2);
             _store->erase(iter2);
             return;
         }
         iter++;
     }
-    // cannot find appropriate insertion point
 }
 
 
-void ServerTreeView::reorder(const RefPtr<StorageRepository> sr, Gtk::TreeIter& iterSource)
+void ServerTreeView::reorder(RefPtr<StorageRepository>& sr, Gtk::TreeIter& iterSource)
 {
     RefPtr<Host> host = sr->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -567,16 +564,16 @@ void ServerTreeView::reorder(const RefPtr<StorageRepository> sr, Gtk::TreeIter& 
             {
                 row = *iter2;
                 object = row[_store->record().colXenObject];
-                if (object.ptr == sr.ptr)
+                if (object.ptr() == sr.ptr())
                 {
                     // nothing to do
                 }
-                else if (object->getType() == XENOBJECT_SR)
+                else if (object->getType() == XenObject::SR)
                 {
                     Glib::ustring key = row[_store->record().colKey];
-                    if (sr->getSubType() == SR_ISO)
+                    if (sr->getSubType() == StorageRepository::ISO)
                     {
-                        if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == SR_ISO)
+                        if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::ISO)
                         {
                             if (key > sr->getName())
                             {
@@ -585,14 +582,14 @@ void ServerTreeView::reorder(const RefPtr<StorageRepository> sr, Gtk::TreeIter& 
                             }
                         }
                     }
-                    else if (sr->getSubType() == SR_DEV)
+                    else if (sr->getSubType() == StorageRepository::DEV)
                     {
-                        if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == SR_ISO)
+                        if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::ISO)
                         {
                             _store->move(iterSource, iter2);
                             return;
                         }
-                        else if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == SR_DEV)
+                        else if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::DEV)
                         {
                             if (key > sr->getName())
                             {
@@ -601,8 +598,8 @@ void ServerTreeView::reorder(const RefPtr<StorageRepository> sr, Gtk::TreeIter& 
                             }
                         }
                     }
-                    else if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == SR_ISO ||
-                             RefPtr<StorageRepository>::castStatic(object)->getSubType() == SR_DEV ||
+                    else if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::ISO ||
+                             RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::DEV ||
                              key > sr->getName())
                     {
                         _store->move(iterSource, iter2);
@@ -611,16 +608,15 @@ void ServerTreeView::reorder(const RefPtr<StorageRepository> sr, Gtk::TreeIter& 
                 }
                 iter2++;
             }
-            iter2 = _store->append((*iter).children());
+            iter2 = _store->append(iter->children());
             _store->move(iterSource, iter2);
             _store->erase(iter2);
             return;
         }
         iter++;
     }
-    // cannot find appropriate insertion point
 }
-#endif
+
 
 RefPtr<XenObject> ServerTreeView::getObject(const Gtk::TreeIter& iter) const
 {
@@ -665,14 +661,12 @@ bool ServerTreeView::on_button_press_event(GdkEventButton* event)
             case XenObject::HOST:
                 //_menuServer.popup(event->button, event->time, RefPtr<Host>::castStatic(object));
                 break;
-#if 0
             case XenObject::VM:
-                _menuVm.popup(event->button, event->time, RefPtr<VirtualMachine>::castStatic(object));
+                //_menuVm.popup(event->button, event->time, RefPtr<VirtualMachine>::castStatic(object));
                 break;
             case XenObject::SR:
-                _menuSr.popup(event->button, event->time, RefPtr<StorageRepository>::castStatic(object));
+                //_menuSr.popup(event->button, event->time, RefPtr<StorageRepository>::castStatic(object));
                 break;
-#endif
             default:
                 break;
             }

@@ -17,8 +17,8 @@ namespace hnrt
     class Host;
     //class Network;
     class ServerTreeStore;
-    //class StorageRepository;
-    //class VirtualMachine;
+    class StorageRepository;
+    class VirtualMachine;
     class XenObject;
 
     class ServerTreeView
@@ -42,7 +42,12 @@ namespace hnrt
 
         ServerTreeView(const ServerTreeView&);
         void operator =(const ServerTreeView&);
-        virtual bool on_button_press_event(GdkEventButton* event);
+        bool add(RefPtr<Host>);
+        bool add(RefPtr<VirtualMachine>);
+        bool add(RefPtr<StorageRepository>);
+        void reorder(RefPtr<VirtualMachine>&, Gtk::TreeIter&);
+        void reorder(RefPtr<StorageRepository>&, Gtk::TreeIter&);
+        virtual bool on_button_press_event(GdkEventButton*);
 
         Glib::RefPtr<ServerTreeStore> _store;
         //ServerMenu _menuServer;
