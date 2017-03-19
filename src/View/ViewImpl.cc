@@ -52,7 +52,6 @@ void ViewImpl::clear()
 {
     Trace trace("ViewImpl::clear");
     _mainWindow.clear();
-    View::update();
 }
 
 

@@ -161,11 +161,6 @@ Controller::Signal ControllerImpl::signalNotified(const RefPtr<RefObj>& object)
 void ControllerImpl::notify(const RefPtr<RefObj>& object, int notification)
 {
     Trace trace("ControllerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
-    if (_quitInProgress)
-    {
-        trace.put("cancelled.");
-        return;
-    }
     Glib::RecMutex::Lock k(_mutex);
     _notified.push_back(RefPtrNotificationPair(object, notification));
     if (_notified.size() == 1)
