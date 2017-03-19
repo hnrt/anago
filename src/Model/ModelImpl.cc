@@ -99,8 +99,6 @@ void ModelImpl::add(const ConnectSpec& cs)
         }
     }
     RefPtr<Host> host = Host::create(cs);
-    Session& session = host->getSession();
-    session.getStore().add(host);
     _hosts.push_back(host);
 }
 

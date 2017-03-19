@@ -15,6 +15,7 @@
 #include "Model/PatchRecord.h"
 #include "Host.h"
 #include "Session.h"
+#include "XenObjectStore.h"
 #include "XenRef.h"
 
 
@@ -25,6 +26,7 @@ RefPtr<Host> Host::create(const ConnectSpec& cs)
 {
     RefPtr<Session> session = RefPtr<Session>(new Session(cs));
     RefPtr<Host> host(new Host(*session));
+    session->getStore().setHost(host);
     return host;
 }
 
