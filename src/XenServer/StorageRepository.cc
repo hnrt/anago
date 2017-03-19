@@ -4,6 +4,7 @@
 #include <libintl.h>
 #include <stdio.h>
 #include <string.h>
+#include "Logger/Trace.h"
 #include "Util/Util.h"
 #include "PhysicalBlockDevice.h"
 #include "Session.h"
@@ -51,6 +52,13 @@ StorageRepository::StorageRepository(Session& session, xen_sr handle, const XenP
     , _subType(GetSubType(record->type))
     , _record(record)
 {
+    Trace trace(StringBuffer().format("VM@%zx::ctor", this));
+}
+
+
+StorageRepository::~StorageRepository()
+{
+    Trace trace(StringBuffer().format("VM@%zx::dtor", this));
 }
 
 

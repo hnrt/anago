@@ -21,6 +21,7 @@ namespace hnrt
 
         static RefPtr<VirtualDiskImage> create(Session&, xen_vdi, const XenPtr<xen_vdi_record>&);
 
+        virtual ~VirtualDiskImage();
         XenPtr<xen_vdi_record> getRecord();
         void setRecord(const XenPtr<xen_vdi_record>&);
         RefPtr<StorageRepository> getSr();

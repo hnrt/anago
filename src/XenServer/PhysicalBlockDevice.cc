@@ -1,6 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "Logger/Trace.h"
 #include "PhysicalBlockDevice.h"
 #include "Session.h"
 #include "StorageRepository.h"
@@ -22,6 +23,13 @@ PhysicalBlockDevice::PhysicalBlockDevice(Session& session, xen_pbd handle, const
     : XenObject(XenObject::PBD, session, reinterpret_cast<char*>(handle), record->uuid, "PBD")
     , _record(record)
 {
+    Trace trace(StringBuffer().format("PBD@%zx::ctor", this));
+}
+
+
+PhysicalBlockDevice::~PhysicalBlockDevice()
+{
+    Trace trace(StringBuffer().format("PBD@%zx::dtor", this));
 }
 
 

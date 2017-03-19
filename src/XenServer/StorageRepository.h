@@ -29,6 +29,7 @@ namespace hnrt
 
         static RefPtr<StorageRepository> create(Session&, xen_sr, const XenPtr<xen_sr_record>&);
 
+        virtual ~StorageRepository();
         virtual int setBusy(bool = true);
         SubType getSubType() const { return _subType; }
         XenPtr<xen_sr_record> getRecord();

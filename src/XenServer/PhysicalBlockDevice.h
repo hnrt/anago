@@ -20,6 +20,7 @@ namespace hnrt
 
         static RefPtr<PhysicalBlockDevice> create(Session&, xen_pbd, const XenPtr<xen_pbd_record>&);
 
+        virtual ~PhysicalBlockDevice();
         XenPtr<xen_pbd_record> getRecord();
         void setRecord(const XenPtr<xen_pbd_record>&);
         RefPtr<StorageRepository> getSr();

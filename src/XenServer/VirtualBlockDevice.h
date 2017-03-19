@@ -21,6 +21,7 @@ namespace hnrt
 
         static RefPtr<VirtualBlockDevice> create(Session&, xen_vbd, const XenPtr<xen_vbd_record>&);
 
+        virtual ~VirtualBlockDevice();
         XenPtr<xen_vbd_record> getRecord();
         void setRecord(const XenPtr<xen_vbd_record>&);
         RefPtr<VirtualMachine> getVm();

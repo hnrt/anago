@@ -3,6 +3,7 @@
 
 #include <libintl.h>
 #include "Base/StringBuffer.h"
+#include "Logger/Trace.h"
 #include "Session.h"
 #include "StorageRepository.h"
 #include "VirtualBlockDevice.h"
@@ -28,6 +29,13 @@ VirtualDiskImage::VirtualDiskImage(Session& session, xen_vdi handle, const XenPt
     : XenObject(XenObject::VDI, session, reinterpret_cast<char*>(handle), record->uuid, record->name_label)
     , _record(record)
 {
+    Trace trace(StringBuffer().format("VDI@%zx::ctor", this));
+}
+
+
+VirtualDiskImage::~VirtualDiskImage()
+{
+    Trace trace(StringBuffer().format("VDI@%zx::dtor", this));
 }
 
 

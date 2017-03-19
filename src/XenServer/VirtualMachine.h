@@ -23,6 +23,7 @@ namespace hnrt
 
         static RefPtr<VirtualMachine> create(Session&, xen_vm, const XenPtr<xen_vm_record>&);
 
+        virtual ~VirtualMachine();
         virtual int setBusy(bool = true);
         XenPtr<xen_vm_record> getRecord();
         void setRecord(const XenPtr<xen_vm_record>&);
