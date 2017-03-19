@@ -7,10 +7,10 @@
 //#include "Controller/PerformanceMonitor.h"
 //#include "Model.h"
 //#include "Network.h"
-//#include "PhysicalBlockDevice.h"
+#include "PhysicalBlockDevice.h"
 //#include "PhysicalInterface.h"
-//#include "StorageRepository.h"
-//#include "Task.h"
+#include "StorageRepository.h"
+#include "XenTask.h"
 //#include "VirtualBlockDevice.h"
 //#include "VirtualDiskImage.h"
 //#include "VirtualInterface.h"
@@ -329,28 +329,27 @@ RefPtr<Network> XenObjectStore::getNw(const xen_network_record_opt* opt) const
     RefPtr<XenObject> object(opt ? get(opt->is_record ? opt->u.record->uuid : reinterpret_cast<const char*>(opt->u.handle), XenObject::NETWORK) : NULL);
     return RefPtr<Network>::castStatic(object);
 }
+#endif
 
-
-RefPtr<PhysicalBlockDevice> XenObjectStore::getPbd(const Glib::ustring& key) const
+RefPtr<PhysicalBlockDevice> XenObjectStore::getPbd(const Glib::ustring& key)
 {
-    RefPtr<XenObject> object(get(key, XenObject::PBD));
-    return RefPtr<PhysicalBlockDevice>::castStatic(object);
+    return RefPtr<PhysicalBlockDevice>::castStatic(get(key, XenObject::PBD));
 }
 
 
-RefPtr<PhysicalBlockDevice> XenObjectStore::getPbd(const char* key) const
+RefPtr<PhysicalBlockDevice> XenObjectStore::getPbd(const char* key)
 {
     return getPbd(Glib::ustring(key));
 }
 
 
-RefPtr<PhysicalBlockDevice> XenObjectStore::getPbd(const xen_pbd_record_opt* opt) const
+RefPtr<PhysicalBlockDevice> XenObjectStore::getPbd(const xen_pbd_record_opt* opt)
 {
-    RefPtr<XenObject> object(opt ? get(opt->is_record ? opt->u.record->uuid : reinterpret_cast<const char*>(opt->u.handle), XenObject::PBD) : NULL);
-    return RefPtr<PhysicalBlockDevice>::castStatic(object);
+    return RefPtr<PhysicalBlockDevice>::castStatic(
+        opt ? get(opt->is_record ? opt->u.record->uuid : reinterpret_cast<const char*>(opt->u.handle), XenObject::PBD) : NULL);
 }
 
-
+#if 0
 RefPtr<PhysicalInterface> XenObjectStore::getPif(const Glib::ustring& key) const
 {
     RefPtr<XenObject> object(get(key, XenObject::PIF));
@@ -369,41 +368,41 @@ RefPtr<PhysicalInterface> XenObjectStore::getPif(const xen_pif_record_opt* opt) 
     RefPtr<XenObject> object(opt ? get(opt->is_record ? opt->u.record->uuid : reinterpret_cast<const char*>(opt->u.handle), XenObject::PIF) : NULL);
     return RefPtr<PhysicalInterface>::castStatic(object);
 }
+#endif
 
-
-RefPtr<StorageRepository> XenObjectStore::getSr(const Glib::ustring& key) const
+RefPtr<StorageRepository> XenObjectStore::getSr(const Glib::ustring& key)
 {
     RefPtr<XenObject> object(get(key, XenObject::SR));
     return RefPtr<StorageRepository>::castStatic(object);
 }
 
 
-RefPtr<StorageRepository> XenObjectStore::getSr(const char* key) const
+RefPtr<StorageRepository> XenObjectStore::getSr(const char* key)
 {
     return getSr(Glib::ustring(key));
 }
 
 
-RefPtr<StorageRepository> XenObjectStore::getSr(const xen_sr_record_opt* opt) const
+RefPtr<StorageRepository> XenObjectStore::getSr(const xen_sr_record_opt* opt)
 {
     RefPtr<XenObject> object(opt ? get(opt->is_record ? opt->u.record->uuid : reinterpret_cast<const char*>(opt->u.handle), XenObject::SR) : NULL);
     return RefPtr<StorageRepository>::castStatic(object);
 }
 
 
-RefPtr<Task> XenObjectStore::getTask(const Glib::ustring& key) const
+RefPtr<XenTask> XenObjectStore::getTask(const Glib::ustring& key)
 {
     RefPtr<XenObject> object(get(key, XenObject::TASK));
-    return RefPtr<Task>::castStatic(object);
+    return RefPtr<XenTask>::castStatic(object);
 }
 
 
-RefPtr<Task> XenObjectStore::getTask(const char* key) const
+RefPtr<XenTask> XenObjectStore::getTask(const char* key)
 {
     return getTask(Glib::ustring(key));
 }
 
-
+#if 0
 RefPtr<VirtualBlockDevice> XenObjectStore::getVbd(const Glib::ustring& key) const
 {
     RefPtr<XenObject> object(get(key, XenObject::VBD));
@@ -560,7 +559,7 @@ RefPtr<VirtualMachine> XenObjectStore::getVmByImportTask(const Glib::ustring& ke
 }
 #endif
 
-template<typename T> int XenObjectStore::getList(std::list<RefPtr<T> >& list, XenObject::Type type) const
+template<typename T> int XenObjectStore::getList(std::list<RefPtr<T> >& list, XenObject::Type type)
 {
     Glib::RecMutex::Lock lock(_mutex);
     int count = 0;
@@ -588,14 +587,14 @@ int XenObjectStore::getList(std::list<RefPtr<PhysicalInterface> >& list) const
 {
     return getList(list, XenObject::PIF);
 }
+#endif
 
-
-int XenObjectStore::getList(std::list<RefPtr<StorageRepository> >& list) const
+int XenObjectStore::getList(std::list<RefPtr<StorageRepository> >& list)
 {
     return getList(list, XenObject::SR);
 }
 
-
+#if 0
 int XenObjectStore::getList(std::list<RefPtr<VirtualInterface> >& list) const
 {
     return getList(list, XenObject::VIF);
@@ -606,9 +605,9 @@ int XenObjectStore::getList(std::list<RefPtr<VirtualMachine> >& list) const
 {
     return getList(list, XenObject::VM);
 }
+#endif
 
-
-Glib::ustring XenObjectStore::getSrCandidate(int64_t hint, const Glib::ustring& defaultSr) const
+Glib::ustring XenObjectStore::getSrCandidate(int64_t hint, const Glib::ustring& defaultSr)
 {
     Glib::ustring srREFID = defaultSr;
     RefPtr<StorageRepository> sr = getSr(srREFID);
@@ -633,7 +632,7 @@ Glib::ustring XenObjectStore::getSrCandidate(int64_t hint, const Glib::ustring& 
         for (HandleObjectMap::iterator iter = map.begin(); iter != map.end(); iter++)
         {
             sr = RefPtr<StorageRepository>::castStatic(iter->second);
-            if (sr->getSubType() != SR_USR)
+            if (sr->getSubType() != StorageRepository::USR)
             {
                 continue;
             }
@@ -648,7 +647,7 @@ Glib::ustring XenObjectStore::getSrCandidate(int64_t hint, const Glib::ustring& 
     }
     return srREFID;
 }
-#endif
+
 #if 0
 #include <stdio.h>
 void XenObjectStore::debuginfo()
