@@ -74,7 +74,7 @@ int Host::setBusy(bool value)
 
 XenPtr<xen_host_record> Host::getRecord()
 {
-    Glib::RecMutex::Lock k(_mutex);
+    Glib::Mutex::Lock k(_mutex);
     return _record;
 }
 
@@ -83,7 +83,7 @@ void Host::setRecord(const XenPtr<xen_host_record>& record)
 {
     if (record)
     {
-        Glib::RecMutex::Lock k(_mutex);
+        Glib::Mutex::Lock k(_mutex);
         _record = record;
         if (record->name_label)
         {
@@ -100,7 +100,7 @@ void Host::setRecord(const XenPtr<xen_host_record>& record)
 
 XenPtr<xen_host_metrics_record> Host::getMetricsRecord()
 {
-    Glib::RecMutex::Lock k(_mutex);
+    Glib::Mutex::Lock k(_mutex);
     return _metricsRecord;
 }
 
@@ -109,7 +109,7 @@ void Host::setMetricsRecord(const XenPtr<xen_host_metrics_record>& record)
 {
     if (record)
     {
-        Glib::RecMutex::Lock k(_mutex);
+        Glib::Mutex::Lock k(_mutex);
         _metricsRecord = record;
     }
     else
@@ -127,7 +127,7 @@ void Host::onConnectPending()
 }
 
 
-void Host::onConnected()
+bool Host::onConnected()
 {
     _state = STATE_CONNECTED;
     _session.getConnectSpec().lastAccess = (long)time(NULL);
@@ -136,45 +136,50 @@ void Host::onConnected()
     if (!xen_session_get_this_host(_session, &host, _session))
     {
         Logger::instance().warn("Host::connect: xen_session_get_this_host failed.");
-        _session.clearError();
-        return;
+        emit(ERROR);
+        return false;
     }
     _refid = host.toString();
     XenPtr<xen_host_record> record;
-    if (!xen_host_get_record(_session, record.address(), host))
+    if (xen_host_get_record(_session, record.address(), host))
+    {
+        Glib::Mutex::Lock k(_mutex);
+        _record = record;
+        _uuid = record->uuid ? record->uuid : "";
+        _name = record->name_label ? record->name_label : "";
+    }
+    else
     {
         Logger::instance().warn("Host::connect: xen_host_get_recrod failed.");
-        _session.clearError();
-        return;
+        emit(ERROR);
+        return false;
     }
-    XenPtr<xen_host_metrics_record> metricsRecord;
     XenRef<xen_host_metrics, xen_host_metrics_free_t> metrics;
     if (xen_host_get_metrics(_session, &metrics, host))
     {
+        XenPtr<xen_host_metrics_record> metricsRecord;
         if (xen_host_metrics_get_record(_session, metricsRecord.address(), metrics))
         {
+            Glib::Mutex::Lock k(_mutex);
+            _metricsRecord = metricsRecord;
         }
         else
         {
             Logger::instance().warn("Host::connect: xen_host_metrics_get_record failed.");
-            _session.clearError();
+            emit(ERROR);
+            return false;
         }
     }
     else
     {
         Logger::instance().warn("Host::connect: xen_host_get_metrics failed.");
-        _session.clearError();
-    }
-    {
-        Glib::RecMutex::Lock k(_mutex);
-        _record = record;
-        _metricsRecord = metricsRecord;
-        _uuid = record->uuid ? record->uuid : "";
-        _name = record->name_label ? record->name_label : "";
+        emit(ERROR);
+        return false;
     }
     initPatchList();
     updatePatchList();
     emit(CONNECTED);
+    return true;
 }
 
 
@@ -182,7 +187,6 @@ void Host::onConnectFailed()
 {
     _state = STATE_CONNECT_FAILED;
     setDisplayStatus(gettext("Failed to connect"));
-    emit(CONNECT_FAILED);
 }
 
 
@@ -235,6 +239,7 @@ bool Host::shutdown()
         {
             setDisplayStatus(gettext("Failed to shut down"));
             _state = STATE_SHUTDOWN_FAILED;
+            emit(ERROR);
             return false;
         }
     }
@@ -268,6 +273,7 @@ bool Host::reboot()
         {
             setDisplayStatus(gettext("Failed to reboot"));
             _state = STATE_REBOOT_FAILED;
+            emit(ERROR);
             return false;
         }
     }
@@ -280,18 +286,15 @@ bool Host::reboot()
 
 bool Host::setName(const char* label, const char* description)
 {
-    if (!_session)
-    {
-        return false;
-    }
-
     if (!xen_host_set_name_label(_session, getXenRef(), (char*)label))
     {
+        emit(ERROR);
         return false;
     }
 
     if (!xen_host_set_name_description(_session, getXenRef(), (char*)description))
     {
+        emit(ERROR);
         return false;
     }
 
@@ -543,15 +546,20 @@ bool Host::applyPatch(const Glib::ustring& uuid)
     XenRef<xen_pool_patch, xen_pool_patch_free_t> patchRefid;
     if (!xen_pool_patch_get_by_uuid(_session, &patchRefid, const_cast<char*>(uuid.c_str())))
     {
+        emit(ERROR);
         return false;
     }
     char* result = NULL;
-    bool retval = xen_pool_patch_apply(_session, &result, patchRefid, getXenRef());
-    if (retval)
+    if (xen_pool_patch_apply(_session, &result, patchRefid, getXenRef()))
     {
         free(result);
+        return true;
     }
-    return retval;
+    else
+    {
+        emit(ERROR);
+        return false;
+    }
 }
 
 
@@ -560,8 +568,16 @@ bool Host::cleanPatch(const Glib::ustring& uuid)
     XenRef<xen_pool_patch, xen_pool_patch_free_t> patchRefid;
     if (!xen_pool_patch_get_by_uuid(_session, &patchRefid, const_cast<char*>(uuid.c_str())))
     {
+        emit(ERROR);
         return false;
     }
-    bool retval = xen_pool_patch_clean(_session, patchRefid);
-    return retval;
+    if (xen_pool_patch_clean(_session, patchRefid))
+    {
+        return true;
+    }
+    else
+    {
+        emit(ERROR);
+        return false;
+    }
 }

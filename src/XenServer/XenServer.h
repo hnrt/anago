@@ -21,6 +21,7 @@ namespace hnrt
         static void setError(xen_session* session, const char* error, ...);
         static void setError(xen_session* session, const std::vector<Glib::ustring>& array);
         static bool getErrorFromTask(xen_session* session, xen_task task, StringBuffer& buffer, const char* separator);
+        static const char* getPowerStateText(int);
         static Glib::ustring getOs(const xen_vm_guest_metrics_record* record);
         static Glib::ustring getIp(const xen_vm_guest_metrics_record* record, int device);
         static Glib::ustring getIpv6(const xen_vm_guest_metrics_record* record, int device);

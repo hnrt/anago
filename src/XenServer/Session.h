@@ -47,7 +47,7 @@ namespace hnrt
         bool failed();
         void clearError();
         bool hasError();
-        bool hasError(const char* error);
+        bool hasError(const char*);
         const XenObjectStore& getStore() const { return *_objectStore; }
         XenObjectStore& getStore() { return *_objectStore; }
         bool operator ==(const Session&) const;
@@ -56,8 +56,8 @@ namespace hnrt
         class Lock
         {
         public:
-            Lock(Session& session) : _session(session) { _session.lock(); }
-            ~Lock() { _session.unlock(); }
+            Lock(Session& session) : _session(session) { _session._mutex.lock(); }
+            ~Lock() { _session._mutex.unlock(); }
         private:
             Session& _session;
         };

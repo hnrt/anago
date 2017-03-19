@@ -55,6 +55,7 @@ namespace hnrt
             POWER_STATE_UPDATED,
             RECORD_UPDATED,
             SNAPSHOT_UPDATED,
+            ERROR,
             DESTROYED = 511,
             NOTIFICATION_MIN = CREATED,
             NOTIFICATION_MAX = DESTROYED,
@@ -67,8 +68,6 @@ namespace hnrt
         void* getXenRef() const { return const_cast<void*>(reinterpret_cast<const void*>(_refid.c_str())); }
         const Glib::ustring& getREFID() const { return _refid; }
         const Glib::ustring& getUUID() const { return _uuid; }
-        void lock();
-        void unlock();
         Glib::ustring getName();
         virtual void setName(const char*);
         Glib::ustring getDisplayStatus();
@@ -90,15 +89,15 @@ namespace hnrt
 
     protected:
 
-        XenObject(Type type, Session& session, const char* refid, const char* uuid = 0, const char* name = 0);
+        XenObject(Type, Session&, const char* refid, const char* uuid = 0, const char* name = 0);
         XenObject(const XenObject&);
         void operator =(const XenObject&);
 
         Type _type;
         Session& _session;
         Glib::ustring _refid;
-        Glib::RecMutex _mutex;
         Glib::ustring _uuid;
+        Glib::Mutex _mutex;
         Glib::ustring _name;
         Glib::ustring _displayStatus;
         volatile int _busyCount;

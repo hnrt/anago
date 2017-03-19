@@ -41,13 +41,13 @@ namespace hnrt
         static RefPtr<Host> create(const ConnectSpec&);
 
         virtual ~Host();
-        virtual int setBusy(bool value = true);
+        virtual int setBusy(bool = true);
         XenPtr<xen_host_record> getRecord();
         void setRecord(const XenPtr<xen_host_record>&);
         XenPtr<xen_host_metrics_record> getMetricsRecord();
         void setMetricsRecord(const XenPtr<xen_host_metrics_record>&);
         void onConnectPending();
-        void onConnected();
+        bool onConnected();
         void onConnectFailed();
         void onDisconnected();
         void onDisconnectedByPeer();

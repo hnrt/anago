@@ -21,11 +21,6 @@ XenObject::XenObject(Type type, Session& session, const char* refid, const char*
     , _name(name ? name : "")
     , _busyCount(0)
 {
-    //Trace trace(__PRETTY_FUNCTION__);
-
-    // trace.put("type=%s", );
-    // DBG("type=%s", XenObjectTypeMap::toString(_type));
-
     if (_type != SESSION)
     {
         _session.reference();
@@ -35,10 +30,6 @@ XenObject::XenObject(Type type, Session& session, const char* refid, const char*
 
 XenObject::~XenObject()
 {
-    //Trace trace(__PRETTY_FUNCTION__);
-
-    //DBG("type=%s", XenObjectTypeMap::toString(_type));
-
     if (_type != SESSION)
     {
         _session.unreference();
@@ -58,34 +49,32 @@ Session& XenObject::getSession()
 }
 
 
-void XenObject::lock()
-{
-    _mutex.lock();
-}
-
-
-void XenObject::unlock()
-{
-    _mutex.unlock();
-}
-
-
 Glib::ustring XenObject::getName()
 {
-    Glib::RecMutex::Lock k(_mutex);
+    Glib::Mutex::Lock k(_mutex);
     return _name;
 }
 
 
 void XenObject::setName(const char* value)
 {
+    if (value)
     {
-        Glib::RecMutex::Lock k(_mutex);
+        Glib::Mutex::Lock k(_mutex);
         if (_name == value)
         {
             return;
         }
         _name = value;
+    }
+    else
+    {
+        Glib::Mutex::Lock k(_mutex);
+        if (_name.empty())
+        {
+            return;
+        }
+        _name.clear();
     }
     emit(NAME_UPDATED);
 }
@@ -93,20 +82,30 @@ void XenObject::setName(const char* value)
 
 Glib::ustring XenObject::getDisplayStatus()
 {
-    Glib::RecMutex::Lock k(_mutex);
+    Glib::Mutex::Lock k(_mutex);
     return _displayStatus;
 }
 
 
 void XenObject::setDisplayStatus(const char* value)
 {
+    if (value)
     {
-        Glib::RecMutex::Lock k(_mutex);
+        Glib::Mutex::Lock k(_mutex);
         if (_displayStatus == value)
         {
             return;
         }
         _displayStatus = value;
+    }
+    else
+    {
+        Glib::Mutex::Lock k(_mutex);
+        if (_displayStatus.empty())
+        {
+            return;
+        }
+        _displayStatus.clear();
     }
     emit(STATUS_UPDATED);
 }

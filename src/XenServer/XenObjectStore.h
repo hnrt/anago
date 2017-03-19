@@ -22,11 +22,11 @@ namespace hnrt
     //class PhysicalBlockDevice;
     //class PhysicalInterface;
     //class StorageRepository;
-    //class Task;
     //class VirtualBlockDevice;
     //class VirtualDiskImage;
     //class VirtualInterface;
     //class VirtualMachine;
+    class XenTask;
 
     class XenObjectStore : public RefObj
     {

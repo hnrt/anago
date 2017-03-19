@@ -9,10 +9,10 @@
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
-#include "Session.h"
-#include "XenObjectStore.h"
 #include "Api.h"
 #include "Constants.h"
+#include "Session.h"
+#include "XenObjectStore.h"
 
 
 using namespace hnrt;
@@ -124,11 +124,15 @@ bool Session::connect()
     Glib::ustring pw = _connectSpec.descramblePassword();
     _ptr = xen_session_login_with_password(rpcExecute, this, _connectSpec.username.c_str(), pw.c_str(), xen_api_latest_version);
     pw.clear();
+    trace.put("return=%d", _ptr->ok);
     if (_ptr->ok)
     {
         _state = PRIMARY;
     }
-    trace.put("return=%d", _ptr->ok);
+    else
+    {
+        emit(CONNECT_FAILED);
+    }
     return _ptr->ok;
 }
 
@@ -146,12 +150,16 @@ bool Session::connect(const Session& other)
     Glib::ustring pw = _connectSpec.descramblePassword();
     _ptr = xen_session_slave_local_login_with_password(rpcExecute, this, _connectSpec.username.c_str(), pw.c_str());
     pw.clear();
+    trace.put("return=%d", _ptr->ok);
     if (_ptr->ok)
     {
         _state = SECONDARY;
         _objectStore = other._objectStore;
     }
-    trace.put("return=%d", _ptr->ok);
+    else
+    {
+        emit(CONNECT_FAILED);
+    }
     return _ptr->ok;
 }
 

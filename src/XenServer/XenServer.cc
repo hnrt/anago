@@ -218,6 +218,26 @@ bool XenServer::getErrorFromTask(xen_session* session, xen_task task, StringBuff
 }
 
 
+const char* XenServer::getPowerStateText(int state)
+{
+    switch (state)
+    {
+    case XEN_VM_POWER_STATE_HALTED:
+        return gettext("Halted");
+    case XEN_VM_POWER_STATE_PAUSED:
+        return gettext("Paused");
+    case XEN_VM_POWER_STATE_RUNNING:
+        return gettext("Running");
+    case XEN_VM_POWER_STATE_SUSPENDED:
+        return gettext("Suspended");
+    case XEN_VM_POWER_STATE_UNDEFINED:
+        return gettext("(undefined)");
+    default:
+        return gettext("(unknown)");
+    }
+}
+
+
 Glib::ustring XenServer::getOs(const xen_vm_guest_metrics_record* record)
 {
     Glib::ustring value;
