@@ -338,7 +338,8 @@ void MainWindow::updateObject(RefPtr<XenObject>& object, int what)
 #endif
     switch (what)
     {
-    case XenObject::BUSY_UPDATED:
+    case XenObject::BUSY_SET:
+    case XenObject::BUSY_RESET:
     case XenObject::CONNECTED:
     case XenObject::DISCONNECTED:
     case XenObject::RECORD_UPDATED:

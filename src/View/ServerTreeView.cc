@@ -374,7 +374,8 @@ void ServerTreeView::update(RefPtr<XenObject>& object, int what)
                 case XenObject::NAME_UPDATED:
                     row[_store->record().colKey] = object->getSession().getConnectSpec().displayname;
                     break;
-                case XenObject::BUSY_UPDATED:
+                case XenObject::BUSY_SET:
+                case XenObject::BUSY_RESET:
                     row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
                     break;
                 case XenObject::CONNECTED:

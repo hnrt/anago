@@ -112,20 +112,26 @@ void XenObject::setDisplayStatus(const char* value)
 }
 
 
-void XenObject::setBusy(bool value)
+int XenObject::setBusy(bool value)
 {
+    int count;
     if (value)
     {
-        if (InterlockedIncrement(&_busyCount) != 1)
+        count = InterlockedIncrement(&_busyCount);
+        if (count == 1)
         {
-            return;
+            emit(BUSY_SET);
         }
     }
-    else if (InterlockedDecrement(&_busyCount) != 0)
+    else
     {
-        return;
+        count = InterlockedDecrement(&_busyCount);
+        if (count == 0)
+        {
+            emit(BUSY_RESET);
+        }
     }
-    emit(BUSY_UPDATED);
+    return count;
 }
 
 

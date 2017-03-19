@@ -43,8 +43,9 @@ namespace hnrt
 
         enum Notification
         {
-            CREATED = 100,
-            BUSY_UPDATED,
+            CREATED = 257,
+            BUSY_SET,
+            BUSY_RESET,
             NAME_UPDATED,
             STATUS_UPDATED,
             SESSION_UPDATED,
@@ -54,7 +55,7 @@ namespace hnrt
             POWER_STATE_UPDATED,
             RECORD_UPDATED,
             SNAPSHOT_UPDATED,
-            DESTROYED = 199,
+            DESTROYED = 511,
             NOTIFICATION_MIN = CREATED,
             NOTIFICATION_MAX = DESTROYED,
         };
@@ -69,11 +70,11 @@ namespace hnrt
         void lock();
         void unlock();
         Glib::ustring getName();
-        virtual void setName(const char* value);
+        virtual void setName(const char*);
         Glib::ustring getDisplayStatus();
-        virtual void setDisplayStatus(const char* value);
+        virtual void setDisplayStatus(const char*);
         bool isBusy() const { return _busyCount > 0; }
-        virtual void setBusy(bool value = true);
+        virtual int setBusy(bool = true);
         void emit(Notification);
 
         class Busy

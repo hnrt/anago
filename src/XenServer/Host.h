@@ -41,7 +41,7 @@ namespace hnrt
         static RefPtr<Host> create(const ConnectSpec&);
 
         virtual ~Host();
-        virtual void setBusy(bool value = true);
+        virtual int setBusy(bool value = true);
         XenPtr<xen_host_record> getRecord();
         void setRecord(const XenPtr<xen_host_record>&);
         XenPtr<xen_host_metrics_record> getMetricsRecord();

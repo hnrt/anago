@@ -43,27 +43,10 @@ Host:: ~Host()
 }
 
 
-void Host::setBusy(bool value)
+int Host::setBusy(bool value)
 {
-    int count;
-    if (value)
-    {
-        count = InterlockedIncrement(&_busyCount);
-        if (count != 1)
-        {
-            return;
-        }
-    }
-    else
-    {
-        count = InterlockedDecrement(&_busyCount);
-        if (count != 0)
-        {
-            return;
-        }
-    }
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), BUSY_UPDATED);
-    if (count == 0)
+    int count = XenObject::setBusy(value);
+    if (!count)
     {
         switch (_state)
         {
@@ -85,6 +68,7 @@ void Host::setBusy(bool value)
             break;
         }
     }
+    return count;
 }
 
 
@@ -151,12 +135,16 @@ void Host::onConnected()
     XenRef<xen_host, xen_host_free_t> host;
     if (!xen_session_get_this_host(_session, &host, _session))
     {
+        Logger::instance().warn("Host::connect: xen_session_get_this_host failed.");
+        _session.clearError();
         return;
     }
     _refid = host.toString();
     XenPtr<xen_host_record> record;
     if (!xen_host_get_record(_session, record.address(), host))
     {
+        Logger::instance().warn("Host::connect: xen_host_get_recrod failed.");
+        _session.clearError();
         return;
     }
     XenPtr<xen_host_metrics_record> metricsRecord;
@@ -168,13 +156,13 @@ void Host::onConnected()
         }
         else
         {
-            g_print("Host::connect: xen_host_metrics_get_record failed.\n");
+            Logger::instance().warn("Host::connect: xen_host_metrics_get_record failed.");
             _session.clearError();
         }
     }
     else
     {
-        g_print("Host::connect: xen_host_get_metrics failed.\n");
+        Logger::instance().warn("Host::connect: xen_host_get_metrics failed.");
         _session.clearError();
     }
     {
