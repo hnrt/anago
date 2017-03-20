@@ -9,11 +9,13 @@
 #include "Model/ThreadManager.h"
 #include "View/View.h"
 #include "XenServer/Host.h"
+#include "XenServer/Network.h"
 #include "XenServer/PhysicalBlockDevice.h"
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
 #include "XenServer/VirtualBlockDevice.h"
 #include "XenServer/VirtualDiskImage.h"
+#include "XenServer/VirtualInterface.h"
 #include "XenServer/VirtualMachine.h"
 #include "XenServer/XenObject.h"
 #include "XenServer/XenObjectStore.h"
@@ -162,9 +164,17 @@ Controller::Signal ControllerImpl::signalNotified(const RefPtr<RefObj>& object)
 void ControllerImpl::notify(const RefPtr<RefObj>& object, int notification)
 {
     Trace trace("ControllerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
-    Glib::RecMutex::Lock k(_mutex);
-    _notified.push_back(RefPtrNotificationPair(object, notification));
-    if (_notified.size() == 1)
+    std::list<RefPtrNotificationPair>::size_type size;
+    {
+        Glib::RecMutex::Lock k(_mutex);
+        _notified.push_back(RefPtrNotificationPair(object, notification));
+        size = _notified.size();
+    }
+    if (ThreadManager::instance().isMain())
+    {
+        onNotify();
+    }
+    else if (size == 1)
     {
         _dispatcher();
     }
@@ -457,7 +467,7 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
                 XenPtr<xen_network_record> nwRecord;
                 if (xen_network_get_record(session, nwRecord.address(), nwSet->contents[i]))
                 {
-                    //Network::create(session, nwSet->contents[i], nwRecord);
+                    Network::create(session, nwSet->contents[i], nwRecord);
                 }
                 else
                 {
@@ -477,7 +487,7 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
                 XenPtr<xen_vif_record> vifRecord;
                 if (xen_vif_get_record(session, vifRecord.address(), vifSet->contents[i]))
                 {
-                    //VirtualInterface::create(session, vifSet->contents[i], vifRecord);
+                    VirtualInterface::create(session, vifSet->contents[i], vifRecord);
                 }
                 else
                 {

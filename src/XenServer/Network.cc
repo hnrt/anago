@@ -22,7 +22,7 @@ RefPtr<Network> Network::create(Session& session, xen_network handle, const XenP
 
 
 Network::Network(Session& session, xen_network handle, const XenPtr<xen_network_record>& record)
-    : XenObject(XenObject::NETWORK, session, handle, record->uuid, "NETWORK")
+    : XenObject(XenObject::NETWORK, session, handle, record->uuid, record->name_label)
     , _record(record)
 {
     Trace trace(StringBuffer().format("NETWORK@%zx::ctor", this));
@@ -53,6 +53,7 @@ void Network::setRecord(const XenPtr<xen_network_record>& record)
     {
         return;
     }
+    XenObject::setName(record->name_label);
     emit(RECORD_UPDATED);
 }
 

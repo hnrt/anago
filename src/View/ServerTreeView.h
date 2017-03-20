@@ -15,7 +15,7 @@
 namespace hnrt
 {
     class Host;
-    //class Network;
+    class Network;
     class ServerTreeStore;
     class StorageRepository;
     class VirtualMachine;
@@ -45,6 +45,7 @@ namespace hnrt
         bool add(RefPtr<Host>);
         bool add(RefPtr<VirtualMachine>);
         bool add(RefPtr<StorageRepository>);
+        bool add(RefPtr<Network>);
         void reorder(RefPtr<VirtualMachine>&, Gtk::TreeIter&);
         void reorder(RefPtr<StorageRepository>&, Gtk::TreeIter&);
         virtual bool on_button_press_event(GdkEventButton*);

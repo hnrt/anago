@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <libintl.h>
 #include "XenServer/Host.h"
-//#include "XenServer/Network.h"
+#include "XenServer/Network.h"
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
 #include "XenServer/VirtualMachine.h"
@@ -53,7 +53,7 @@ bool ServerTreeView::add(RefPtr<XenObject>& object)
     case XenObject::SR:
         return add(RefPtr<StorageRepository>::castStatic(object));
     case XenObject::NETWORK:
-        //return add(RefPtr<Network>::castStatic(object));
+        return add(RefPtr<Network>::castStatic(object));
     default:
         return false;
     }
@@ -294,10 +294,9 @@ bool ServerTreeView::add(RefPtr<StorageRepository> sr)
     return false;
 }
 
-#if 0
+
 bool ServerTreeView::add(const RefPtr<Network> nw)
 {
-    //printf("#%p ServerTreeView::add(%s): Started.\n", Glib::Thread::self(), nw->getName().str());
     RefPtr<Host> host = nw->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
     while (iter)
@@ -346,18 +345,16 @@ bool ServerTreeView::add(const RefPtr<Network> nw)
                 iter2++;
             }
             row[_store->record().colPix] = PixStore::instance().get(nw);
-            row[_store->record().colKey] = Glib::ustring(nwRecord->name_label);
-            row[_store->record().colVal] = Glib::ustring(nw->getDisplayStatus().str());
+            row[_store->record().colKey] = nw->getName();
+            row[_store->record().colVal] = nw->getDisplayStatus();
             row[_store->record().colXenObject] = RefPtr<XenObject>::castStatic(nw);
-            //printf("#%p ServerTreeView::add(%s): Finished.\n", Glib::Thread::self(), nw->getName().str());
             return true;
         }
         iter++;
     }
-    // cannot find appropriate insertion point
     return false;
 }
-#endif
+
 
 void ServerTreeView::update(RefPtr<XenObject>& object, int what)
 {

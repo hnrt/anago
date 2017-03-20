@@ -21,6 +21,7 @@ namespace hnrt
 
         virtual ~ThreadManager();
         int count();
+        bool isMain() const { return Glib::Thread::self() == _mainThread; }
         Glib::ustring add(const char*);
         Glib::ustring add(const Glib::ustring&);
         void remove();

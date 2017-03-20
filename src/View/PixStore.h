@@ -14,6 +14,7 @@ namespace hnrt
     class Host;
     class StorageRepository;
     class VirtualMachine;
+    class Network;
 
     class PixStore
     {
@@ -27,9 +28,10 @@ namespace hnrt
         Glib::RefPtr<Gdk::Pixbuf> getApp() const { return _pixApp; }
         Glib::RefPtr<Gdk::Pixbuf> getYes() const { return _pixYes; }
         Glib::RefPtr<Gdk::Pixbuf> getNo() const { return _pixNo; }
-        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<Host>);
-        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<StorageRepository>);
-        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<VirtualMachine>);
+        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<Host>) const;
+        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<StorageRepository>) const;
+        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<VirtualMachine>) const;
+        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<Network> nw) const;
 
     protected:
 
@@ -39,7 +41,9 @@ namespace hnrt
 
         Glib::RefPtr<Gdk::Pixbuf> _pixApp;
         Glib::RefPtr<Gdk::Pixbuf> _pixError;
+        Glib::RefPtr<Gdk::Pixbuf> _pixHardDisk;
         Glib::RefPtr<Gdk::Pixbuf> _pixHourglass;
+        Glib::RefPtr<Gdk::Pixbuf> _pixNetworkAdapter;
         Glib::RefPtr<Gdk::Pixbuf> _pixNo;
         Glib::RefPtr<Gdk::Pixbuf> _pixPause;
         Glib::RefPtr<Gdk::Pixbuf> _pixPowerOff;

@@ -2,7 +2,9 @@
 
 
 #include <gtkmm.h>
+#include "Icon/HardDisk.h"
 #include "Icon/Hourglass.h"
+#include "Icon/NetworkAdapter.h"
 #include "Icon/No.h"
 #include "Icon/Pause.h"
 #include "Icon/PowerOff.h"
@@ -10,6 +12,7 @@
 #include "Icon/Warning.h"
 #include "Icon/Yes.h"
 #include "XenServer/Host.h"
+#include "XenServer/Network.h"
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
 #include "XenServer/VirtualMachine.h"
@@ -50,7 +53,9 @@ static Glib::RefPtr<Gdk::Pixbuf> RenderIcon(const Gtk::StockID& stockId, Gtk::Ic
 PixStore::PixStore()
     : _pixApp(Gdk::Pixbuf::create_from_file("/usr/share/icons/gnome/32x32/apps/preferences-desktop-remote-desktop.png"))
     , _pixError(RenderIcon(Gtk::Stock::DIALOG_ERROR, Gtk::ICON_SIZE_BUTTON))
+    , _pixHardDisk(Gdk::Pixbuf::create_from_inline(-1, _iconHardDisk, false))
     , _pixHourglass(Gdk::Pixbuf::create_from_inline(-1, _iconHourglass, false))
+    , _pixNetworkAdapter(Gdk::Pixbuf::create_from_inline(-1, _iconNetworkAdapter, false))
     , _pixNo(Gdk::Pixbuf::create_from_inline(-1, _iconNo, false))
     , _pixPause(Gdk::Pixbuf::create_from_inline(-1, _iconPause, false))
     , _pixPowerOff(Gdk::Pixbuf::create_from_inline(-1, _iconPowerOff, false))
@@ -61,7 +66,7 @@ PixStore::PixStore()
 }
 
 
-Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<Host> host)
+Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<Host> host) const
 {
     return
         !host ? _pixError :
@@ -71,13 +76,13 @@ Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<Host> host)
 }
 
 
-Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<StorageRepository> sr)
+Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<StorageRepository> sr) const
 {
-    return _pixError;
+    return _pixHardDisk;
 }
 
 
-Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<VirtualMachine> vm)
+Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<VirtualMachine> vm) const
 {
     if (!vm)
     {
@@ -98,4 +103,10 @@ Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<VirtualMachine> vm)
             record->power_state == XEN_VM_POWER_STATE_SUSPENDED ? _pixPause :
             _pixError;
     }
+}
+
+
+Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<Network> nw) const
+{
+    return _pixNetworkAdapter;
 }
