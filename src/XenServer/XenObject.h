@@ -15,13 +15,18 @@
 
 namespace hnrt
 {
+    class Host;
+    class Network;
     class PhysicalBlockDevice;
+    class PhysicalInterface;
     class Session;
     class StorageRepository;
     class VirtualBlockDevice;
     class VirtualDiskImage;
+    class VirtualInterface;
     class VirtualMachine;
     class XenObjectStore;
+    class XenTask;
     struct ConnectSpec;
 
     class XenObject

@@ -16,17 +16,7 @@
 
 namespace hnrt
 {
-    class Host;
-    //class Network;
     //class PerformanceMonitor;
-    class PhysicalBlockDevice;
-    //class PhysicalInterface;
-    class StorageRepository;
-    class VirtualBlockDevice;
-    class VirtualDiskImage;
-    //class VirtualInterface;
-    class VirtualMachine;
-    class XenTask;
 
     class XenObjectStore
         : public RefObj
@@ -40,53 +30,53 @@ namespace hnrt
 
         XenObjectStore();
         virtual ~XenObjectStore();
-        RefPtr<Host> getHost();
+        RefPtr<Host> getHost() const;
         void setHost(const RefPtr<Host>&);
         void removeHost();
         void clear();
-        RefPtr<XenObject> get(const Glib::ustring&, XenObject::Type = XenObject::ANY);
-        RefPtr<XenObject> get(const char*, XenObject::Type = XenObject::ANY);
+        RefPtr<XenObject> get(const Glib::ustring&, XenObject::Type = XenObject::ANY) const;
+        RefPtr<XenObject> get(const char*, XenObject::Type = XenObject::ANY) const;
         void remove(const RefPtr<XenObject>&);
         void remove(const Glib::ustring&, XenObject::Type = XenObject::ANY);
         void remove(const char* refid, XenObject::Type type = XenObject::ANY) { return remove(Glib::ustring(refid), type); }
         template<typename T> void add(RefPtr<T>& object) { addObject(RefPtr<XenObject>::castStatic(object)); }
         //RefPtr<PerformanceMonitor> getPerformanceMonitor() const;
         //void setPerformanceMonitor(const RefPtr<PerformanceMonitor>&);
-        //RefPtr<Network> getNw(const Glib::ustring& key) const;
-        //RefPtr<Network> getNw(const char* key) const;
-        //RefPtr<Network> getNw(const xen_network_record_opt* opt) const;
-        RefPtr<PhysicalBlockDevice> getPbd(const Glib::ustring&);
-        RefPtr<PhysicalBlockDevice> getPbd(const char*);
-        RefPtr<PhysicalBlockDevice> getPbd(const xen_pbd_record_opt*);
+        RefPtr<Network> getNw(const Glib::ustring&) const;
+        RefPtr<Network> getNw(const char*) const;
+        RefPtr<Network> getNw(const xen_network_record_opt*) const;
+        RefPtr<PhysicalBlockDevice> getPbd(const Glib::ustring&) const;
+        RefPtr<PhysicalBlockDevice> getPbd(const char*) const;
+        RefPtr<PhysicalBlockDevice> getPbd(const xen_pbd_record_opt*) const;
         //RefPtr<PhysicalInterface> getPif(const Glib::ustring& key) const;
         //RefPtr<PhysicalInterface> getPif(const char* key) const;
         //RefPtr<PhysicalInterface> getPif(const xen_pif_record_opt* opt) const;
-        RefPtr<StorageRepository> getSr(const Glib::ustring&);
-        RefPtr<StorageRepository> getSr(const char*);
-        RefPtr<StorageRepository> getSr(const xen_sr_record_opt*);
-        RefPtr<XenTask> getTask(const Glib::ustring&);
-        RefPtr<XenTask> getTask(const char*);
-        RefPtr<VirtualBlockDevice> getVbd(const Glib::ustring&);
-        RefPtr<VirtualBlockDevice> getVbd(const char*);
-        RefPtr<VirtualBlockDevice> getVbd(const xen_vbd_record_opt*);
-        RefPtr<VirtualDiskImage> getVdi(const Glib::ustring&);
-        RefPtr<VirtualDiskImage> getVdi(const char*);
-        RefPtr<VirtualDiskImage> getVdi(const xen_vdi_record_opt*);
-        //RefPtr<VirtualInterface> getVif(const Glib::ustring& key) const;
-        //RefPtr<VirtualInterface> getVif(const char* key) const;
-        //RefPtr<VirtualInterface> getVif(const xen_vif_record_opt* opt) const;
-        RefPtr<VirtualMachine> getVm(const Glib::ustring&);
-        RefPtr<VirtualMachine> getVm(const char*);
-        RefPtr<VirtualMachine> getVm(const xen_vm_record_opt*);
-        RefPtr<VirtualMachine> getVmByMetrics(const xen_vm_metrics);
-        RefPtr<VirtualMachine> getVmByGuestMetrics(const xen_vm_guest_metrics);
-        RefPtr<VirtualMachine> getVmByImportTask(const Glib::ustring& key);
-        //int getList(std::list<RefPtr<Network> >& list) const;
-        //int getList(std::list<RefPtr<PhysicalInterface> >& list) const;
-        int getList(std::list<RefPtr<StorageRepository> >&);
-        //int getList(std::list<RefPtr<VirtualInterface> >& list) const;
-        int getList(std::list<RefPtr<VirtualMachine> >&);
-        Glib::ustring getSrCandidate(int64_t hint, const Glib::ustring& defaultSr);
+        RefPtr<StorageRepository> getSr(const Glib::ustring&) const;
+        RefPtr<StorageRepository> getSr(const char*) const;
+        RefPtr<StorageRepository> getSr(const xen_sr_record_opt*) const;
+        RefPtr<XenTask> getTask(const Glib::ustring&) const;
+        RefPtr<XenTask> getTask(const char*) const;
+        RefPtr<VirtualBlockDevice> getVbd(const Glib::ustring&) const;
+        RefPtr<VirtualBlockDevice> getVbd(const char*) const;
+        RefPtr<VirtualBlockDevice> getVbd(const xen_vbd_record_opt*) const;
+        RefPtr<VirtualDiskImage> getVdi(const Glib::ustring&) const;
+        RefPtr<VirtualDiskImage> getVdi(const char*) const;
+        RefPtr<VirtualDiskImage> getVdi(const xen_vdi_record_opt*) const;
+        RefPtr<VirtualInterface> getVif(const Glib::ustring&) const;
+        RefPtr<VirtualInterface> getVif(const char*) const;
+        RefPtr<VirtualInterface> getVif(const xen_vif_record_opt*) const;
+        RefPtr<VirtualMachine> getVm(const Glib::ustring&) const;
+        RefPtr<VirtualMachine> getVm(const char*) const;
+        RefPtr<VirtualMachine> getVm(const xen_vm_record_opt*) const;
+        RefPtr<VirtualMachine> getVmByMetrics(const xen_vm_metrics) const;
+        RefPtr<VirtualMachine> getVmByGuestMetrics(const xen_vm_guest_metrics) const;
+        RefPtr<VirtualMachine> getVmByImportTask(const Glib::ustring& key) const;
+        int getList(std::list<RefPtr<Network> >&) const;
+        //int getList(std::list<RefPtr<PhysicalInterface> >&) const;
+        int getList(std::list<RefPtr<StorageRepository> >&) const;
+        int getList(std::list<RefPtr<VirtualInterface> >&) const;
+        int getList(std::list<RefPtr<VirtualMachine> >&) const;
+        Glib::ustring getSrCandidate(int64_t hint, const Glib::ustring& defaultSr) const;
         //void debuginfo();
 
     protected:
@@ -94,8 +84,8 @@ namespace hnrt
         XenObjectStore(const XenObjectStore&);
         void operator =(const XenObjectStore&);
         void addObject(RefPtr<XenObject>);
-        template<typename T> RefPtr<XenObject> getByOpt(T*, XenObject::Type);
-        template<typename T> int getList(std::list<RefPtr<T> >& list, XenObject::Type type);
+        template<typename T> RefPtr<XenObject> getByOpt(T, XenObject::Type) const;
+        template<typename T> int getListByType(std::list<RefPtr<T> >&, XenObject::Type) const;
 
         Glib::RecMutex _mutex;
         RefPtr<Host> _host;
