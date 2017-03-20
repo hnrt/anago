@@ -40,6 +40,7 @@ namespace hnrt
         void operator =(const PixStore&);
 
         Glib::RefPtr<Gdk::Pixbuf> _pixApp;
+        Glib::RefPtr<Gdk::Pixbuf> _pixCdRom;
         Glib::RefPtr<Gdk::Pixbuf> _pixError;
         Glib::RefPtr<Gdk::Pixbuf> _pixHardDisk;
         Glib::RefPtr<Gdk::Pixbuf> _pixHourglass;
@@ -48,6 +49,7 @@ namespace hnrt
         Glib::RefPtr<Gdk::Pixbuf> _pixPause;
         Glib::RefPtr<Gdk::Pixbuf> _pixPowerOff;
         Glib::RefPtr<Gdk::Pixbuf> _pixPowerOn;
+        Glib::RefPtr<Gdk::Pixbuf> _pixRemovableMedia;
         Glib::RefPtr<Gdk::Pixbuf> _pixWarning;
         Glib::RefPtr<Gdk::Pixbuf> _pixYes;
     };
