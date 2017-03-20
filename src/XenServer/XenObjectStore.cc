@@ -5,19 +5,19 @@
 #include <list>
 #include "Controller/Controller.h"
 //#include "Controller/PerformanceMonitor.h"
+#include "Host.h"
+#include "Macros.h"
 #include "Network.h"
 #include "PhysicalBlockDevice.h"
-//#include "PhysicalInterface.h"
+#include "PhysicalInterface.h"
+#include "Session.h"
 #include "StorageRepository.h"
-#include "XenTask.h"
 #include "VirtualBlockDevice.h"
 #include "VirtualDiskImage.h"
 #include "VirtualInterface.h"
 #include "VirtualMachine.h"
-#include "Host.h"
-#include "Macros.h"
-#include "Session.h"
 #include "XenObjectStore.h"
+#include "XenTask.h"
 
 
 using namespace hnrt;
@@ -355,7 +355,7 @@ RefPtr<PhysicalBlockDevice> XenObjectStore::getPbd(const xen_pbd_record_opt* opt
     return RefPtr<PhysicalBlockDevice>::castStatic(getByOpt(opt, XenObject::PBD));
 }
 
-#if 0
+
 RefPtr<PhysicalInterface> XenObjectStore::getPif(const Glib::ustring& key) const
 {
     return RefPtr<PhysicalInterface>::castStatic(get(key, XenObject::PIF));
@@ -372,7 +372,7 @@ RefPtr<PhysicalInterface> XenObjectStore::getPif(const xen_pif_record_opt* opt) 
 {
     return RefPtr<PhysicalInterface>::castStatic(getByOpt(opt, XenObject::PIF));
 }
-#endif
+
 
 RefPtr<StorageRepository> XenObjectStore::getSr(const Glib::ustring& key) const
 {
@@ -575,12 +575,12 @@ int XenObjectStore::getList(std::list<RefPtr<Network> >& list) const
     return getListByType(list, XenObject::NETWORK);
 }
 
-#if 0
+
 int XenObjectStore::getList(std::list<RefPtr<PhysicalInterface> >& list) const
 {
     return getListByType(list, XenObject::PIF);
 }
-#endif
+
 
 int XenObjectStore::getList(std::list<RefPtr<StorageRepository> >& list) const
 {

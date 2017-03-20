@@ -7,6 +7,7 @@
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "XenServer/XenObjectStore.h"
+#include "XenServer/XenObjectTypeMap.h"
 #include "ModelImpl.h"
 #include "PatchBase.h"
 
@@ -51,11 +52,13 @@ ModelImpl::~ModelImpl()
 void ModelImpl::init()
 {
     _patchBase->init();
+    XenObjectTypeMap::init();
 }
 
 
 void ModelImpl::fini()
 {
+    XenObjectTypeMap::fini();
     _patchBase->fini();
 }
 

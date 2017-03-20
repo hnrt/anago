@@ -48,9 +48,9 @@ namespace hnrt
         RefPtr<PhysicalBlockDevice> getPbd(const Glib::ustring&) const;
         RefPtr<PhysicalBlockDevice> getPbd(const char*) const;
         RefPtr<PhysicalBlockDevice> getPbd(const xen_pbd_record_opt*) const;
-        //RefPtr<PhysicalInterface> getPif(const Glib::ustring& key) const;
-        //RefPtr<PhysicalInterface> getPif(const char* key) const;
-        //RefPtr<PhysicalInterface> getPif(const xen_pif_record_opt* opt) const;
+        RefPtr<PhysicalInterface> getPif(const Glib::ustring&) const;
+        RefPtr<PhysicalInterface> getPif(const char*) const;
+        RefPtr<PhysicalInterface> getPif(const xen_pif_record_opt*) const;
         RefPtr<StorageRepository> getSr(const Glib::ustring&) const;
         RefPtr<StorageRepository> getSr(const char*) const;
         RefPtr<StorageRepository> getSr(const xen_sr_record_opt*) const;
@@ -72,7 +72,7 @@ namespace hnrt
         RefPtr<VirtualMachine> getVmByGuestMetrics(const xen_vm_guest_metrics) const;
         RefPtr<VirtualMachine> getVmByImportTask(const Glib::ustring& key) const;
         int getList(std::list<RefPtr<Network> >&) const;
-        //int getList(std::list<RefPtr<PhysicalInterface> >&) const;
+        int getList(std::list<RefPtr<PhysicalInterface> >&) const;
         int getList(std::list<RefPtr<StorageRepository> >&) const;
         int getList(std::list<RefPtr<VirtualInterface> >&) const;
         int getList(std::list<RefPtr<VirtualMachine> >&) const;

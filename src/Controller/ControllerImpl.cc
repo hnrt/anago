@@ -4,6 +4,7 @@
 #include <libintl.h>
 #include <stdexcept>
 #include "Base/Atomic.h"
+#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "Model/ThreadManager.h"
@@ -11,14 +12,17 @@
 #include "XenServer/Host.h"
 #include "XenServer/Network.h"
 #include "XenServer/PhysicalBlockDevice.h"
+#include "XenServer/PhysicalInterface.h"
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
 #include "XenServer/VirtualBlockDevice.h"
 #include "XenServer/VirtualDiskImage.h"
 #include "XenServer/VirtualInterface.h"
 #include "XenServer/VirtualMachine.h"
+#include "XenServer/XenEventMonitor.h"
 #include "XenServer/XenObject.h"
 #include "XenServer/XenObjectStore.h"
+#include "XenServer/XenTask.h"
 #include "Background.h"
 #include "ControllerImpl.h"
 
@@ -230,11 +234,9 @@ void ControllerImpl::onNotify()
 void ControllerImpl::onObjectCreated(RefPtr<RefObj> object)
 {
     RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
-    if (xenObject->getType() == XenObject::SESSION)
-    {
-        signalNotified(object).connect(sigc::mem_fun(*this, &ControllerImpl::onObjectUpdated));
-    }
-    else if (View::instance().addObject(xenObject))
+    if (xenObject->getType() == XenObject::SESSION
+        || xenObject->getType() == XenObject::TASK
+        || View::instance().addObject(xenObject))
     {
         signalNotified(object).connect(sigc::mem_fun(*this, &ControllerImpl::onObjectUpdated));
     }
@@ -272,6 +274,47 @@ void ControllerImpl::onObjectUpdated(RefPtr<RefObj> object, int what)
             session.clearError();
         }
         View::instance().showWarning(message.str());
+    }
+    else if (xenObject->getType() == XenObject::TASK)
+    {
+        RefPtr<XenTask> task = RefPtr<XenTask>::castStatic(xenObject);
+        switch (what)
+        {
+        case XenObject::TASK_ON_SUCCESS:
+        {
+            StringBuffer message;
+            message += task->getMessageOnSuccess().c_str();
+            if (message.len())
+            {
+                View::instance().showInfo(message.str());
+            }
+            task->onSuccess();
+            break;
+        }
+        case XenObject::TASK_ON_FAILURE:
+        {
+            StringBuffer message;
+            XenServer::getErrorFromTask(task->getSession(), task->getHandle(), message, "\n");
+            task->setErrorMessage(message);
+            message.clear();
+            message += task->getMessageOnFailure().c_str();
+            if (message.len())
+            {
+                message += "\n";
+                message += task->getErrorMessage().c_str();
+                View::instance().showWarning(message.str());
+            }
+            task->onFailure();
+            break;
+        }
+        case XenObject::TASK_ON_CANCELLED:
+        {
+            task->onFailure();
+            break;
+        }
+        default:
+            break;
+        }
     }
     else
     {
@@ -447,7 +490,7 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
                 XenPtr<xen_pif_record> pifRecord;
                 if (xen_pif_get_record(session, pifRecord.address(), pifSet->contents[i]))
                 {
-                    //PhysicalInterface::create(session, pifSet->contents[i], pifRecord);
+                    PhysicalInterface::create(session, pifSet->contents[i], pifRecord);
                 }
                 else
                 {
@@ -539,6 +582,14 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
         {
             session.clearError();
         }
+    }
+    session.setMonitoring(true);
+    XenEventMonitor eventMonitor(session);
+    eventMonitor.run();
+    session.setMonitoring(false);
+    if (session.isConnected())
+    {
+        Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false);
     }
 }
 
