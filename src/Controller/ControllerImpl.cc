@@ -584,8 +584,8 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
         }
     }
     session.setMonitoring(true);
-    XenEventMonitor eventMonitor(session);
-    eventMonitor.run();
+    XenEventMonitor eventMonitor;
+    eventMonitor.run(session);
     session.setMonitoring(false);
     if (session.isConnected())
     {

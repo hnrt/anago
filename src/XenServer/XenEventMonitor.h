@@ -13,10 +13,9 @@ namespace hnrt
     {
     public:
 
-        XenEventMonitor(Session&);
+        XenEventMonitor();
         ~XenEventMonitor();
-        Session& getSession() const { return _session; }
-        void run();
+        void run(Session&);
         void disconnect() { _connected = false; }
 
     private:
@@ -30,13 +29,12 @@ namespace hnrt
             char *ref;
 
             Record(int, const xen_event_record*);
-            bool process(Session& session, XenEventMonitor*);
+            bool process(XenEventMonitor&, Session& primary, Session& secondary);
         };
 
         XenEventMonitor(const XenEventMonitor&);
         void operator =(const XenEventMonitor&);
 
-        Session& _session;
         bool _connected;
     };
 }

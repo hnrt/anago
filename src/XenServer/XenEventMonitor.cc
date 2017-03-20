@@ -30,31 +30,22 @@
 using namespace hnrt;
 
 
-XenEventMonitor::XenEventMonitor(Session& session)
-    : _session(session)
-    , _connected(false)
+XenEventMonitor::XenEventMonitor()
+    : _connected(false)
 {
     Trace trace("XenEventMonitor::ctor");
-    _session.reference();
 }
 
 
 XenEventMonitor::~XenEventMonitor()
 {
     Trace trace("XenEventMonitor::dtor");
-    _session.unreference();
 }
 
 
-void XenEventMonitor::run()
+void XenEventMonitor::run(Session& sessionPrimary)
 {
     Trace trace("XenEventMonitor::run");
-
-    if (_connected)
-    {
-        Logger::instance().warn("XenEventMonitor: Already connected.");
-        return;
-    }
 
     RefPtr<Session> pSession = RefPtr<Session>(new Session());
 
@@ -64,9 +55,13 @@ void XenEventMonitor::run()
 
     try
     {
-        if (!session.connect(_session))
+        if (_connected)
         {
-            Logger::instance().error("connect failed.");
+            throw "XenEventMonitor: Already connected.";
+        }
+
+        if (!session.connect(sessionPrimary))
+        {
             throw "connect failed.";
         }
 
@@ -75,15 +70,13 @@ void XenEventMonitor::run()
         xen_string_set *classes = xen_string_set_alloc(1);
         if (!classes)
         {
-            Logger::instance().error("xen_string_set_alloc(1) failed.");
-            throw std::bad_alloc();
+            throw "xen_string_set_alloc(1) failed.";
         }
 
         classes->contents[0] = xen_strdup_("*");
         if (!classes->contents[0])
         {
-            Logger::instance().error("xen_strdup failed.");
-            throw std::bad_alloc();
+            throw "xen_strdup failed.";
         }
 
         if (!xen_event_register(session, classes))
@@ -91,7 +84,7 @@ void XenEventMonitor::run()
             throw "xen_event_register failed.";
         }
 
-        while (_session.isConnected() && _connected)
+        while (sessionPrimary.isConnected() && _connected)
         {
             XenPtr<xen_event_record_set> events;
 
@@ -100,7 +93,7 @@ void XenEventMonitor::run()
                 throw "xen_event_next failed.";
             }
 
-            if (!_session.isConnected())
+            if (!sessionPrimary.isConnected())
             {
                 break;
             }
@@ -146,16 +139,20 @@ void XenEventMonitor::run()
 
             for (size_t i = 0; i < cache.size(); i++)
             {
-                if (!cache[i].process(session, this))
+                if (!cache[i].process(*this, sessionPrimary, session))
                 {
-                    Session::Lock lock(session);
                     session.clearError();
                 }
             }
         }
     }
+    catch (char* message)
+    {
+        Logger::instance().error("%s", message);
+    }
     catch (...)
     {
+        Logger::instance().error("Unhandled exception caught.");
     }
 
     if (session.failed())
@@ -169,7 +166,6 @@ void XenEventMonitor::run()
         {
             Logger::instance().info("Session %s disconnected by peer.",
                                     session.getConnectSpec().hostname.c_str());
-            //Controller::instance().onDisconnectedByPeer(_session);
         }
         else
         {
@@ -200,7 +196,7 @@ XenEventMonitor::Record::Record(int type_, const xen_event_record* ev)
 }
 
 
-bool XenEventMonitor::Record::process(Session& session, XenEventMonitor* mon)
+bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& sessionPrimary, Session& session)
 {
     Trace trace("XenEventMonitor::Record::process");
 
@@ -214,7 +210,6 @@ bool XenEventMonitor::Record::process(Session& session, XenEventMonitor* mon)
     }
     else
     {
-        Session& sessionPrimary = mon->getSession();
         switch (type)
         {
         case XenObject::HOST:
@@ -419,7 +414,7 @@ bool XenEventMonitor::Record::process(Session& session, XenEventMonitor* mon)
             }
             if (!strcmp(record->name_label, "disconnect"))
             {
-                mon->disconnect();
+                monitor.disconnect();
             }
             xen_task_status_type status = XEN_TASK_STATUS_TYPE_UNDEFINED;
             if (xen_task_get_status(session, &status, ref))
