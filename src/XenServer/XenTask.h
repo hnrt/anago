@@ -5,8 +5,6 @@
 #define HNRT_XENTASK_H
 
 
-#include <glibmm.h>
-#include "Api.h"
 #include "XenObject.h"
 
 
@@ -19,6 +17,7 @@ namespace hnrt
 
         static RefPtr<XenTask> create(Session&, xen_task, XenObject*, const char* messageOnFailure = NULL, const char* messageOnSuccess = NULL);
 
+        virtual ~XenTask();
         const XenObject& getObject() const { return *_object; }
         XenObject& getObject() { return *_object; }
         xen_task_status_type getStatus() const { return _status; }

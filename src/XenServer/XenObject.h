@@ -8,11 +8,21 @@
 #include <glibmm.h>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
+#include "XenServer/Api.h"
+#include "XenServer/XenPtr.h"
+#include "XenServer/XenRef.h"
 
 
 namespace hnrt
 {
+    class PhysicalBlockDevice;
     class Session;
+    class StorageRepository;
+    class VirtualBlockDevice;
+    class VirtualDiskImage;
+    class VirtualMachine;
+    class XenObjectStore;
+    struct ConnectSpec;
 
     class XenObject
         : public RefObj
@@ -63,14 +73,14 @@ namespace hnrt
 
         virtual ~XenObject();
         Type getType() const { return _type; }
-        const Session& getSession() const;
-        Session& getSession();
-        void* getXenRef() const { return const_cast<void*>(reinterpret_cast<const void*>(_refid.c_str())); }
-        const Glib::ustring& getREFID() const { return _refid; }
-        const Glib::ustring& getUUID() const { return _uuid; }
-        Glib::ustring getName();
+        const Session& getSession() const { return _session; }
+        Session& getSession() { return _session; }
+        void* getHandle() const { return _handle; }
+        Glib::ustring getREFID() const { return _refid; }
+        Glib::ustring getUUID() const { return _uuid; }
+        Glib::ustring getName() const;
         virtual void setName(const char*);
-        Glib::ustring getDisplayStatus();
+        Glib::ustring getDisplayStatus() const;
         virtual void setDisplayStatus(const char*);
         bool isBusy() const { return _busyCount > 0; }
         virtual int setBusy(bool = true);
@@ -89,12 +99,13 @@ namespace hnrt
 
     protected:
 
-        XenObject(Type, Session&, const char* refid, const char* uuid = 0, const char* name = 0);
+        XenObject(Type, Session&, void* handle, const char* uuid, const char* name);
         XenObject(const XenObject&);
         void operator =(const XenObject&);
 
         Type _type;
         Session& _session;
+        void* _handle;
         Glib::ustring _refid;
         Glib::ustring _uuid;
         Glib::Mutex _mutex;

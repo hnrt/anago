@@ -13,7 +13,6 @@
 #include "VirtualDiskImage.h"
 #include "VirtualMachine.h"
 #include "XenObjectStore.h"
-#include "XenRef.h"
 #include "XenTask.h"
 
 
@@ -29,7 +28,7 @@ RefPtr<VirtualMachine> VirtualMachine::create(Session& session, xen_vm handle, c
 
 
 VirtualMachine::VirtualMachine(Session& session, xen_vm handle, const XenPtr<xen_vm_record>& record)
-    : XenObject(XenObject::VM, session, reinterpret_cast<char*>(handle), record->uuid, record->name_label)
+    : XenObject(XenObject::VM, session, handle, record->uuid, record->name_label)
     , _record(record)
 {
     Trace trace(StringBuffer().format("VM@%zx::ctor", this), "name=\"%s\"", record->name_label);
@@ -73,10 +72,10 @@ int VirtualMachine::setBusy(bool value)
 }
 
 
-XenPtr<xen_vm_record> VirtualMachine::getRecord()
+XenPtr<xen_vm_record> VirtualMachine::getRecord() const
 {
-    Glib::Mutex::Lock k(_mutex);
-    return XenPtr<xen_vm_record>(_record);
+    Glib::Mutex::Lock lock(const_cast<VirtualMachine*>(this)->_mutex);
+    return _record;
 }
 
 
@@ -85,7 +84,7 @@ void VirtualMachine::setRecord(const XenPtr<xen_vm_record>& record)
     xen_vm_power_state prev_power_state;
     if (record)
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         prev_power_state = _record->power_state;
         _record = record;
     }
@@ -106,10 +105,10 @@ void VirtualMachine::setRecord(const XenPtr<xen_vm_record>& record)
 }
 
 
-XenPtr<xen_vm_metrics_record> VirtualMachine::getMetricsRecord()
+XenPtr<xen_vm_metrics_record> VirtualMachine::getMetricsRecord() const
 {
-    Glib::Mutex::Lock k(_mutex);
-    return XenPtr<xen_vm_metrics_record>(_metricsRecord);
+    Glib::Mutex::Lock lock(const_cast<VirtualMachine*>(this)->_mutex);
+    return _metricsRecord;
 }
 
 
@@ -117,7 +116,7 @@ void VirtualMachine::setRecord(const XenPtr<xen_vm_metrics_record>& record)
 {
     if (record)
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         _metricsRecord = record;
     }
     else
@@ -128,10 +127,10 @@ void VirtualMachine::setRecord(const XenPtr<xen_vm_metrics_record>& record)
 }
 
 
-XenPtr<xen_vm_guest_metrics_record> VirtualMachine::getGuestMetricsRecord()
+XenPtr<xen_vm_guest_metrics_record> VirtualMachine::getGuestMetricsRecord() const
 {
-    Glib::Mutex::Lock k(_mutex);
-    return XenPtr<xen_vm_guest_metrics_record>(_guestMetricsRecord);
+    Glib::Mutex::Lock lock(const_cast<VirtualMachine*>(this)->_mutex);
+    return _guestMetricsRecord;
 }
 
 
@@ -139,7 +138,7 @@ void VirtualMachine::setRecord(const XenPtr<xen_vm_guest_metrics_record>& record
 {
     if (record)
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         _guestMetricsRecord = record;
     }
     else
@@ -150,7 +149,7 @@ void VirtualMachine::setRecord(const XenPtr<xen_vm_guest_metrics_record>& record
 }
 
 
-int VirtualMachine::getVbds(std::list<RefPtr<VirtualBlockDevice> >& vbds)
+int VirtualMachine::getVbds(std::list<RefPtr<VirtualBlockDevice> >& vbds) const
 {
     XenPtr<xen_vm_record> record = getRecord();
     if (!record->vbds)
@@ -185,7 +184,7 @@ int VirtualMachine::getVbds(std::list<RefPtr<VirtualBlockDevice> >& vbds)
 }
 
 
-RefPtr<VirtualBlockDevice> VirtualMachine::getVbd(const RefPtr<VirtualDiskImage>& vdi)
+RefPtr<VirtualBlockDevice> VirtualMachine::getVbd(const RefPtr<VirtualDiskImage>& vdi) const
 {
     XenPtr<xen_vm_record> record = getRecord();
     if (!record->vbds)
@@ -211,13 +210,13 @@ RefPtr<VirtualBlockDevice> VirtualMachine::getVbd(const RefPtr<VirtualDiskImage>
 
 bool VirtualMachine::setName(const char* label, const char* description)
 {
-    if (!xen_vm_set_name_label(_session, getXenRef(), (char*)label))
+    if (!xen_vm_set_name_label(_session, _handle, (char*)label))
     {
         emit(ERROR);
         return false;
     }
 
-    if (!xen_vm_set_name_description(_session, getXenRef(), (char*)description))
+    if (!xen_vm_set_name_description(_session, _handle, (char*)description))
     {
         emit(ERROR);
         return false;
@@ -229,7 +228,7 @@ bool VirtualMachine::setName(const char* label, const char* description)
 
 bool VirtualMachine::setMemory(int64_t staticMin, int64_t staticMax, int64_t dynamicMin, int64_t dynamicMax)
 {
-    if (!xen_vm_set_memory_limits(_session, getXenRef(), staticMin, staticMax, dynamicMin, dynamicMax))
+    if (!xen_vm_set_memory_limits(_session, _handle, staticMin, staticMax, dynamicMin, dynamicMax))
     {
         emit(ERROR);
         return false;
@@ -241,7 +240,7 @@ bool VirtualMachine::setMemory(int64_t staticMin, int64_t staticMax, int64_t dyn
 
 bool VirtualMachine::setShadowMemory(double multiplier)
 {
-    if (!xen_vm_set_hvm_shadow_multiplier(_session, getXenRef(), multiplier))
+    if (!xen_vm_set_hvm_shadow_multiplier(_session, _handle, multiplier))
     {
         emit(ERROR);
         return false;
@@ -267,12 +266,12 @@ bool VirtualMachine::setVcpu(int64_t vcpusMax, int64_t vcpusAtStartup, int cores
 
     if (vcpusMax < vcpusAtStartupCurrent)
     {
-        if (!xen_vm_set_vcpus_at_startup(_session, getXenRef(), vcpusAtStartup))
+        if (!xen_vm_set_vcpus_at_startup(_session, _handle, vcpusAtStartup))
         {
             emit(ERROR);
             return false;
         }
-        if (!xen_vm_set_vcpus_max(_session, getXenRef(), vcpusMax))
+        if (!xen_vm_set_vcpus_max(_session, _handle, vcpusMax))
         {
             emit(ERROR);
             return false;
@@ -280,12 +279,12 @@ bool VirtualMachine::setVcpu(int64_t vcpusMax, int64_t vcpusAtStartup, int cores
     }
     else
     {
-        if (!xen_vm_set_vcpus_max(_session, getXenRef(), vcpusMax))
+        if (!xen_vm_set_vcpus_max(_session, _handle, vcpusMax))
         {
             emit(ERROR);
             return false;
         }
-        if (!xen_vm_set_vcpus_at_startup(_session, getXenRef(), vcpusAtStartup))
+        if (!xen_vm_set_vcpus_at_startup(_session, _handle, vcpusAtStartup))
         {
             emit(ERROR);
             return false;
@@ -304,7 +303,7 @@ bool VirtualMachine::setVcpu(int64_t vcpusMax, int64_t vcpusAtStartup, int cores
 #define KEY_CORES_PER_SOCKET "cores-per-socket"
 
 
-int VirtualMachine::getCoresPerSocket()
+int VirtualMachine::getCoresPerSocket() const
 {
     int retval = 1;
     XenPtr<xen_vm_record> record = getRecord();
@@ -319,7 +318,7 @@ int VirtualMachine::getCoresPerSocket()
 
 bool VirtualMachine::setCoresPerSocket(int value)
 {
-    if(!xen_vm_remove_from_platform(_session, getXenRef(), (char*)KEY_CORES_PER_SOCKET))
+    if(!xen_vm_remove_from_platform(_session, _handle, (char*)KEY_CORES_PER_SOCKET))
     {
         emit(ERROR);
         return false;
@@ -329,7 +328,7 @@ bool VirtualMachine::setCoresPerSocket(int value)
     {
         char buf[32];
         snprintf(buf, sizeof(buf), "%d", value);
-        if (!xen_vm_add_to_platform(_session, getXenRef(), (char*)KEY_CORES_PER_SOCKET, buf))
+        if (!xen_vm_add_to_platform(_session, _handle, (char*)KEY_CORES_PER_SOCKET, buf))
         {
             emit(ERROR);
             return false;
@@ -342,16 +341,17 @@ bool VirtualMachine::setCoresPerSocket(int value)
 
 bool VirtualMachine::start()
 {
+    setBusy(true);
     XenRef<xen_task, xen_task_free_t> task;
-    if (xen_vm_start_async(_session, &task, getXenRef(), false, false))
+    if (xen_vm_start_async(_session, &task, _handle, false, false))
     {
-        setBusy();
         setDisplayStatus(gettext("Starting..."));
         XenTask::create(_session, task, this);
         return true;
     }
     else
     {
+        setBusy(false);
         emit(ERROR);
         return false;
     }
@@ -360,24 +360,24 @@ bool VirtualMachine::start()
 
 bool VirtualMachine::shutdown(bool hard)
 {
+    setBusy(true);
     XenRef<xen_task, xen_task_free_t> task;
     if (hard)
     {
-        if (xen_vm_hard_shutdown_async(_session, &task, getXenRef()))
+        if (xen_vm_hard_shutdown_async(_session, &task, _handle))
         {
-            setBusy();
             setDisplayStatus(gettext("Forcibly shutting down..."));
             XenTask::create(_session, task, this);
             return true;
         }
     }
-    else if (xen_vm_shutdown_async(_session, &task, getXenRef()))
+    else if (xen_vm_shutdown_async(_session, &task, _handle))
     {
-        setBusy();
         setDisplayStatus(gettext("Shutting down..."));
         XenTask::create(_session, task, this);
         return true;
     }
+    setBusy(false);
     emit(ERROR);
     return false;
 }
@@ -385,24 +385,24 @@ bool VirtualMachine::shutdown(bool hard)
 
 bool VirtualMachine::reboot(bool hard)
 {
+    setBusy(true);
     XenRef<xen_task, xen_task_free_t> task;
     if (hard)
     {
-        if (xen_vm_hard_reboot_async(_session, &task, getXenRef()))
+        if (xen_vm_hard_reboot_async(_session, &task, _handle))
         {
-            setBusy();
             setDisplayStatus(gettext("Forcibly rebooting..."));
             XenTask::create(_session, task, this);
             return true;
         }
     }
-    else if (xen_vm_clean_reboot_async(_session, &task, getXenRef()))
+    else if (xen_vm_clean_reboot_async(_session, &task, _handle))
     {
-        setBusy();
         setDisplayStatus(gettext("Rebooting..."));
         XenTask::create(_session, task, this);
         return true;
     }
+    setBusy(false);
     emit(ERROR);
     return false;
 }
@@ -410,16 +410,17 @@ bool VirtualMachine::reboot(bool hard)
 
 bool VirtualMachine::suspend()
 {
+    setBusy(true);
     XenRef<xen_task, xen_task_free_t> task;
-    if (xen_vm_suspend_async(_session, &task, getXenRef()))
+    if (xen_vm_suspend_async(_session, &task, _handle))
     {
-        setBusy();
         setDisplayStatus(gettext("Suspending..."));
         XenTask::create(_session, task, this);
         return true;
     }
     else
     {
+        setBusy(false);
         emit(ERROR);
         return false;
     }
@@ -428,16 +429,17 @@ bool VirtualMachine::suspend()
 
 bool VirtualMachine::resume()
 {
+    setBusy(true);
     XenRef<xen_task, xen_task_free_t> task;
-    if (xen_vm_resume_async(_session, &task, getXenRef(), false, false))
+    if (xen_vm_resume_async(_session, &task, _handle, false, false))
     {
-        setBusy();
         setDisplayStatus(gettext("Resuming..."));
         XenTask::create(_session, task, this);
         return true;
     }
     else
     {
+        setBusy(false);
         emit(ERROR);
         return false;
     }
@@ -472,7 +474,7 @@ bool VirtualMachine::changeCd(xen_vbd vbd, xen_vdi vdi)
 #define VAL_VGA_STD "std"
 
 
-bool VirtualMachine::isStdVga()
+bool VirtualMachine::isStdVga() const
 {
     return getVga() == VAL_VGA_STD;
 }
@@ -484,7 +486,7 @@ bool VirtualMachine::setStdVga(bool stdVga)
 }
 
 
-Glib::ustring VirtualMachine::getVga()
+Glib::ustring VirtualMachine::getVga() const
 {
     Glib::ustring retval;
     XenPtr<xen_vm_record> record = getRecord();
@@ -499,7 +501,7 @@ Glib::ustring VirtualMachine::getVga()
 
 bool VirtualMachine::setVga(const char* value)
 {
-    if(!xen_vm_remove_from_platform(_session, getXenRef(), (char*)KEY_VGA))
+    if(!xen_vm_remove_from_platform(_session, _handle, (char*)KEY_VGA))
     {
         emit(ERROR);
         return false;
@@ -507,7 +509,7 @@ bool VirtualMachine::setVga(const char* value)
 
     if (value)
     {
-        if (!xen_vm_add_to_platform(_session, getXenRef(), (char*)KEY_VGA, (char*)value))
+        if (!xen_vm_add_to_platform(_session, _handle, (char*)KEY_VGA, (char*)value))
         {
             emit(ERROR);
             return false;
@@ -521,7 +523,7 @@ bool VirtualMachine::setVga(const char* value)
 #define KEY_VIDEORAM "videoram"
 
 
-int VirtualMachine::getVideoRam()
+int VirtualMachine::getVideoRam() const
 {
     int retval = -1;
     XenPtr<xen_vm_record> record = getRecord();
@@ -536,7 +538,7 @@ int VirtualMachine::getVideoRam()
 
 bool VirtualMachine::setVideoRam(int value)
 {
-    if(!xen_vm_remove_from_platform(_session, getXenRef(), (char*)KEY_VIDEORAM))
+    if(!xen_vm_remove_from_platform(_session, _handle, (char*)KEY_VIDEORAM))
     {
         emit(ERROR);
         return false;
@@ -546,7 +548,7 @@ bool VirtualMachine::setVideoRam(int value)
     {
         char buf[32];
         snprintf(buf, sizeof(buf), "%d", value);
-        if (!xen_vm_add_to_platform(_session, getXenRef(), (char*)KEY_VIDEORAM, buf))
+        if (!xen_vm_add_to_platform(_session, _handle, (char*)KEY_VIDEORAM, buf))
         {
             emit(ERROR);
             return false;
@@ -557,7 +559,7 @@ bool VirtualMachine::setVideoRam(int value)
 }
 
 
-Glib::ustring VirtualMachine::getPrimarySr()
+Glib::ustring VirtualMachine::getPrimarySr() const
 {
     Glib::ustring refid;
     std::list<RefPtr<VirtualBlockDevice> > vbds;
@@ -584,16 +586,17 @@ Glib::ustring VirtualMachine::getPrimarySr()
 
 bool VirtualMachine::clone(const char* name)
 {
+    setBusy(true);
     XenRef<xen_task, xen_task_free_t> task;
-    if (xen_vm_clone_async(_session, &task, getXenRef(), (char*)name))
+    if (xen_vm_clone_async(_session, &task, _handle, (char*)name))
     {
-        setBusy();
         setDisplayStatus(gettext("Cloning..."));
         XenTask::create(_session, task, this);
         return true;
     }
     else
     {
+        setBusy(false);
         emit(ERROR);
         return false;
     }
@@ -602,16 +605,17 @@ bool VirtualMachine::clone(const char* name)
 
 bool VirtualMachine::copy(const char* name, xen_sr sr)
 {
+    setBusy(true);
     XenRef<xen_task, xen_task_free_t> task;
-    if (xen_vm_copy_async(_session, &task, getXenRef(), (char*)name, sr))
+    if (xen_vm_copy_async(_session, &task, _handle, (char*)name, sr))
     {
-        setBusy();
         setDisplayStatus(gettext("Copying..."));
         XenTask::create(_session, task, this);
         return true;
     }
     else
     {
+        setBusy(false);
         emit(ERROR);
         return false;
     }
@@ -620,8 +624,9 @@ bool VirtualMachine::copy(const char* name, xen_sr sr)
 
 bool VirtualMachine::destroy()
 {
+    setBusy(true);
     XenRef<xen_task, xen_task_free_t> task;
-    if (xen_vm_destroy_async(_session, &task, getXenRef()))
+    if (xen_vm_destroy_async(_session, &task, _handle))
     {
         setDisplayStatus(gettext("Being destroyed..."));
         XenTask::create(_session, task, this);
@@ -629,6 +634,7 @@ bool VirtualMachine::destroy()
     }
     else
     {
+        setBusy(false);
         emit(ERROR);
         return false;
     }
@@ -639,7 +645,7 @@ Glib::ustring VirtualMachine::getConsoleLocation()
 {
     Glib::ustring location;
     XenPtr<xen_console_set> conSet;
-    if (xen_vm_get_consoles(_session, conSet.address(), getXenRef()))
+    if (xen_vm_get_consoles(_session, conSet.address(), _handle))
     {
         for (size_t i = 0; i < conSet->size; i++)
         {

@@ -10,8 +10,6 @@
 #include "Session.h"
 #include "StorageRepository.h"
 #include "XenObjectStore.h"
-#include "XenRef.h"
-#include "XenServer.h"
 
 
 using namespace hnrt;
@@ -48,7 +46,7 @@ RefPtr<StorageRepository> StorageRepository::create(Session& session, xen_sr han
 
 
 StorageRepository::StorageRepository(Session& session, xen_sr handle, const XenPtr<xen_sr_record>& record)
-    : XenObject(XenObject::SR, session, reinterpret_cast<char*>(handle), record->uuid, record->name_label)
+    : XenObject(XenObject::SR, session, handle, record->uuid, record->name_label)
     , _subType(GetSubType(record->type))
     , _record(record)
 {
@@ -73,9 +71,9 @@ int StorageRepository::setBusy(bool value)
 }
 
 
-XenPtr<xen_sr_record> StorageRepository::getRecord()
+XenPtr<xen_sr_record> StorageRepository::getRecord() const
 {
-    Glib::Mutex::Lock k(_mutex);
+    Glib::Mutex::Lock lock(const_cast<StorageRepository*>(this)->_mutex);
     return _record;
 }
 
@@ -84,7 +82,7 @@ void StorageRepository::setRecord(const XenPtr<xen_sr_record>& record)
 {
     if (record)
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         _record = record;
     }
     else
@@ -100,7 +98,7 @@ void StorageRepository::setRecord(const XenPtr<xen_sr_record>& record)
 }
 
 
-RefPtr<PhysicalBlockDevice> StorageRepository::getPbd()
+RefPtr<PhysicalBlockDevice> StorageRepository::getPbd() const
 {
     XenPtr<xen_sr_record> record = getRecord();
     return _session.getStore().getPbd((record->pbds && record->pbds->size) ? record->pbds->contents[0] : NULL);
@@ -109,13 +107,13 @@ RefPtr<PhysicalBlockDevice> StorageRepository::getPbd()
 
 bool StorageRepository::setName(const char* name, const char* desc)
 {
-    if (!xen_sr_set_name_label(_session, getXenRef(), (char*)name))
+    if (!xen_sr_set_name_label(_session, _handle, (char*)name))
     {
         emit(ERROR);
         return false;
     }
 
-    if (!xen_sr_set_name_description(_session, getXenRef(), (char*)desc))
+    if (!xen_sr_set_name_description(_session, _handle, (char*)desc))
     {
         emit(ERROR);
         return false;
@@ -125,7 +123,7 @@ bool StorageRepository::setName(const char* name, const char* desc)
 }
 
 
-bool StorageRepository::isCifs()
+bool StorageRepository::isCifs() const
 {
     RefPtr<PhysicalBlockDevice> pbd = getPbd();
     if (pbd)
@@ -137,7 +135,7 @@ bool StorageRepository::isCifs()
 }
 
 
-bool StorageRepository::isTools()
+bool StorageRepository::isTools() const
 {
     XenPtr<xen_sr_record> record = getRecord();
     return XenServer::match(record->other_config, "xenserver_tools_sr", "true") == 1;
@@ -146,7 +144,7 @@ bool StorageRepository::isTools()
 
 bool StorageRepository::isDefault()
 {
-    return XenServer::isDefaultSr(_session, getXenRef());
+    return XenServer::isDefaultSr(_session, _handle);
 }
 
 
@@ -227,12 +225,12 @@ bool StorageRepository::remove()
                     return false;
                 }
             }
-            if (!xen_pbd_unplug(_session, pbd->getXenRef()))
+            if (!xen_pbd_unplug(_session, pbd->getHandle()))
             {
                 pbd->emit(ERROR);
                 return false;
             }
-            else if (!xen_pbd_destroy(_session, pbd->getXenRef()))
+            else if (!xen_pbd_destroy(_session, pbd->getHandle()))
             {
                 pbd->emit(ERROR);
                 return false;
@@ -240,7 +238,7 @@ bool StorageRepository::remove()
         }
     }
 
-    if (!xen_sr_forget(_session, getXenRef()))
+    if (!xen_sr_forget(_session, _handle))
     {
         emit(ERROR);
         return false;

@@ -2,6 +2,7 @@
 
 
 #include "Base/StringBuffer.h"
+#include "Logger/Trace.h"
 #include "Util/Util.h"
 #include "Session.h"
 #include "XenObjectStore.h"
@@ -20,11 +21,12 @@ RefPtr<XenTask> XenTask::create(Session& session, xen_task handle, XenObject* ob
 
 
 XenTask::XenTask(Session& session, xen_task handle, XenObject* object, const char* messageOnFailure, const char* messageOnSuccess)
-    : XenObject(XenObject::TASK, session, reinterpret_cast<char*>(handle))
+    : XenObject(XenObject::TASK, session, handle, NULL, NULL)
     , _status(XEN_TASK_STATUS_TYPE_UNDEFINED)
     , _object(RefPtr<XenObject>(object, 1))
     , _progress(0.0)
 {
+    Trace trace(StringBuffer().format("TASK@%zx::ctor", this), "%s", _refid.c_str());
     if (messageOnFailure)
     {
         _messageOnFailure = messageOnFailure;
@@ -33,6 +35,12 @@ XenTask::XenTask(Session& session, xen_task handle, XenObject* object, const cha
     {
         _messageOnSuccess = messageOnSuccess;
     }
+}
+
+
+XenTask::~XenTask()
+{
+    Trace trace(StringBuffer().format("TASK@%zx::dtor", this), "%s", _refid.c_str());
 }
 
 
@@ -50,14 +58,14 @@ void XenTask::setProgress(double value)
 
 void XenTask::wait()
 {
-    Glib::Mutex::Lock k(_mutex);
+    Glib::Mutex::Lock lock(_mutex);
     _cond.wait(_mutex);
 }
 
 
 bool XenTask::wait(const Glib::TimeVal& absTime)
 {
-    Glib::Mutex::Lock k(_mutex);
+    Glib::Mutex::Lock lock(_mutex);
     return _cond.timed_wait(_mutex, absTime);
 }
 

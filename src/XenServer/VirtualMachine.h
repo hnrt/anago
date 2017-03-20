@@ -5,17 +5,12 @@
 #define HNRT_VIRTUALMACHINE_H
 
 
-#include <glibmm.h>
 #include <list>
 #include "XenObject.h"
-#include "XenPtr.h"
 
 
 namespace hnrt
 {
-    class VirtualDiskImage;
-    class VirtualBlockDevice;
-
     class VirtualMachine
         : public XenObject
     {
@@ -25,17 +20,17 @@ namespace hnrt
 
         virtual ~VirtualMachine();
         virtual int setBusy(bool = true);
-        XenPtr<xen_vm_record> getRecord();
+        XenPtr<xen_vm_record> getRecord() const;
         void setRecord(const XenPtr<xen_vm_record>&);
-        XenPtr<xen_vm_metrics_record> getMetricsRecord();
+        XenPtr<xen_vm_metrics_record> getMetricsRecord() const;
         void setRecord(const XenPtr<xen_vm_metrics_record>&);
-        XenPtr<xen_vm_guest_metrics_record> getGuestMetricsRecord();
+        XenPtr<xen_vm_guest_metrics_record> getGuestMetricsRecord() const;
         void setRecord(const XenPtr<xen_vm_guest_metrics_record>&);
-        int getVbds(std::list<RefPtr<VirtualBlockDevice> >&);
-        RefPtr<VirtualBlockDevice> getVbd(const RefPtr<VirtualDiskImage>&);
+        int getVbds(std::list<RefPtr<VirtualBlockDevice> >&) const;
+        RefPtr<VirtualBlockDevice> getVbd(const RefPtr<VirtualDiskImage>&) const;
         bool setName(const char* label, const char* description);
         bool setVcpu(int64_t vcpusMax, int64_t vcpusAtStartup, int coresPerSocket);
-        int getCoresPerSocket();
+        int getCoresPerSocket() const;
         bool setCoresPerSocket(int);
         bool setMemory(int64_t staticMin, int64_t staticMax, int64_t dynamicMin, int64_t dynamicMax);
         bool setShadowMemory(double);
@@ -45,13 +40,13 @@ namespace hnrt
         bool suspend();
         bool resume();
         bool changeCd(xen_vbd, xen_vdi);
-        bool isStdVga();
+        bool isStdVga() const;
         bool setStdVga(bool stdVga);
-        Glib::ustring getVga();
+        Glib::ustring getVga() const;
         bool setVga(const char*);
-        int getVideoRam();
+        int getVideoRam() const;
         bool setVideoRam(int);
-        Glib::ustring getPrimarySr();
+        Glib::ustring getPrimarySr() const;
         bool clone(const char*);
         bool copy(const char*, xen_sr);
         bool destroy();

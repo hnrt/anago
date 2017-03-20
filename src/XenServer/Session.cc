@@ -74,9 +74,9 @@ static int rpcExecute(const void* data, size_t size, void* user_handle, void* re
 
 Session::Session(const ConnectSpec& cs)
     : XenObject(XenObject::SESSION, *this, NULL, NULL, NULL)
+    , _state(NONE)
     , _connectSpec(cs)
     , _ptr(NULL)
-    , _state(NONE)
     , _objectStore(new XenObjectStore)
     , _monitoring(false)
 {
@@ -87,9 +87,9 @@ Session::Session(const ConnectSpec& cs)
 
 Session::Session()
     : XenObject(XenObject::SESSION, *this, NULL, NULL, NULL)
+    , _state(NONE)
     , _connectSpec()
     , _ptr(NULL)
-    , _state(NONE)
     , _monitoring(false)
 {
     Trace trace(StringBuffer().format("Session@%zx::ctor", this));
@@ -108,18 +108,21 @@ Session::~Session()
 
 bool Session::isConnected() const
 {
-    return (_state == PRIMARY || _state == SECONDARY) ? true : false;
+    int state = _state;
+    return (state == PRIMARY || state == SECONDARY) ? true : false;
 }
 
 
 bool Session::connect()
 {
     Trace trace(StringBuffer().format("Session@%zx::connect", this));
-    if (_state != NONE)
+    int state = InterlockedCompareExchange(&_state, PRIMARY_PENDING, NONE);
+    if (state != NONE)
     {
-        disconnect();
+        trace.put("return=false (state=%d)", state);
+        //emit(CONNECT_FAILED);
+        return false;
     }
-    _state = PRIMARY_PENDING;
     _url = Glib::ustring::compose("https://%1", _connectSpec.hostname);
     Glib::ustring pw = _connectSpec.descramblePassword();
     _ptr = xen_session_login_with_password(rpcExecute, this, _connectSpec.username.c_str(), pw.c_str(), xen_api_latest_version);
@@ -127,7 +130,7 @@ bool Session::connect()
     trace.put("return=%d", _ptr->ok);
     if (_ptr->ok)
     {
-        _state = PRIMARY;
+        InterlockedExchange(&_state, PRIMARY);
     }
     else
     {
@@ -139,12 +142,14 @@ bool Session::connect()
 
 bool Session::connect(const Session& other)
 {
-    Trace trace(StringBuffer().format("Session@%zx::connect", this));
-    if (_state != NONE)
+    Trace trace(StringBuffer().format("Session@%zx::connect", this), "other=%zx", &other);
+    int state = InterlockedCompareExchange(&_state, SECONDARY_PENDING, NONE);
+    if (state != NONE)
     {
-        disconnect();
+        trace.put("return=false (state=%d)", state);
+        //emit(CONNECT_FAILED);
+        return false;
     }
-    _state = SECONDARY_PENDING;
     _connectSpec = other._connectSpec;
     _url = Glib::ustring::compose("https://%1", _connectSpec.hostname);
     Glib::ustring pw = _connectSpec.descramblePassword();
@@ -153,7 +158,7 @@ bool Session::connect(const Session& other)
     trace.put("return=%d", _ptr->ok);
     if (_ptr->ok)
     {
-        _state = SECONDARY;
+        InterlockedExchange(&_state, SECONDARY);
         _objectStore = other._objectStore;
     }
     else
@@ -218,13 +223,13 @@ bool Session::disconnect()
 }
 
 
-bool Session::succeeded()
+bool Session::succeeded() const
 {
     return _ptr && _ptr->ok ? true : false; 
 }
 
 
-bool Session::failed()
+bool Session::failed() const
 {
     return _ptr && !_ptr->ok ? true : false; 
 }
@@ -239,7 +244,7 @@ void Session::clearError()
 }
 
 
-bool Session::hasError()
+bool Session::hasError() const
 {
     return _ptr && !_ptr->ok &&
         _ptr->error_description_count &&
@@ -248,7 +253,7 @@ bool Session::hasError()
 }
 
 
-bool Session::hasError(const char* error)
+bool Session::hasError(const char* error) const
 {
     return _ptr && !_ptr->ok &&
         _ptr->error_description_count &&

@@ -36,7 +36,7 @@ RefPtr<VirtualBlockDevice> VirtualBlockDevice::create(Session& session, xen_vbd 
 
 
 VirtualBlockDevice::VirtualBlockDevice(Session& session, xen_vbd handle, const XenPtr<xen_vbd_record>& record)
-    : XenObject(XenObject::VBD, session, reinterpret_cast<char*>(handle), record->uuid, "VBD")
+    : XenObject(XenObject::VBD, session, handle, record->uuid, "VBD")
     , _record(record)
 {
     Trace trace(StringBuffer().format("VBD@%zx::ctor", this));
@@ -49,9 +49,9 @@ VirtualBlockDevice::~VirtualBlockDevice()
 }
 
 
-XenPtr<xen_vbd_record> VirtualBlockDevice::getRecord()
+XenPtr<xen_vbd_record> VirtualBlockDevice::getRecord() const
 {
-    Glib::Mutex::Lock k(_mutex);
+    Glib::Mutex::Lock lock(const_cast<VirtualBlockDevice*>(this)->_mutex);
     return _record;
 }
 
@@ -60,7 +60,7 @@ void VirtualBlockDevice::setRecord(const XenPtr<xen_vbd_record>& record)
 {
     if (record)
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         _record = record;
     }
     else
@@ -71,25 +71,25 @@ void VirtualBlockDevice::setRecord(const XenPtr<xen_vbd_record>& record)
 }
 
 
-RefPtr<VirtualMachine> VirtualBlockDevice::getVm()
+RefPtr<VirtualMachine> VirtualBlockDevice::getVm() const
 {
     return _session.getStore().getVm(getRecord()->vm);
 }
 
 
-RefPtr<VirtualDiskImage> VirtualBlockDevice::getVdi()
+RefPtr<VirtualDiskImage> VirtualBlockDevice::getVdi() const
 {
     return _session.getStore().getVdi(getRecord()->vdi);
 }
 
 
-Glib::ustring VirtualBlockDevice::getUserdevice()
+Glib::ustring VirtualBlockDevice::getUserdevice() const
 {
     return Glib::ustring(getRecord()->userdevice);
 }
 
 
-Glib::ustring VirtualBlockDevice::getDeviceName()
+Glib::ustring VirtualBlockDevice::getDeviceName() const
 {
     XenPtr<xen_vbd_record> record = getRecord();
     return Glib::ustring::compose("%1 %2", GetVbdTypeText(record->type), record->userdevice);

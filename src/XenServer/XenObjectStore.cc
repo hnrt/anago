@@ -16,6 +16,7 @@
 #include "VirtualMachine.h"
 #include "Host.h"
 #include "Macros.h"
+#include "Session.h"
 #include "XenObjectStore.h"
 
 
@@ -45,16 +46,18 @@ void XenObjectStore::setHost(const RefPtr<Host>& host)
     RefPtr<Host> prev;
     RefPtr<Host> next;
     {
-        Glib::RecMutex::Lock k(_mutex);
+        Glib::RecMutex::Lock lock(_mutex);
         prev = _host;
         next = _host = host;
     }
     if (prev)
     {
         prev->emit(XenObject::DESTROYED);
+        prev->getSession().emit(XenObject::DESTROYED);
     }
     if (next)
     {
+        next->getSession().emit(XenObject::CREATED);
         next->emit(XenObject::CREATED);
     }
 }
@@ -64,13 +67,14 @@ void XenObjectStore::removeHost()
 {
     RefPtr<Host> prev;
     {
-        Glib::RecMutex::Lock k(_mutex);
+        Glib::RecMutex::Lock lock(_mutex);
         prev = _host;
         _host = RefPtr<Host>();
     }
     if (prev)
     {
         prev->emit(XenObject::DESTROYED);
+        prev->getSession().emit(XenObject::DESTROYED);
     }
 }
 

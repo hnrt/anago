@@ -74,9 +74,9 @@ int Host::setBusy(bool value)
 }
 
 
-XenPtr<xen_host_record> Host::getRecord()
+XenPtr<xen_host_record> Host::getRecord() const
 {
-    Glib::Mutex::Lock k(_mutex);
+    Glib::Mutex::Lock lock(const_cast<Host*>(this)->_mutex);
     return _record;
 }
 
@@ -85,7 +85,7 @@ void Host::setRecord(const XenPtr<xen_host_record>& record)
 {
     if (record)
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         _record = record;
         if (record->name_label)
         {
@@ -100,9 +100,9 @@ void Host::setRecord(const XenPtr<xen_host_record>& record)
 }
 
 
-XenPtr<xen_host_metrics_record> Host::getMetricsRecord()
+XenPtr<xen_host_metrics_record> Host::getMetricsRecord() const
 {
-    Glib::Mutex::Lock k(_mutex);
+    Glib::Mutex::Lock lock(const_cast<Host*>(this)->_mutex);
     return _metricsRecord;
 }
 
@@ -111,7 +111,7 @@ void Host::setMetricsRecord(const XenPtr<xen_host_metrics_record>& record)
 {
     if (record)
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         _metricsRecord = record;
     }
     else
@@ -142,10 +142,11 @@ bool Host::onConnected()
         return false;
     }
     _refid = host.toString();
+    _handle = const_cast<void*>(reinterpret_cast<const void*>(_refid.c_str()));
     XenPtr<xen_host_record> record;
     if (xen_host_get_record(_session, record.address(), host))
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         _record = record;
         _uuid = record->uuid ? record->uuid : "";
         _name = record->name_label ? record->name_label : "";
@@ -162,7 +163,7 @@ bool Host::onConnected()
         XenPtr<xen_host_metrics_record> metricsRecord;
         if (xen_host_metrics_get_record(_session, metricsRecord.address(), metrics))
         {
-            Glib::Mutex::Lock k(_mutex);
+            Glib::Mutex::Lock lock(_mutex);
             _metricsRecord = metricsRecord;
         }
         else
@@ -230,8 +231,8 @@ bool Host::shutdown()
     }
     if (_session)
     {
-        if (xen_host_disable(_session, getXenRef()) &&
-            xen_host_shutdown(_session, getXenRef()))
+        if (xen_host_disable(_session, _handle) &&
+            xen_host_shutdown(_session, _handle))
         {
             setDisplayStatus(gettext("Shut down successfully"));
             _state = STATE_SHUTDOWN;
@@ -264,8 +265,8 @@ bool Host::reboot()
     }
     if (_session)
     {
-        if (xen_host_disable(_session, getXenRef()) &&
-            xen_host_reboot(_session, getXenRef()))
+        if (xen_host_disable(_session, _handle) &&
+            xen_host_reboot(_session, _handle))
         {
             setDisplayStatus(gettext("Rebooted successfully"));
             _state = STATE_REBOOTED;
@@ -288,13 +289,13 @@ bool Host::reboot()
 
 bool Host::setName(const char* label, const char* description)
 {
-    if (!xen_host_set_name_label(_session, getXenRef(), (char*)label))
+    if (!xen_host_set_name_label(_session, _handle, (char*)label))
     {
         emit(ERROR);
         return false;
     }
 
-    if (!xen_host_set_name_description(_session, getXenRef(), (char*)description))
+    if (!xen_host_set_name_description(_session, _handle, (char*)description))
     {
         emit(ERROR);
         return false;
@@ -450,7 +451,6 @@ void Host::updatePatchList()
                     _session.clearError();
                     continue;
                 }
-                //g_print("#Host::updatePatchList: poolPatch[%zu] uuid(%s) label(%s) size(%zu)\n", i, poolPatchRecord->uuid, poolPatchRecord->name_label, poolPatchRecord->size);
                 for (std::list<RefPtr<PatchRecord> >::iterator j = _patchList.begin(); j != _patchList.end(); j++)
                 {
                     if ((*j)->uuid == poolPatchRecord->uuid)
@@ -497,7 +497,6 @@ void Host::updatePatchList()
                     _session.clearError();
                     continue;
                 }
-                //g_print("#Host::updatePatchList: hostPatch[%zu] uuid(%s) label(%s) size(%zu)\n", i, hostPatchRecord->uuid, poolPatchRecord->name_label, hostPatchRecord->size);
                 for (std::list<RefPtr<PatchRecord> >::iterator j = _patchList.begin(); j != _patchList.end(); j++)
                 {
                     if ((*j)->uuid == poolPatchRecord->uuid)
@@ -552,7 +551,7 @@ bool Host::applyPatch(const Glib::ustring& uuid)
         return false;
     }
     char* result = NULL;
-    if (xen_pool_patch_apply(_session, &result, patchRefid, getXenRef()))
+    if (xen_pool_patch_apply(_session, &result, patchRefid, _handle))
     {
         free(result);
         return true;

@@ -6,13 +6,10 @@
 
 
 #include "XenObject.h"
-#include "XenPtr.h"
 
 
 namespace hnrt
 {
-    class PhysicalBlockDevice;
-
     class StorageRepository
         : public XenObject
     {
@@ -32,12 +29,12 @@ namespace hnrt
         virtual ~StorageRepository();
         virtual int setBusy(bool = true);
         SubType getSubType() const { return _subType; }
-        XenPtr<xen_sr_record> getRecord();
+        XenPtr<xen_sr_record> getRecord() const;
         void setRecord(const XenPtr<xen_sr_record>&);
-        RefPtr<PhysicalBlockDevice> getPbd();
+        RefPtr<PhysicalBlockDevice> getPbd() const;
         bool setName(const char* name, const char* desc);
-        bool isCifs();
-        bool isTools();
+        bool isCifs() const;
+        bool isTools() const;
         bool isDefault();
         bool remove();
 

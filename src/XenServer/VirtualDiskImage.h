@@ -11,9 +11,6 @@
 
 namespace hnrt
 {
-    class StorageRepository;
-    class VirtualMachine;
-
     class VirtualDiskImage
         : public XenObject
     {
@@ -22,10 +19,10 @@ namespace hnrt
         static RefPtr<VirtualDiskImage> create(Session&, xen_vdi, const XenPtr<xen_vdi_record>&);
 
         virtual ~VirtualDiskImage();
-        XenPtr<xen_vdi_record> getRecord();
+        XenPtr<xen_vdi_record> getRecord() const;
         void setRecord(const XenPtr<xen_vdi_record>&);
-        RefPtr<StorageRepository> getSr();
-        RefPtr<VirtualMachine> getVm(size_t = 0);
+        RefPtr<StorageRepository> getSr() const;
+        RefPtr<VirtualMachine> getVm(size_t = 0) const;
         bool setName(const char* label, const char* description);
         bool destroy();
         bool resize(int64_t);

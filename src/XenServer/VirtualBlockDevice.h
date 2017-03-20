@@ -6,14 +6,10 @@
 
 
 #include "XenObject.h"
-#include "XenPtr.h"
 
 
 namespace hnrt
 {
-    class VirtualMachine;
-    class VirtualDiskImage;
-
     class VirtualBlockDevice
         : public XenObject
     {
@@ -22,12 +18,12 @@ namespace hnrt
         static RefPtr<VirtualBlockDevice> create(Session&, xen_vbd, const XenPtr<xen_vbd_record>&);
 
         virtual ~VirtualBlockDevice();
-        XenPtr<xen_vbd_record> getRecord();
+        XenPtr<xen_vbd_record> getRecord() const;
         void setRecord(const XenPtr<xen_vbd_record>&);
-        RefPtr<VirtualMachine> getVm();
-        RefPtr<VirtualDiskImage> getVdi();
-        Glib::ustring getUserdevice();
-        Glib::ustring getDeviceName();
+        RefPtr<VirtualMachine> getVm() const;
+        RefPtr<VirtualDiskImage> getVdi() const;
+        Glib::ustring getUserdevice() const;
+        Glib::ustring getDeviceName() const;
 
     protected:
 

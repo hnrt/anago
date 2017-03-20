@@ -16,6 +16,7 @@
 #include "XenServer/VirtualDiskImage.h"
 #include "XenServer/VirtualMachine.h"
 #include "XenServer/XenObject.h"
+#include "XenServer/XenObjectStore.h"
 #include "Background.h"
 #include "ControllerImpl.h"
 
@@ -178,7 +179,7 @@ void ControllerImpl::onNotify()
     {
         RefPtrNotificationPair entry;
         {
-            Glib::RecMutex::Lock k(_mutex);
+            Glib::RecMutex::Lock lock(_mutex);
             if (!_notified.size())
             {
                 break;
@@ -186,6 +187,7 @@ void ControllerImpl::onNotify()
             entry = _notified.front();
             _notified.pop_front();
         }
+        trace.put("object=%zx notification=%d", (size_t)entry.first.ptr(), entry.second);
         if (entry.second == XenObject::CREATED)
         {
             onObjectCreated(entry.first);
@@ -218,7 +220,11 @@ void ControllerImpl::onNotify()
 void ControllerImpl::onObjectCreated(RefPtr<RefObj> object)
 {
     RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
-    if (View::instance().addObject(xenObject))
+    if (xenObject->getType() == XenObject::SESSION)
+    {
+        signalNotified(object).connect(sigc::mem_fun(*this, &ControllerImpl::onObjectUpdated));
+    }
+    else if (View::instance().addObject(xenObject))
     {
         signalNotified(object).connect(sigc::mem_fun(*this, &ControllerImpl::onObjectUpdated));
     }
@@ -234,10 +240,27 @@ void ControllerImpl::onObjectUpdated(RefPtr<RefObj> object, int what)
     }
     else if (what == XenObject::CONNECT_FAILED)
     {
-        Session& session = xenObject->getSession();
         StringBuffer message;
-        message.format(gettext("Failed to connect to %s.\n"), session.getConnectSpec().hostname.c_str());
-        XenServer::getError(session, message, "\n");
+        {
+            Session& session = xenObject->getSession();
+            Session::Lock lock(session);
+            message.format(gettext("Failed to connect to %s.\n"), session.getConnectSpec().hostname.c_str());
+            XenServer::getError(session, message, "\n");
+            session.clearError();
+            RefPtr<Host> host = session.getStore().getHost();
+            Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false);
+        }
+        View::instance().showWarning(message.str());
+    }
+    else if (what == XenObject::ERROR)
+    {
+        StringBuffer message;
+        {
+            Session& session = xenObject->getSession();
+            Session::Lock lock(session);
+            XenServer::getError(session, message, "\n");
+            session.clearError();
+        }
         View::instance().showWarning(message.str());
     }
     else
@@ -332,7 +355,10 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
         if (session.connect())
         {
             trace.put("Connected successfully.");
-            host->onConnected();
+            if (!host->onConnected())
+            {
+                return;
+            }
         }
         else
         {

@@ -10,7 +10,6 @@
 #include "VirtualDiskImage.h"
 #include "VirtualMachine.h"
 #include "XenObjectStore.h"
-#include "XenRef.h"
 #include "XenTask.h"
 
 
@@ -26,7 +25,7 @@ RefPtr<VirtualDiskImage> VirtualDiskImage::create(Session& session, xen_vdi hand
 
 
 VirtualDiskImage::VirtualDiskImage(Session& session, xen_vdi handle, const XenPtr<xen_vdi_record>& record)
-    : XenObject(XenObject::VDI, session, reinterpret_cast<char*>(handle), record->uuid, record->name_label)
+    : XenObject(XenObject::VDI, session, handle, record->uuid, record->name_label)
     , _record(record)
 {
     Trace trace(StringBuffer().format("VDI@%zx::ctor", this));
@@ -39,9 +38,9 @@ VirtualDiskImage::~VirtualDiskImage()
 }
 
 
-XenPtr<xen_vdi_record> VirtualDiskImage::getRecord()
+XenPtr<xen_vdi_record> VirtualDiskImage::getRecord() const
 {
-    Glib::Mutex::Lock k(_mutex);
+    Glib::Mutex::Lock lock(const_cast<VirtualDiskImage*>(this)->_mutex);
     return _record;
 }
 
@@ -50,7 +49,7 @@ void VirtualDiskImage::setRecord(const XenPtr<xen_vdi_record>& record)
 {
     if (record)
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         _record = record;
     }
     else
@@ -62,13 +61,13 @@ void VirtualDiskImage::setRecord(const XenPtr<xen_vdi_record>& record)
 }
 
 
-RefPtr<StorageRepository> VirtualDiskImage::getSr()
+RefPtr<StorageRepository> VirtualDiskImage::getSr() const
 {
     return _session.getStore().getSr(getRecord()->sr);
 }
 
 
-RefPtr<VirtualMachine> VirtualDiskImage::getVm(size_t index)
+RefPtr<VirtualMachine> VirtualDiskImage::getVm(size_t index) const
 {
     XenPtr<xen_vdi_record> vdiRecord = getRecord();
     if (vdiRecord->vbds && index < vdiRecord->vbds->size)
@@ -92,13 +91,13 @@ RefPtr<VirtualMachine> VirtualDiskImage::getVm(size_t index)
 
 bool VirtualDiskImage::setName(const char* label, const char* description)
 {
-    if (!xen_vdi_set_name_label(_session, getXenRef(), (char*)label))
+    if (!xen_vdi_set_name_label(_session, _handle, (char*)label))
     {
         emit(ERROR);
         return false;
     }
 
-    if (!xen_vdi_set_name_description(_session, getXenRef(), (char*)description))
+    if (!xen_vdi_set_name_description(_session, _handle, (char*)description))
     {
         emit(ERROR);
         return false;
@@ -112,7 +111,7 @@ bool VirtualDiskImage::destroy()
 {
     setBusy(true);
     XenRef<xen_task, xen_task_free_t> task;
-    if (xen_vdi_destroy_async(_session, &task, getXenRef()))
+    if (xen_vdi_destroy_async(_session, &task, _handle))
     {
         XenTask::create(_session, task, this,
                         StringBuffer().format(gettext("Failed to destroy VDI \"%s\".\n"), getName().c_str()));
@@ -131,7 +130,7 @@ bool VirtualDiskImage::resize(int64_t value)
 {
     setBusy(true);
     XenRef<xen_task, xen_task_free_t> task;
-    if (xen_vdi_resize_async(_session, &task, getXenRef(), value))
+    if (xen_vdi_resize_async(_session, &task, _handle, value))
     {
         XenTask::create(_session, task, this,
                         StringBuffer().format(gettext("Failed to resize VDI \"%s\".\n"), getName().c_str()));

@@ -4,19 +4,18 @@
 #include <glibmm.h>
 #include "Base/Atomic.h"
 #include "Controller/Controller.h"
-#include "Logger/Trace.h"
+#include "Constants.h"
 #include "Session.h"
 #include "XenObject.h"
-#include "Constants.h"
 
 
 using namespace hnrt;
 
 
-XenObject::XenObject(Type type, Session& session, const char* refid, const char* uuid, const char* name)
+XenObject::XenObject(Type type, Session& session, void* handle, const char* uuid, const char* name)
     : _type(type)
     , _session(session)
-    , _refid(refid ? refid : NULLREFSTRING)
+    , _refid(handle ? reinterpret_cast<char*>(handle) : NULLREFSTRING)
     , _uuid(uuid ? uuid : "")
     , _name(name ? name : "")
     , _busyCount(0)
@@ -25,6 +24,7 @@ XenObject::XenObject(Type type, Session& session, const char* refid, const char*
     {
         _session.reference();
     }
+    _handle = const_cast<void*>(reinterpret_cast<const void*>(_refid.c_str()));
 }
 
 
@@ -37,21 +37,9 @@ XenObject::~XenObject()
 }
 
 
-const Session& XenObject::getSession() const
+Glib::ustring XenObject::getName() const
 {
-    return _session;
-}
-
-
-Session& XenObject::getSession()
-{
-    return _session;
-}
-
-
-Glib::ustring XenObject::getName()
-{
-    Glib::Mutex::Lock k(_mutex);
+    Glib::Mutex::Lock lock(const_cast<XenObject*>(this)->_mutex);
     return _name;
 }
 
@@ -60,7 +48,7 @@ void XenObject::setName(const char* value)
 {
     if (value)
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         if (_name == value)
         {
             return;
@@ -69,7 +57,7 @@ void XenObject::setName(const char* value)
     }
     else
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         if (_name.empty())
         {
             return;
@@ -80,9 +68,9 @@ void XenObject::setName(const char* value)
 }
 
 
-Glib::ustring XenObject::getDisplayStatus()
+Glib::ustring XenObject::getDisplayStatus() const
 {
-    Glib::Mutex::Lock k(_mutex);
+    Glib::Mutex::Lock lock(const_cast<XenObject*>(this)->_mutex);
     return _displayStatus;
 }
 
@@ -91,7 +79,7 @@ void XenObject::setDisplayStatus(const char* value)
 {
     if (value)
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         if (_displayStatus == value)
         {
             return;
@@ -100,7 +88,7 @@ void XenObject::setDisplayStatus(const char* value)
     }
     else
     {
-        Glib::Mutex::Lock k(_mutex);
+        Glib::Mutex::Lock lock(_mutex);
         if (_displayStatus.empty())
         {
             return;
