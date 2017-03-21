@@ -35,6 +35,8 @@ namespace hnrt
         virtual void deselectAll();
         virtual void select(const RefPtr<XenObject>&);
         virtual int getSelected(std::list<RefPtr<Host> >&);
+        virtual int getSelected(std::list<RefPtr<VirtualMachine> >&);
+        virtual int getSelected(std::list<RefPtr<StorageRepository> >&);
         virtual RefPtr<Host> getSelectedHost();
 
         virtual RefPtr<PatchBase> getPatchBase();

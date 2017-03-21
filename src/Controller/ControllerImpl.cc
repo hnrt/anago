@@ -621,6 +621,210 @@ void ControllerImpl::disconnectInBackground(RefPtr<Host> host)
 }
 
 
+void ControllerImpl::changeHostName()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::wakeHost()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::shutdownHosts()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::restartHosts()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::startVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::shutdownVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::rebootVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::suspendVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::resumeVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::changeCd()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::sendCtrlAltDelete()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::addVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::copyVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::deleteVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::snapshotVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::exportVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::importVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::verifyVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::hardShutdownVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::hardRebootVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::changeVmName()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::changeCpu()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::changeMemory()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::changeShadowMemory()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::changeVga()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::attachHdd()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::attachCd()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::attachNic()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::addHdd()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::addCifs()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::deleteCifs()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::changeSrName()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::setDefaultSr()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::openVmStatusWindow()
+{
+    //TODO: IMPLEMENT
+}
+
+
 void ControllerImpl::showAbout()
 {
     //TODO: IMPLEMENT

@@ -6,6 +6,8 @@
 #include "Logger/Trace.h"
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
+#include "XenServer/StorageRepository.h"
+#include "XenServer/VirtualMachine.h"
 #include "XenServer/XenObjectStore.h"
 #include "XenServer/XenObjectTypeMap.h"
 #include "ModelImpl.h"
@@ -179,6 +181,64 @@ int ModelImpl::getSelected(std::list<RefPtr<Host> >& list)
                 break;
             }
             else if ((*iter2).ptr() == host.ptr())
+            {
+                break;
+            }
+        }
+    }
+    return static_cast<int>(list.size() - count0);
+}
+
+
+int ModelImpl::getSelected(std::list<RefPtr<VirtualMachine> >& list)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    std::list<RefPtr<VirtualMachine> >::size_type count0 = list.size();
+    for (std::list<RefPtr<XenObject> >::iterator iter = _selected.begin(); iter != _selected.end(); iter++)
+    {
+        RefPtr<XenObject>& object = *iter;
+        if (object->getType() != XenObject::VM)
+        {
+            continue;
+        }
+        RefPtr<VirtualMachine> vm = RefPtr<VirtualMachine>::castStatic(object);
+        for (std::list<RefPtr<VirtualMachine> >::iterator iter2 = list.begin();; iter2++)
+        {
+            if (iter2 == list.end())
+            {
+                list.push_back(vm);
+                break;
+            }
+            else if ((*iter2).ptr() == vm.ptr())
+            {
+                break;
+            }
+        }
+    }
+    return static_cast<int>(list.size() - count0);
+}
+
+
+int ModelImpl::getSelected(std::list<RefPtr<StorageRepository> >& list)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    std::list<RefPtr<StorageRepository> >::size_type count0 = list.size();
+    for (std::list<RefPtr<XenObject> >::iterator iter = _selected.begin(); iter != _selected.end(); iter++)
+    {
+        RefPtr<XenObject>& object = *iter;
+        if (object->getType() != XenObject::SR)
+        {
+            continue;
+        }
+        RefPtr<StorageRepository> sr = RefPtr<StorageRepository>::castStatic(object);
+        for (std::list<RefPtr<StorageRepository> >::iterator iter2 = list.begin();; iter2++)
+        {
+            if (iter2 == list.end())
+            {
+                list.push_back(sr);
+                break;
+            }
+            else if ((*iter2).ptr() == sr.ptr())
             {
                 break;
             }

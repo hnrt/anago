@@ -14,6 +14,8 @@ namespace hnrt
     class Host;
     class PatchBase;
     class Session;
+    class StorageRepository;
+    class VirtualMachine;
     class XenObject;
     struct ConnectSpec;
 
@@ -36,6 +38,8 @@ namespace hnrt
         virtual void deselectAll() = 0;
         virtual void select(const RefPtr<XenObject>&) = 0;
         virtual int getSelected(std::list<RefPtr<Host> >&) = 0;
+        virtual int getSelected(std::list<RefPtr<VirtualMachine> >&) = 0;
+        virtual int getSelected(std::list<RefPtr<StorageRepository> >&) = 0;
         virtual RefPtr<Host> getSelectedHost() = 0;
 
         virtual RefPtr<PatchBase> getPatchBase() = 0;
