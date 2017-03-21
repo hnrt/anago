@@ -57,6 +57,13 @@ void ControllerImpl::parseCommandLine(int argc, char *argv[])
 {
     Trace trace("ControllerImpl::parseCommandLine");
 
+    signalNotified(XenObject::CONNECT_FAILED).connect(sigc::mem_fun(*this, &ControllerImpl::onConnectFailed));
+    signalNotified(XenObject::ERROR).connect(sigc::mem_fun(*this, &ControllerImpl::onXenObjectError));
+    signalNotified(XenObject::TASK_ON_SUCCESS).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
+    signalNotified(XenObject::TASK_ON_FAILURE).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
+    signalNotified(XenObject::TASK_ON_CANCELLED).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
+    signalNotified(XenObject::TASK_IN_PROGRESS).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
+
     _dispatcher.connect(sigc::mem_fun(*this, &ControllerImpl::onNotify));
 
     for (int index = 1; index < argc; index++)
@@ -202,11 +209,6 @@ void ControllerImpl::onNotify()
             _notified.pop_front();
         }
         trace.put("object=%zx notification=%d", (size_t)entry.first.ptr(), entry.second);
-        if (entry.second == XenObject::CREATED)
-        {
-            onObjectCreated(entry.first);
-            continue;
-        }
         {
             int key = entry.second;
             NotificationSignalMap::iterator iter = _notificationSignalMap.find(key);
@@ -223,7 +225,7 @@ void ControllerImpl::onNotify()
                 iter->second.emit(entry.first, entry.second);
                 if (entry.second == XenObject::DESTROYED)
                 {
-                    _refObjSignalMap.erase(key);
+                    _refObjSignalMap.erase(iter);
                 }
             }
         }
@@ -231,94 +233,80 @@ void ControllerImpl::onNotify()
 }
 
 
-void ControllerImpl::onObjectCreated(RefPtr<RefObj> object)
+void ControllerImpl::onConnectFailed(RefPtr<RefObj> object, int what)
 {
     RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
-    if (xenObject->getType() == XenObject::SESSION
-        || xenObject->getType() == XenObject::TASK
-        || View::instance().addObject(xenObject))
+    StringBuffer message;
     {
-        signalNotified(object).connect(sigc::mem_fun(*this, &ControllerImpl::onObjectUpdated));
+        Session& session = xenObject->getSession();
+        Session::Lock lock(session);
+        message.format(gettext("Failed to connect to %s.\n"), session.getConnectSpec().hostname.c_str());
+        XenServer::getError(session, message, "\n");
+        session.clearError();
+        RefPtr<Host> host = session.getStore().getHost();
+        Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false);
     }
+    View::instance().showWarning(message.str());
 }
 
 
-void ControllerImpl::onObjectUpdated(RefPtr<RefObj> object, int what)
+void ControllerImpl::onXenObjectError(RefPtr<RefObj> object, int what)
 {
     RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
-    if (what == XenObject::DESTROYED)
+    StringBuffer message;
     {
-        View::instance().removeObject(xenObject);
+        Session& session = xenObject->getSession();
+        Session::Lock lock(session);
+        XenServer::getError(session, message, "\n");
+        session.clearError();
     }
-    else if (what == XenObject::CONNECT_FAILED)
+    View::instance().showWarning(message.str());
+}
+
+
+void ControllerImpl::onXenTaskUpdated(RefPtr<RefObj> object, int what)
+{
+    RefPtr<XenTask> task = RefPtr<XenTask>::castStatic(object);
+    switch (what)
+    {
+    case XenObject::TASK_ON_SUCCESS:
     {
         StringBuffer message;
+        message += task->getMessageOnSuccess().c_str();
+        if (message.len())
         {
-            Session& session = xenObject->getSession();
-            Session::Lock lock(session);
-            message.format(gettext("Failed to connect to %s.\n"), session.getConnectSpec().hostname.c_str());
-            XenServer::getError(session, message, "\n");
-            session.clearError();
-            RefPtr<Host> host = session.getStore().getHost();
-            Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false);
+            View::instance().showInfo(message.str());
         }
-        View::instance().showWarning(message.str());
+        task->onSuccess();
+        break;
     }
-    else if (what == XenObject::ERROR)
+    case XenObject::TASK_ON_FAILURE:
     {
         StringBuffer message;
+        XenServer::getErrorFromTask(task->getSession(), task->getHandle(), message, "\n");
+        task->setErrorMessage(message);
+        message.clear();
+        message += task->getMessageOnFailure().c_str();
+        if (message.len())
         {
-            Session& session = xenObject->getSession();
-            Session::Lock lock(session);
-            XenServer::getError(session, message, "\n");
-            session.clearError();
+            message += "\n";
+            message += task->getErrorMessage().c_str();
+            View::instance().showWarning(message.str());
         }
-        View::instance().showWarning(message.str());
+        task->onFailure();
+        break;
     }
-    else if (xenObject->getType() == XenObject::TASK)
+    case XenObject::TASK_ON_CANCELLED:
     {
-        RefPtr<XenTask> task = RefPtr<XenTask>::castStatic(xenObject);
-        switch (what)
-        {
-        case XenObject::TASK_ON_SUCCESS:
-        {
-            StringBuffer message;
-            message += task->getMessageOnSuccess().c_str();
-            if (message.len())
-            {
-                View::instance().showInfo(message.str());
-            }
-            task->onSuccess();
-            break;
-        }
-        case XenObject::TASK_ON_FAILURE:
-        {
-            StringBuffer message;
-            XenServer::getErrorFromTask(task->getSession(), task->getHandle(), message, "\n");
-            task->setErrorMessage(message);
-            message.clear();
-            message += task->getMessageOnFailure().c_str();
-            if (message.len())
-            {
-                message += "\n";
-                message += task->getErrorMessage().c_str();
-                View::instance().showWarning(message.str());
-            }
-            task->onFailure();
-            break;
-        }
-        case XenObject::TASK_ON_CANCELLED:
-        {
-            task->onFailure();
-            break;
-        }
-        default:
-            break;
-        }
+        task->onFailure();
+        break;
     }
-    else
+    case XenObject::TASK_IN_PROGRESS:
     {
-        View::instance().updateObject(xenObject, what);
+        break;
+    }
+    default:
+        break;
     }
 }
 

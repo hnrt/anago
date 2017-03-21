@@ -48,8 +48,9 @@ namespace hnrt
         void operator =(const ControllerImpl&);
         bool quit2();
         void onNotify();
-        void onObjectCreated(RefPtr<RefObj>);
-        void onObjectUpdated(RefPtr<RefObj>, int);
+        void onConnectFailed(RefPtr<RefObj>, int);
+        void onXenObjectError(RefPtr<RefObj>, int);
+        void onXenTaskUpdated(RefPtr<RefObj>, int);
         void connectInBackground(RefPtr<Host>);
         void disconnectInBackground(RefPtr<Host>);
 

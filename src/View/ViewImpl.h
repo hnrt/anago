@@ -5,6 +5,8 @@
 #define HNRT_VIEWIMPL_H
 
 
+#include "Base/RefObj.h"
+#include "Base/RefPtr.h"
 #include "MainWindow.h"
 #include "View.h"
 
@@ -20,11 +22,8 @@ namespace hnrt
         ~ViewImpl();
         virtual const Glib::ustring& getDisplayName() { return _displayName; }
         virtual Gtk::Window& getWindow() { return _mainWindow; }
-        virtual void resize();
+        virtual void configure();
         virtual void clear();
-        virtual bool addObject(RefPtr<XenObject>&);
-        virtual void removeObject(RefPtr<XenObject>&);
-        virtual void updateObject(RefPtr<XenObject>&, int);
         virtual void showInfo(const Glib::ustring&);
         virtual void showWarning(const Glib::ustring&);
         virtual void showError(const Glib::ustring&);
@@ -36,6 +35,8 @@ namespace hnrt
 
         ViewImpl(const ViewImpl&);
         void operator =(const ViewImpl&);
+        void onObjectCreated(RefPtr<RefObj>, int);
+        void onObjectUpdated(RefPtr<RefObj>, int);
         void showMessageDialog(const Glib::ustring&, Gtk::MessageType);
 
         Glib::ustring _displayName;

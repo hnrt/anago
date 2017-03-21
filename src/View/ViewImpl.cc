@@ -4,6 +4,7 @@
 #include <libintl.h>
 #include "App/Constants.h"
 #include "Base/StringBuffer.h"
+#include "Controller/Controller.h"
 #include "Logger/Trace.h"
 #include "Model/ConnectSpec.h"
 #include "Model/Model.h"
@@ -20,6 +21,7 @@ ViewImpl::ViewImpl()
     : _displayName("Anago")
 {
     Trace trace("ViewImpl::ctor");
+    Controller::instance().signalNotified(XenObject::CREATED).connect(sigc::mem_fun(*this, &ViewImpl::onObjectCreated));
 }
 
 
@@ -29,9 +31,9 @@ ViewImpl::~ViewImpl()
 }
 
 
-void ViewImpl::resize()
+void ViewImpl::configure()
 {
-    Trace trace("ViewImpl::resize");
+    Trace trace("ViewImpl::configure");
     int cx = Model::instance().getWidth();
     int cy = Model::instance().getHeight();
     if (cx > WIDTH_DEFAULT && cy > HEIGHT_DEFAULT)
@@ -55,21 +57,27 @@ void ViewImpl::clear()
 }
 
 
-bool ViewImpl::addObject(RefPtr<XenObject>& object)
+void ViewImpl::onObjectCreated(RefPtr<RefObj> object, int what)
 {
-    return _mainWindow.addObject(object);
+    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
+    if (_mainWindow.addObject(xenObject))
+    {
+        Controller::instance().signalNotified(object).connect(sigc::mem_fun(*this, &ViewImpl::onObjectUpdated));
+    }
 }
 
 
-void ViewImpl::removeObject(RefPtr<XenObject>& object)
+void ViewImpl::onObjectUpdated(RefPtr<RefObj> object, int what)
 {
-    _mainWindow.removeObject(object);
-}
-
-
-void ViewImpl::updateObject(RefPtr<XenObject>& object, int what)
-{
-    _mainWindow.updateObject(object, what);
+    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
+    if (what == XenObject::DESTROYED)
+    {
+        _mainWindow.removeObject(xenObject);
+    }
+    else
+    {
+        _mainWindow.updateObject(xenObject, what);
+    }
 }
 
 
