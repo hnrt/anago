@@ -10,6 +10,8 @@
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
 #include "XenServer/VirtualMachine.h"
+#include "NoContentsNotebook.h"
+#include "NotebookFactory.h"
 #include "MainWindow.h"
 #include "PixStore.h"
 #include "View.h"
@@ -297,6 +299,10 @@ MainWindow::MainWindow()
 
     show_all_children();
 
+    _defaultNotebook = NoContentsNotebook::create(APPNAME);
+    addNotebook(_defaultNotebook);
+    showNotebook(_defaultNotebook);
+
     updateSensitivity();
 }
 
@@ -423,10 +429,10 @@ bool MainWindow::addObject(RefPtr<XenObject>& object)
 {
     if (_serverTreeView.add(object))
     {
-        //RefPtr<Notebook> notebook = NotebookFactory::create(xenObject);
-        //_notebookStore.set(xenObject, notebook);
-        //notebook->update();
-        //addNotebook(notebook);
+        Glib::RefPtr<Notebook> notebook = NotebookFactory::create(object);
+        _notebookStore.set(object, notebook);
+        notebook->update();
+        addNotebook(notebook);
         updateSensitivity();
         return true;
     }
@@ -538,6 +544,40 @@ void MainWindow::onServerTreeViewSelectionChanged()
     showNotebook(notebook);
 #endif
     updateSensitivity();
+}
+
+
+void MainWindow::addNotebook(Glib::RefPtr<Notebook>& notebook)
+{
+    notebook->hide();
+    _box2.pack_start(*notebook.operator->());
+}
+
+
+void MainWindow::removeNotebook(Glib::RefPtr<Notebook>& notebook)
+{
+    if (_currentNotebook == notebook)
+    {
+        showNotebook(_defaultNotebook);
+    }
+    _box2.remove(*notebook.operator->());
+}
+
+
+void MainWindow::showNotebook(const Glib::RefPtr<Notebook>& notebook)
+{
+    if (_currentNotebook != notebook)
+    {
+        if (_currentNotebook)
+        {
+            _currentNotebook->hide();
+        }
+        _currentNotebook = notebook;
+        if (_currentNotebook)
+        {
+            _currentNotebook->show();
+        }
+    }
 }
 
 

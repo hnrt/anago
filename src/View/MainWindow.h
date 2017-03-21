@@ -7,6 +7,8 @@
 
 #include <gtkmm.h>
 #include "Base/RefPtr.h"
+#include "Notebook.h"
+#include "NotebookStore.h"
 #include "ServerTreeView.h"
 
 
@@ -40,6 +42,9 @@ namespace hnrt
         bool onWindowStateChange(GdkEventWindowState*);
         void onResize(Gtk::Allocation&);
         void onServerTreeViewSelectionChanged();
+        void addNotebook(Glib::RefPtr<Notebook>&);
+        void removeNotebook(Glib::RefPtr<Notebook>&);
+        void showNotebook(const Glib::RefPtr<Notebook>&);
         void updateSensitivity();
 
         Glib::RefPtr<Gtk::IconFactory> _iconFactory;
@@ -61,6 +66,9 @@ namespace hnrt
         Gtk::ScrolledWindow _sw1;
         ServerTreeView _serverTreeView;
         Gtk::HBox _box2;
+        Glib::RefPtr<Notebook> _defaultNotebook;
+        Glib::RefPtr<Notebook> _currentNotebook;
+        NotebookStore _notebookStore;
 
         int _width;
         int _height;
