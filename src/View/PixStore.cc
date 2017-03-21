@@ -10,6 +10,7 @@
 #include "Icon/Pause.h"
 #include "Icon/PowerOff.h"
 #include "Icon/PowerOn.h"
+#include "Icon/RemoteDesktop.h"
 #include "Icon/RemovableMedia.h"
 #include "Icon/Warning.h"
 #include "Icon/Yes.h"
@@ -53,7 +54,7 @@ static Glib::RefPtr<Gdk::Pixbuf> RenderIcon(const Gtk::StockID& stockId, Gtk::Ic
 
 
 PixStore::PixStore()
-    : _pixApp(Gdk::Pixbuf::create_from_file("/usr/share/icons/gnome/32x32/apps/preferences-desktop-remote-desktop.png"))
+    : _pixApp(Gdk::Pixbuf::create_from_inline(-1, _iconRemoteDesktop, false))
     , _pixCdRom(Gdk::Pixbuf::create_from_inline(-1, _iconCdRom, false))
     , _pixError(RenderIcon(Gtk::Stock::DIALOG_ERROR, Gtk::ICON_SIZE_BUTTON))
     , _pixHardDisk(Gdk::Pixbuf::create_from_inline(-1, _iconHardDisk, false))
