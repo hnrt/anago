@@ -22,7 +22,8 @@ namespace hnrt
         ~ViewImpl();
         virtual const Glib::ustring& getDisplayName() { return _displayName; }
         virtual Gtk::Window& getWindow() { return _mainWindow; }
-        virtual void configure();
+        virtual void load();
+        virtual void save();
         virtual void clear();
         virtual void showInfo(const Glib::ustring&);
         virtual void showWarning(const Glib::ustring&);

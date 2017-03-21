@@ -52,8 +52,9 @@ int main(int argc, char *argv[])
         {
             Model::instance().load();
             Controller::instance().parseCommandLine(argc, argv);
-            View::instance().configure();
+            View::instance().load();
             Gtk::Main::run(View::instance().getWindow());
+            View::instance().save();
             Model::instance().save();
         }
         catch (Glib::ustring msg)

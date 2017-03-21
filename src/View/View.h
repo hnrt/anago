@@ -24,7 +24,8 @@ namespace hnrt
 
         virtual const Glib::ustring& getDisplayName() = 0;
         virtual Gtk::Window& getWindow() = 0;
-        virtual void configure() = 0;
+        virtual void load() = 0;
+        virtual void save() = 0;
         virtual void clear() = 0;
         virtual void showInfo(const Glib::ustring&) = 0;
         virtual void showWarning(const Glib::ustring&) = 0;

@@ -21,6 +21,7 @@ namespace hnrt
 
         MainWindow();
         ~MainWindow();
+        int getPane1Width() const;
         void setPane1Width(int);
         void clear();
         bool addObject(RefPtr<XenObject>&);

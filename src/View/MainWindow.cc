@@ -574,6 +574,12 @@ void MainWindow::updateSensitivity()
 }
 
 
+int MainWindow::getPane1Width() const
+{
+    return _sw1.get_width();
+}
+
+
 void MainWindow::setPane1Width(int cx)
 {
     _sw1.set_size_request(cx, -1);

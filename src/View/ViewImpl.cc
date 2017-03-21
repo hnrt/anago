@@ -31,7 +31,7 @@ ViewImpl::~ViewImpl()
 }
 
 
-void ViewImpl::configure()
+void ViewImpl::load()
 {
     Trace trace("ViewImpl::configure");
     int cx = Model::instance().getWidth();
@@ -47,6 +47,12 @@ void ViewImpl::configure()
         trace.put("pane1.cx=%d", cx);
         _mainWindow.setPane1Width(cx);
     }
+}
+
+
+void ViewImpl::save()
+{
+    Model::instance().setPane1Width(_mainWindow.getPane1Width());
 }
 
 
