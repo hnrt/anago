@@ -30,6 +30,8 @@ MainWindow::MainWindow()
     , _stockIdResumeVm("ResumeVm")
     , _stockIdChangeCd("ChangeCd")
     , _stockIdAuth("Auth")
+    , _width(0)
+    , _height(0)
     , _windowState((GdkWindowState)0)
 {
     initStockItems();
@@ -410,8 +412,9 @@ void MainWindow::onResize(Gtk::Allocation& a)
                           GDK_WINDOW_STATE_MAXIMIZED |
                           GDK_WINDOW_STATE_ICONIFIED)))
     {
-        Model::instance().setWidth(a.get_width());
-        Model::instance().setHeight(a.get_height());
+        _width = a.get_width();
+        _height = a.get_height();
+        Logger::instance().trace("MainWindow::onResize: cx=%d cy=%d", _width, _height);
     }
 }
 
@@ -710,6 +713,12 @@ void MainWindow::updateSensitivity()
         _uiManager->get_widget("/ToolBar/StartVm")->show();
         _uiManager->get_widget("/ToolBar/ResumeVm")->hide();
     }
+}
+
+
+void MainWindow::setSize(int cx, int cy)
+{
+    set_default_size(cx, cy);
 }
 
 

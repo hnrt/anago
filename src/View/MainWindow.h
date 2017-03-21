@@ -21,6 +21,9 @@ namespace hnrt
 
         MainWindow();
         ~MainWindow();
+        int getWidth() const { return _width; }
+        int getHeight() const { return _height; }
+        void setSize(int cx, int cy);
         int getPane1Width() const;
         void setPane1Width(int);
         void clear();
@@ -59,6 +62,8 @@ namespace hnrt
         ServerTreeView _serverTreeView;
         Gtk::HBox _box2;
 
+        int _width;
+        int _height;
         GdkWindowState _windowState;
     };
 }
