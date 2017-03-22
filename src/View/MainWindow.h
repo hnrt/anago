@@ -44,9 +44,9 @@ namespace hnrt
         bool onWindowStateChange(GdkEventWindowState*);
         void onResize(Gtk::Allocation&);
         void onHostTreeViewSelectionChanged();
-        void addNotebook(Glib::RefPtr<Notebook>&);
-        void removeNotebook(Glib::RefPtr<Notebook>&);
-        void showNotebook(const Glib::RefPtr<Notebook>&);
+        void addNotebook(RefPtr<Notebook>&);
+        void removeNotebook(RefPtr<Notebook>&);
+        void showNotebook(const RefPtr<Notebook>&);
         void updateSensitivity();
 
         Glib::RefPtr<Gtk::IconFactory> _iconFactory;
@@ -68,8 +68,8 @@ namespace hnrt
         Gtk::ScrolledWindow _sw1;
         HostTreeView _serverTreeView;
         Gtk::HBox _box2;
-        Glib::RefPtr<Notebook> _defaultNotebook;
-        Glib::RefPtr<Notebook> _currentNotebook;
+        RefPtr<Notebook> _defaultNotebook;
+        RefPtr<Notebook> _currentNotebook;
         NotebookStore _notebookStore;
 
         int _width;

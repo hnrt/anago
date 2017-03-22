@@ -22,7 +22,7 @@ XenObject::XenObject(Type type, Session& session, void* handle, const char* uuid
 {
     if (_type != SESSION)
     {
-        _session.reference();
+        _session.incRef();
     }
     _handle = const_cast<void*>(reinterpret_cast<const void*>(_refid.c_str()));
 }
@@ -32,7 +32,7 @@ XenObject::~XenObject()
 {
     if (_type != SESSION)
     {
-        _session.unreference();
+        _session.decRef();
     }
 }
 

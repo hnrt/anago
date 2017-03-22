@@ -5,6 +5,7 @@
 #define HNRT_NOCONTENTSNOTEBOOK_H
 
 
+#include "Base/RefPtr.h"
 #include "Notebook.h"
 
 
@@ -15,7 +16,7 @@ namespace hnrt
     {
     public:
 
-        static Glib::RefPtr<Notebook> create(const char* = "");
+        static RefPtr<Notebook> create(const char* = "");
 
         virtual const Gtk::Notebook& getInstance() const { return *this; }
         virtual Gtk::Notebook& getInstance() { return *this; }

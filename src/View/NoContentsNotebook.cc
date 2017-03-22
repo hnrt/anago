@@ -9,9 +9,9 @@
 using namespace hnrt;
 
 
-Glib::RefPtr<Notebook> NoContentsNotebook::create(const char* text)
+RefPtr<Notebook> NoContentsNotebook::create(const char* text)
 {
-    return Glib::RefPtr<Notebook>(new NoContentsNotebook(text));
+    return RefPtr<Notebook>(new NoContentsNotebook(text));
 }
 
 

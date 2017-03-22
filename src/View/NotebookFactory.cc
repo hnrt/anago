@@ -10,7 +10,7 @@
 using namespace hnrt;
 
 
-Glib::RefPtr<Notebook> NotebookFactory::create(const RefPtr<XenObject>& object)
+RefPtr<Notebook> NotebookFactory::create(const RefPtr<XenObject>& object)
 {
     switch (object->getType())
     {

@@ -13,8 +13,8 @@ namespace hnrt
 
         RefObj();
         virtual ~RefObj();
-        virtual void reference() const;
-        virtual void unreference() const;
+        virtual void incRef() const;
+        virtual void decRef() const;
         int refCount() const { return _refCount; }
 
     private:

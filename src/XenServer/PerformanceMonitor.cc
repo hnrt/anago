@@ -31,7 +31,7 @@ PerformanceMonitor::PerformanceMonitor(Session& session)
     , _end(static_cast<unsigned long>(time(NULL)) - 1)
 {
     Trace trace("PerformanceMonitor::ctor");
-    _session.reference();
+    _session.incRef();
 }
 
 
@@ -57,7 +57,7 @@ PerformanceMonitor::~PerformanceMonitor()
         delete pList;
     }
 
-    _session.unreference();
+    _session.decRef();
 }
 
 

@@ -18,9 +18,9 @@
 using namespace hnrt;
 
 
-Glib::RefPtr<Notebook> HostNotebook::create(const RefPtr<Host>& host)
+RefPtr<Notebook> HostNotebook::create(const RefPtr<Host>& host)
 {
-    return Glib::RefPtr<Notebook>(new HostNotebook(host));
+    return RefPtr<Notebook>(new HostNotebook(host));
 }
 
 

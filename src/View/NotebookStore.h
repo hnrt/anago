@@ -16,20 +16,20 @@ namespace hnrt
     class XenObject;
 
     class NotebookStore
-        : public std::map<RefPtr<XenObject>, Glib::RefPtr<Notebook> >
+        : public std::map<RefPtr<XenObject>, RefPtr<Notebook> >
     {
     public:
 
-        typedef std::map<RefPtr<XenObject>, Glib::RefPtr<Notebook> > Super;
-        typedef std::map<RefPtr<XenObject>, Glib::RefPtr<Notebook> >::iterator Iter;
-        typedef std::map<RefPtr<XenObject>, Glib::RefPtr<Notebook> >::const_iterator ConstIter;
-        typedef std::pair<RefPtr<XenObject>, Glib::RefPtr<Notebook> > Entry;
+        typedef std::map<RefPtr<XenObject>, RefPtr<Notebook> > Super;
+        typedef std::map<RefPtr<XenObject>, RefPtr<Notebook> >::iterator Iter;
+        typedef std::map<RefPtr<XenObject>, RefPtr<Notebook> >::const_iterator ConstIter;
+        typedef std::pair<RefPtr<XenObject>, RefPtr<Notebook> > Entry;
 
         NotebookStore();
         ~NotebookStore();
-        Glib::RefPtr<Notebook> get(const RefPtr<XenObject>&);
-        Glib::RefPtr<Notebook> set(const RefPtr<XenObject>&, const Glib::RefPtr<Notebook>&);
-        Glib::RefPtr<Notebook> remove(const RefPtr<XenObject>&);
+        RefPtr<Notebook> get(const RefPtr<XenObject>&);
+        RefPtr<Notebook> set(const RefPtr<XenObject>&, const RefPtr<Notebook>&);
+        RefPtr<Notebook> remove(const RefPtr<XenObject>&);
 
     private:
 

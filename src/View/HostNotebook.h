@@ -25,7 +25,7 @@ namespace hnrt
     {
     public:
 
-        static Glib::RefPtr<Notebook> create(const RefPtr<Host>&);
+        static RefPtr<Notebook> create(const RefPtr<Host>&);
 
         virtual ~HostNotebook();
         virtual const Gtk::Notebook& getInstance() const { return *this; }

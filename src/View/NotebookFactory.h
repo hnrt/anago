@@ -18,7 +18,7 @@ namespace hnrt
     {
     public:
 
-        static Glib::RefPtr<Notebook> create(const RefPtr<XenObject>&);
+        static RefPtr<Notebook> create(const RefPtr<XenObject>&);
     };
 }
 

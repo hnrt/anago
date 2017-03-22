@@ -29,7 +29,7 @@ namespace hnrt
             {
                 do
                 {
-                    _ptr->reference();
+                    _ptr->incRef();
                 }
                 while (--delta);
             }
@@ -40,7 +40,7 @@ namespace hnrt
         {
             if (_ptr)
             {
-                _ptr->reference();
+                _ptr->incRef();
             }
         }
 
@@ -48,7 +48,7 @@ namespace hnrt
         {
             if (_ptr)
             {
-                _ptr->unreference();
+                _ptr->decRef();
             }
         }
 
@@ -96,12 +96,12 @@ namespace hnrt
         {
             if (_ptr)
             {
-                _ptr->unreference();
+                _ptr->decRef();
             }
             _ptr = src._ptr;
             if (_ptr)
             {
-                _ptr->reference();
+                _ptr->incRef();
             }
             return *this;
         }
@@ -121,9 +121,18 @@ namespace hnrt
             RefPtr<T> instance(static_cast<T*>(const_cast<U*>(src.ptr())));
             if (instance._ptr)
             {
-                instance._ptr->reference();
+                instance._ptr->incRef();
             }
             return instance;
+        }
+
+        void clear()
+        {
+            if (_ptr)
+            {
+                _ptr->decRef();
+                _ptr = 0;
+            }
         }
 
     private:

@@ -50,7 +50,7 @@ namespace hnrt
         {
             if (_ctr)
             {
-                _ctr->reference();
+                _ctr->incRef();
             }
         }
 
@@ -59,7 +59,7 @@ namespace hnrt
         {
             if (_ctr)
             {
-                _ctr->reference();
+                _ctr->incRef();
             }
         }
 
@@ -67,7 +67,7 @@ namespace hnrt
         {
             if (_ctr)
             {
-                _ctr->unreference();
+                _ctr->decRef();
             }
         }
 
@@ -84,7 +84,7 @@ namespace hnrt
         {
             if (_ctr)
             {
-                _ctr->unreference();
+                _ctr->decRef();
             }
             _ctr = new Container;
             return &_ctr->_ptr;
@@ -94,12 +94,12 @@ namespace hnrt
         {
             if (_ctr)
             {
-                _ctr->unreference();
+                _ctr->decRef();
             }
             _ctr = src._ctr;
             if (_ctr)
             {
-                _ctr->reference();
+                _ctr->incRef();
             }
             return *this;
         }

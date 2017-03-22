@@ -6,12 +6,14 @@
 
 
 #include <gtkmm.h>
+#include "Base/RefObj.h"
 
 
 namespace hnrt
 {
     class Notebook
         : public Gtk::Notebook
+        , public RefObj
     {
     public:
 

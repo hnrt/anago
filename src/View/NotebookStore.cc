@@ -24,16 +24,16 @@ NotebookStore::~NotebookStore()
 }
 
 
-Glib::RefPtr<Notebook> NotebookStore::get(const RefPtr<XenObject>& node)
+RefPtr<Notebook> NotebookStore::get(const RefPtr<XenObject>& node)
 {
     ConstIter iter = find(node);
-    return iter != end() ? iter->second : Glib::RefPtr<Notebook>();
+    return iter != end() ? iter->second : RefPtr<Notebook>();
 }
 
 
-Glib::RefPtr<Notebook> NotebookStore::set(const RefPtr<XenObject>& node, const Glib::RefPtr<Notebook>& notebook)
+RefPtr<Notebook> NotebookStore::set(const RefPtr<XenObject>& node, const RefPtr<Notebook>& notebook)
 {
-    Glib::RefPtr<Notebook> old;
+    RefPtr<Notebook> old;
     Iter iter = find(node);
     if (iter != end())
     {
@@ -48,9 +48,9 @@ Glib::RefPtr<Notebook> NotebookStore::set(const RefPtr<XenObject>& node, const G
 }
 
 
-Glib::RefPtr<Notebook> NotebookStore::remove(const RefPtr<XenObject>& node)
+RefPtr<Notebook> NotebookStore::remove(const RefPtr<XenObject>& node)
 {
-    Glib::RefPtr<Notebook> old;
+    RefPtr<Notebook> old;
     Iter iter = find(node);
     if (iter != end())
     {

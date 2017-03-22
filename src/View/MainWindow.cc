@@ -435,7 +435,7 @@ bool MainWindow::addObject(RefPtr<XenObject>& object)
 {
     if (_serverTreeView.add(object))
     {
-        Glib::RefPtr<Notebook> notebook = NotebookFactory::create(object);
+        RefPtr<Notebook> notebook = NotebookFactory::create(object);
         _notebookStore.set(object, notebook);
         notebook->update();
         addNotebook(notebook);
@@ -452,7 +452,7 @@ bool MainWindow::addObject(RefPtr<XenObject>& object)
 void MainWindow::removeObject(RefPtr<XenObject>& object)
 {
     _serverTreeView.remove(object);
-    Glib::RefPtr<Notebook> notebook = _notebookStore.remove(object);
+    RefPtr<Notebook> notebook = _notebookStore.remove(object);
     if (!notebook)
     {
         return;
@@ -469,7 +469,7 @@ void MainWindow::removeObject(RefPtr<XenObject>& object)
 void MainWindow::updateObject(RefPtr<XenObject>& object, int what)
 {
     _serverTreeView.update(object, what);
-    Glib::RefPtr<Notebook> notebook = _notebookStore.get(object);
+    RefPtr<Notebook> notebook = _notebookStore.get(object);
     if (notebook)
     {
         switch (what)
@@ -507,8 +507,8 @@ void MainWindow::updateObject(RefPtr<XenObject>& object, int what)
 void MainWindow::addPerformanceMonitor(RefPtr<PerformanceMonitor>& pm)
 {
     RefPtr<Host> host = pm->getSession().getStore().getHost();
-    Glib::RefPtr<Notebook> notebook = _notebookStore.get(RefPtr<XenObject>::castStatic(host));
-    Glib::RefPtr<HostNotebook>::cast_static(notebook)->initPerformaceMonitor(pm);
+    RefPtr<Notebook> notebook = _notebookStore.get(RefPtr<XenObject>::castStatic(host));
+    RefPtr<HostNotebook>::castStatic(notebook)->initPerformaceMonitor(pm);
 }
 
 
@@ -542,7 +542,7 @@ void MainWindow::onHostTreeViewSelectionChanged()
         }
         iter++;
     }
-    Glib::RefPtr<Notebook> notebook;
+    RefPtr<Notebook> notebook;
     if (node)
     {
         notebook = _notebookStore.get(node);
@@ -556,14 +556,14 @@ void MainWindow::onHostTreeViewSelectionChanged()
 }
 
 
-void MainWindow::addNotebook(Glib::RefPtr<Notebook>& notebook)
+void MainWindow::addNotebook(RefPtr<Notebook>& notebook)
 {
     notebook->hide();
     _box2.pack_start(notebook->getInstance());
 }
 
 
-void MainWindow::removeNotebook(Glib::RefPtr<Notebook>& notebook)
+void MainWindow::removeNotebook(RefPtr<Notebook>& notebook)
 {
     if (_currentNotebook == notebook)
     {
@@ -573,7 +573,7 @@ void MainWindow::removeNotebook(Glib::RefPtr<Notebook>& notebook)
 }
 
 
-void MainWindow::showNotebook(const Glib::RefPtr<Notebook>& notebook)
+void MainWindow::showNotebook(const RefPtr<Notebook>& notebook)
 {
     if (_currentNotebook != notebook)
     {
