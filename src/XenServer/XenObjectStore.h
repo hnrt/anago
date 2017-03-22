@@ -16,7 +16,7 @@
 
 namespace hnrt
 {
-    //class PerformanceMonitor;
+    class PerformanceMonitor;
 
     class XenObjectStore
         : public RefObj
@@ -40,8 +40,9 @@ namespace hnrt
         void remove(const Glib::ustring&, XenObject::Type = XenObject::ANY);
         void remove(const char* refid, XenObject::Type type = XenObject::ANY) { return remove(Glib::ustring(refid), type); }
         template<typename T> void add(RefPtr<T>& object) { addObject(RefPtr<XenObject>::castStatic(object)); }
-        //RefPtr<PerformanceMonitor> getPerformanceMonitor() const;
-        //void setPerformanceMonitor(const RefPtr<PerformanceMonitor>&);
+        RefPtr<PerformanceMonitor> getPerformanceMonitor() const;
+        void setPerformanceMonitor(const RefPtr<PerformanceMonitor>&);
+        void removePerformanceMonitor();
         RefPtr<Network> getNw(const Glib::ustring&) const;
         RefPtr<Network> getNw(const char*) const;
         RefPtr<Network> getNw(const xen_network_record_opt*) const;
@@ -89,7 +90,7 @@ namespace hnrt
 
         Glib::RecMutex _mutex;
         RefPtr<Host> _host;
-        //RefPtr<PerformanceMonitor> _performanceMonitor;
+        RefPtr<PerformanceMonitor> _performanceMonitor;
         TypeMapMap _typeMapMap;
     };
 }

@@ -1,6 +1,8 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "Logger/Trace.h"
+#include "XenServer/Session.h"
 #include "XenServer/XenObject.h"
 #include "Notebook.h"
 #include "NotebookStore.h"
@@ -11,6 +13,14 @@ using namespace hnrt;
 
 NotebookStore::NotebookStore()
 {
+    Trace trace("NotebookStore::ctor");
+}
+
+
+NotebookStore::~NotebookStore()
+{
+    Trace trace("NotebookStore::dtor");
+    trace.put("size=%zu", size());
 }
 
 

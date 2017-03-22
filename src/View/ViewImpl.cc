@@ -8,6 +8,7 @@
 #include "Logger/Trace.h"
 #include "Model/ConnectSpec.h"
 #include "Model/Model.h"
+#include "XenServer/PerformanceMonitor.h"
 #include "XenServer/XenObject.h"
 #include "ConnectDialog.h"
 #include "PixStore.h"
@@ -22,6 +23,7 @@ ViewImpl::ViewImpl()
 {
     Trace trace("ViewImpl::ctor");
     Controller::instance().signalNotified(XenObject::CREATED).connect(sigc::mem_fun(*this, &ViewImpl::onObjectCreated));
+    Controller::instance().signalNotified(PerformanceMonitor::CREATED).connect(sigc::mem_fun(*this, &ViewImpl::onObjectCreated));
 }
 
 
@@ -68,10 +70,18 @@ void ViewImpl::clear()
 
 void ViewImpl::onObjectCreated(RefPtr<RefObj> object, int what)
 {
-    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
-    if (_mainWindow.addObject(xenObject))
+    if (what == XenObject::CREATED)
     {
-        Controller::instance().signalNotified(object).connect(sigc::mem_fun(*this, &ViewImpl::onObjectUpdated));
+        RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
+        if (_mainWindow.addObject(xenObject))
+        {
+            Controller::instance().signalNotified(object).connect(sigc::mem_fun(*this, &ViewImpl::onObjectUpdated));
+        }
+    }
+    else if (what == PerformanceMonitor::CREATED)
+    {
+        RefPtr<PerformanceMonitor> pmObject = RefPtr<PerformanceMonitor>::castStatic(object);
+        _mainWindow.addPerformanceMonitor(pmObject);
     }
 }
 

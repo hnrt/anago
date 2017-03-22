@@ -14,6 +14,7 @@
 namespace hnrt
 {
     class Host;
+    class PerformanceMonitor;
 
     class ControllerImpl
         : public sigc::trackable
@@ -86,6 +87,7 @@ namespace hnrt
         void onXenObjectError(RefPtr<RefObj>, int);
         void onXenTaskUpdated(RefPtr<RefObj>, int);
         void connectInBackground(RefPtr<Host>);
+        void performanceMonitorInBackground(RefPtr<PerformanceMonitor>);
         void disconnectInBackground(RefPtr<Host>);
 
         bool _quitInProgress;

@@ -4,10 +4,10 @@
 #include <string.h>
 #include <list>
 #include "Controller/Controller.h"
-//#include "Controller/PerformanceMonitor.h"
 #include "Host.h"
 #include "Macros.h"
 #include "Network.h"
+#include "PerformanceMonitor.h"
 #include "PhysicalBlockDevice.h"
 #include "PhysicalInterface.h"
 #include "Session.h"
@@ -65,17 +65,7 @@ void XenObjectStore::setHost(const RefPtr<Host>& host)
 
 void XenObjectStore::removeHost()
 {
-    RefPtr<Host> prev;
-    {
-        Glib::RecMutex::Lock lock(_mutex);
-        prev = _host;
-        _host = RefPtr<Host>();
-    }
-    if (prev)
-    {
-        prev->emit(XenObject::DESTROYED);
-        prev->getSession().emit(XenObject::DESTROYED);
-    }
+    setHost(RefPtr<Host>());
 }
 
 
@@ -102,7 +92,7 @@ void XenObjectStore::clear()
         RefPtr<XenObject> object = *iter;
         object->emit(XenObject::DESTROYED);
     }
-    //setPerformanceMonitor(RefPtr<PerformanceMonitor>());
+    setPerformanceMonitor(RefPtr<PerformanceMonitor>());
 }
 
 
@@ -286,10 +276,9 @@ void XenObjectStore::remove(const Glib::ustring& refid, XenObject::Type type)
 }
 
 
-#if 0
 RefPtr<PerformanceMonitor> XenObjectStore::getPerformanceMonitor() const
 {
-    Glib::RecMutex::Lock lock(_mutex);
+    Glib::RecMutex::Lock lock(const_cast<XenObjectStore*>(this)->_mutex);
     return _performanceMonitor;
 }
 
@@ -305,14 +294,20 @@ void XenObjectStore::setPerformanceMonitor(const RefPtr<PerformanceMonitor>& per
     }
     if (prev)
     {
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(prev), NOTIF_PM_DESTROYED);
+        Controller::instance().notify(RefPtr<RefObj>::castStatic(prev), PerformanceMonitor::DESTROYED);
     }
     if (next)
     {
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(next), NOTIF_PM_CREATED);
+        Controller::instance().notify(RefPtr<RefObj>::castStatic(next), PerformanceMonitor::CREATED);
     }
 }
-#endif
+
+
+void XenObjectStore::removePerformanceMonitor()
+{
+    setPerformanceMonitor(RefPtr<PerformanceMonitor>());
+}
+
 
 template<typename T> RefPtr<XenObject> XenObjectStore::getByOpt(T opt, XenObject::Type type) const
 {

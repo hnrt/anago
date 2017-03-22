@@ -10,16 +10,16 @@
 #include "XenServer/VirtualMachine.h"
 #include "XenServer/XenObjectStore.h"
 #include "PixStore.h"
-#include "ServerTreeStore.h"
-#include "ServerTreeView.h"
+#include "HostTreeStore.h"
+#include "HostTreeView.h"
 
 
 using namespace hnrt;
 
 
-ServerTreeView::ServerTreeView()
+HostTreeView::HostTreeView()
 {
-    _store = ServerTreeStore::create();
+    _store = HostTreeStore::create();
     set_model(_store);
     set_headers_visible(false);
     set_reorderable();
@@ -31,18 +31,18 @@ ServerTreeView::ServerTreeView()
 }
 
 
-ServerTreeView::~ServerTreeView()
+HostTreeView::~HostTreeView()
 {
 }
 
 
-void ServerTreeView::clear()
+void HostTreeView::clear()
 {
     _store.clear();
 }
 
 
-bool ServerTreeView::add(RefPtr<XenObject>& object)
+bool HostTreeView::add(RefPtr<XenObject>& object)
 {
     switch (object->getType())
     {
@@ -60,7 +60,7 @@ bool ServerTreeView::add(RefPtr<XenObject>& object)
 }
 
 
-void ServerTreeView::remove(const RefPtr<XenObject>& object)
+void HostTreeView::remove(const RefPtr<XenObject>& object)
 {
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
     while (iter)
@@ -100,7 +100,7 @@ void ServerTreeView::remove(const RefPtr<XenObject>& object)
 }
 
 
-bool ServerTreeView::add(RefPtr<Host> host)
+bool HostTreeView::add(RefPtr<Host> host)
 {
     RefPtr<XenObject> object = RefPtr<XenObject>::castStatic(host);
     Gtk::TreeModel::Row row;
@@ -149,7 +149,7 @@ bool ServerTreeView::add(RefPtr<Host> host)
 }
 
 
-bool ServerTreeView::add(RefPtr<VirtualMachine> vm)
+bool HostTreeView::add(RefPtr<VirtualMachine> vm)
 {
     XenPtr<xen_vm_record> vmRecord = vm->getRecord();
     if (!vmRecord ||
@@ -210,7 +210,7 @@ bool ServerTreeView::add(RefPtr<VirtualMachine> vm)
 }
 
 
-bool ServerTreeView::add(RefPtr<StorageRepository> sr)
+bool HostTreeView::add(RefPtr<StorageRepository> sr)
 {
     RefPtr<Host> host = sr->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -295,7 +295,7 @@ bool ServerTreeView::add(RefPtr<StorageRepository> sr)
 }
 
 
-bool ServerTreeView::add(const RefPtr<Network> nw)
+bool HostTreeView::add(const RefPtr<Network> nw)
 {
     RefPtr<Host> host = nw->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -356,7 +356,7 @@ bool ServerTreeView::add(const RefPtr<Network> nw)
 }
 
 
-void ServerTreeView::update(RefPtr<XenObject>& object, int what)
+void HostTreeView::update(RefPtr<XenObject>& object, int what)
 {
     switch (object->getType())
     {
@@ -495,13 +495,13 @@ void ServerTreeView::update(RefPtr<XenObject>& object, int what)
 }
 
 
-Gtk::TreeIter ServerTreeView::getFirst() const
+Gtk::TreeIter HostTreeView::getFirst() const
 {
     return _store->get_iter("0");
 }
 
 
-void ServerTreeView::reorder(RefPtr<VirtualMachine>& vm, Gtk::TreeIter& iterSource)
+void HostTreeView::reorder(RefPtr<VirtualMachine>& vm, Gtk::TreeIter& iterSource)
 {
     RefPtr<Host> host = vm->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -546,7 +546,7 @@ void ServerTreeView::reorder(RefPtr<VirtualMachine>& vm, Gtk::TreeIter& iterSour
 }
 
 
-void ServerTreeView::reorder(RefPtr<StorageRepository>& sr, Gtk::TreeIter& iterSource)
+void HostTreeView::reorder(RefPtr<StorageRepository>& sr, Gtk::TreeIter& iterSource)
 {
     RefPtr<Host> host = sr->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -615,13 +615,13 @@ void ServerTreeView::reorder(RefPtr<StorageRepository>& sr, Gtk::TreeIter& iterS
 }
 
 
-RefPtr<XenObject> ServerTreeView::getObject(const Gtk::TreeIter& iter) const
+RefPtr<XenObject> HostTreeView::getObject(const Gtk::TreeIter& iter) const
 {
     return (*iter)[_store->record().colXenObject];
 }
 
 
-bool ServerTreeView::on_button_press_event(GdkEventButton* event)
+bool HostTreeView::on_button_press_event(GdkEventButton* event)
 {
     bool retval = Gtk::TreeView::on_button_press_event(event);
 
@@ -656,7 +656,7 @@ bool ServerTreeView::on_button_press_event(GdkEventButton* event)
             switch (object->getType())
             {
             case XenObject::HOST:
-                //_menuServer.popup(event->button, event->time, RefPtr<Host>::castStatic(object));
+                _menuHost.popup(event->button, event->time, RefPtr<Host>::castStatic(object));
                 break;
             case XenObject::VM:
                 //_menuVm.popup(event->button, event->time, RefPtr<VirtualMachine>::castStatic(object));
@@ -676,7 +676,7 @@ bool ServerTreeView::on_button_press_event(GdkEventButton* event)
 }
 
 
-void ServerTreeView::updateDisplayOrder()
+void HostTreeView::updateDisplayOrder()
 {
     int displayOrder = 10;
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item

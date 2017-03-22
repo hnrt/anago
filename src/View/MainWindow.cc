@@ -4,12 +4,15 @@
 #include <libintl.h>
 #include "App/Constants.h"
 #include "Controller/Controller.h"
-#include "Logger/Logger.h"
+#include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "XenServer/Host.h"
+#include "XenServer/PerformanceMonitor.h"
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
 #include "XenServer/VirtualMachine.h"
+#include "XenServer/XenObjectStore.h"
+#include "HostNotebook.h"
 #include "NoContentsNotebook.h"
 #include "NotebookFactory.h"
 #include "MainWindow.h"
@@ -36,6 +39,8 @@ MainWindow::MainWindow()
     , _height(0)
     , _windowState((GdkWindowState)0)
 {
+    Trace trace("MainWindow::ctor");
+
     initStockItems();
 
     set_icon(PixStore::instance().getApp());
@@ -295,7 +300,7 @@ MainWindow::MainWindow()
     signal_window_state_event().connect(sigc::mem_fun(*this, &MainWindow::onWindowStateChange));
     signal_size_allocate().connect(sigc::mem_fun(*this, &MainWindow::onResize));
 
-    _serverTreeView.signalSelectionChanged().connect(sigc::mem_fun(*this, &MainWindow::onServerTreeViewSelectionChanged));
+    _serverTreeView.signalSelectionChanged().connect(sigc::mem_fun(*this, &MainWindow::onHostTreeViewSelectionChanged));
 
     show_all_children();
 
@@ -309,6 +314,7 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
+    Trace trace("MainWindow::dtor");
 }
 
 
@@ -446,18 +452,16 @@ bool MainWindow::addObject(RefPtr<XenObject>& object)
 void MainWindow::removeObject(RefPtr<XenObject>& object)
 {
     _serverTreeView.remove(object);
-#if 0
-    RefPtr<Notebook> notebook = _notebookStore.remove(object);
+    Glib::RefPtr<Notebook> notebook = _notebookStore.remove(object);
     if (!notebook)
     {
         return;
     }
     if (notebook == _currentNotebook)
     {
-        onServerTreeViewSelectionChanged();
+        onHostTreeViewSelectionChanged();
     }
     removeNotebook(notebook);
-#endif
     updateSensitivity();
 }
 
@@ -465,8 +469,7 @@ void MainWindow::removeObject(RefPtr<XenObject>& object)
 void MainWindow::updateObject(RefPtr<XenObject>& object, int what)
 {
     _serverTreeView.update(object, what);
-#if 0
-    RefPtr<Notebook> notebook = _notebookStore.get(object);
+    Glib::RefPtr<Notebook> notebook = _notebookStore.get(object);
     if (notebook)
     {
         switch (what)
@@ -476,7 +479,8 @@ void MainWindow::updateObject(RefPtr<XenObject>& object, int what)
         case XenObject::RECORD_UPDATED:
             notebook->update();
             break;
-        case XenObject::BUSY_UPDATED:
+        case XenObject::BUSY_SET:
+        case XenObject::BUSY_RESET:
         case XenObject::POWER_STATE_UPDATED:
         case XenObject::SNAPSHOT_UPDATED:
             notebook->updateSnapshots();
@@ -485,7 +489,6 @@ void MainWindow::updateObject(RefPtr<XenObject>& object, int what)
             break;
         }
     }
-#endif
     switch (what)
     {
     case XenObject::BUSY_SET:
@@ -501,7 +504,15 @@ void MainWindow::updateObject(RefPtr<XenObject>& object, int what)
 }
 
 
-void MainWindow::onServerTreeViewSelectionChanged()
+void MainWindow::addPerformanceMonitor(RefPtr<PerformanceMonitor>& pm)
+{
+    RefPtr<Host> host = pm->getSession().getStore().getHost();
+    Glib::RefPtr<Notebook> notebook = _notebookStore.get(RefPtr<XenObject>::castStatic(host));
+    Glib::RefPtr<HostNotebook>::cast_static(notebook)->initPerformaceMonitor(pm);
+}
+
+
+void MainWindow::onHostTreeViewSelectionChanged()
 {
     RefPtr<XenObject> node;
     Model::instance().deselectAll();
@@ -531,8 +542,7 @@ void MainWindow::onServerTreeViewSelectionChanged()
         }
         iter++;
     }
-#if 0
-    RefPtr<Notebook> notebook;
+    Glib::RefPtr<Notebook> notebook;
     if (node)
     {
         notebook = _notebookStore.get(node);
@@ -542,7 +552,6 @@ void MainWindow::onServerTreeViewSelectionChanged()
         notebook = _defaultNotebook;
     }
     showNotebook(notebook);
-#endif
     updateSensitivity();
 }
 
@@ -550,7 +559,7 @@ void MainWindow::onServerTreeViewSelectionChanged()
 void MainWindow::addNotebook(Glib::RefPtr<Notebook>& notebook)
 {
     notebook->hide();
-    _box2.pack_start(*notebook.operator->());
+    _box2.pack_start(notebook->getInstance());
 }
 
 
@@ -560,7 +569,7 @@ void MainWindow::removeNotebook(Glib::RefPtr<Notebook>& notebook)
     {
         showNotebook(_defaultNotebook);
     }
-    _box2.remove(*notebook.operator->());
+    _box2.remove(notebook->getInstance());
 }
 
 
@@ -776,5 +785,9 @@ void MainWindow::setPane1Width(int cx)
 
 void MainWindow::clear()
 {
+    Trace trace("MainWindow::clear");
     _serverTreeView.clear();
+    _defaultNotebook.clear();
+    _currentNotebook.clear();
+    _notebookStore.clear();
 }

@@ -1,8 +1,8 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
-#ifndef HNRT_SERVERTREESTORE_H
-#define HNRT_SERVERTREESTORE_H
+#ifndef HNRT_HOSTTREESTORE_H
+#define HNRT_HOSTTREESTORE_H
 
 
 #include <gtkmm.h>
@@ -13,7 +13,7 @@ namespace hnrt
 {
     class XenObject;
 
-    class ServerTreeStore
+    class HostTreeStore
         : public Gtk::TreeStore
     {
     public:
@@ -33,15 +33,15 @@ namespace hnrt
             void operator =(const Record&);
         };
 
-        static Glib::RefPtr<ServerTreeStore> create();
+        static Glib::RefPtr<HostTreeStore> create();
 
         Record& record() { return _record; }
 
     protected:
 
-        ServerTreeStore();
-        ServerTreeStore(const ServerTreeStore&);
-        void operator =(const ServerTreeStore&);
+        HostTreeStore();
+        HostTreeStore(const HostTreeStore&);
+        void operator =(const HostTreeStore&);
         virtual bool row_draggable_vfunc(const Gtk::TreeModel::Path& path) const;
         virtual bool row_drop_possible_vfunc(const Gtk::TreeModel::Path& dest, const Gtk::SelectionData& selectionData) const;
 
@@ -50,4 +50,4 @@ namespace hnrt
 }
 
 
-#endif //!HNRT_SERVERTREESTORE_H
+#endif //!HNRT_HOSTTREESTORE_H

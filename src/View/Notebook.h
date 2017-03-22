@@ -15,6 +15,9 @@ namespace hnrt
     {
     public:
 
+        virtual ~Notebook() {}
+        virtual const Gtk::Notebook& getInstance() const = 0;
+        virtual Gtk::Notebook& getInstance() = 0;
         virtual void update() = 0;
         virtual void updateSnapshots() {}
     };

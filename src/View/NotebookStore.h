@@ -26,6 +26,7 @@ namespace hnrt
         typedef std::pair<RefPtr<XenObject>, Glib::RefPtr<Notebook> > Entry;
 
         NotebookStore();
+        ~NotebookStore();
         Glib::RefPtr<Notebook> get(const RefPtr<XenObject>&);
         Glib::RefPtr<Notebook> set(const RefPtr<XenObject>&, const Glib::RefPtr<Notebook>&);
         Glib::RefPtr<Notebook> remove(const RefPtr<XenObject>&);

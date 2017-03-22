@@ -9,11 +9,12 @@
 #include "Base/RefPtr.h"
 #include "Notebook.h"
 #include "NotebookStore.h"
-#include "ServerTreeView.h"
+#include "HostTreeView.h"
 
 
 namespace hnrt
 {
+    class PerformanceMonitor;
     class XenObject;
 
     class MainWindow
@@ -22,7 +23,7 @@ namespace hnrt
     public:
 
         MainWindow();
-        ~MainWindow();
+        virtual ~MainWindow();
         int getWidth() const { return _width; }
         int getHeight() const { return _height; }
         void setSize(int cx, int cy);
@@ -32,6 +33,7 @@ namespace hnrt
         bool addObject(RefPtr<XenObject>&);
         void removeObject(RefPtr<XenObject>&);
         void updateObject(RefPtr<XenObject>&, int);
+        void addPerformanceMonitor(RefPtr<PerformanceMonitor>&);
 
     private:
 
@@ -41,7 +43,7 @@ namespace hnrt
         bool onClose(GdkEventAny*);
         bool onWindowStateChange(GdkEventWindowState*);
         void onResize(Gtk::Allocation&);
-        void onServerTreeViewSelectionChanged();
+        void onHostTreeViewSelectionChanged();
         void addNotebook(Glib::RefPtr<Notebook>&);
         void removeNotebook(Glib::RefPtr<Notebook>&);
         void showNotebook(const Glib::RefPtr<Notebook>&);
@@ -64,7 +66,7 @@ namespace hnrt
         Gtk::VBox _box;
         Gtk::HPaned _hpaned;
         Gtk::ScrolledWindow _sw1;
-        ServerTreeView _serverTreeView;
+        HostTreeView _serverTreeView;
         Gtk::HBox _box2;
         Glib::RefPtr<Notebook> _defaultNotebook;
         Glib::RefPtr<Notebook> _currentNotebook;

@@ -3,6 +3,7 @@
 
 #include "Atomic.h"
 #include "RefObj.h"
+#include "Logger/Logger.h"
 
 
 using namespace hnrt;
@@ -21,14 +22,17 @@ RefObj::~RefObj()
 
 void RefObj::reference() const
 {
-    InterlockedIncrement(&const_cast<RefObj*>(this)->_refCount);
+    int count = InterlockedIncrement(&const_cast<RefObj*>(this)->_refCount);
+    Logger::instance().trace("RefObj@%zx::reference: %d", this, count);
+    (void)count;
 }
 
 
 void RefObj::unreference() const
 {
-    int retval = InterlockedDecrement(&const_cast<RefObj*>(this)->_refCount);
-    if (!retval)
+    int count = InterlockedDecrement(&const_cast<RefObj*>(this)->_refCount);
+    Logger::instance().trace("RefObj@%zx::unreference: %d", this, count);
+    if (!count)
     {
         delete this;
     }

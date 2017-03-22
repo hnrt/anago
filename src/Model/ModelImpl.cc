@@ -147,6 +147,7 @@ void ModelImpl::removeAllSessions()
             }
         }
         session.getStore().removeHost();
+        Logger::instance().trace("ModelImpl::removeAllSessions: host=%zx count=%d", host.ptr(), host->refCount());
     }
 }
 

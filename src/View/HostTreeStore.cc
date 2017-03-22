@@ -4,27 +4,27 @@
 #include "Logger/Trace.h"
 #include "XenServer/Session.h"
 #include "XenServer/XenObject.h"
-#include "ServerTreeStore.h"
+#include "HostTreeStore.h"
 
 
 using namespace hnrt;
 
 
-Glib::RefPtr<ServerTreeStore> ServerTreeStore::create()
+Glib::RefPtr<HostTreeStore> HostTreeStore::create()
 {
-    return Glib::RefPtr<ServerTreeStore>(new ServerTreeStore);
+    return Glib::RefPtr<HostTreeStore>(new HostTreeStore);
 }
 
 
-ServerTreeStore::ServerTreeStore()
+HostTreeStore::HostTreeStore()
 {
     set_column_types(_record);
 }
 
 
-bool ServerTreeStore::row_draggable_vfunc(const Gtk::TreeModel::Path& path) const
+bool HostTreeStore::row_draggable_vfunc(const Gtk::TreeModel::Path& path) const
 {
-    ServerTreeStore* pThis = const_cast<ServerTreeStore*>(this);
+    HostTreeStore* pThis = const_cast<HostTreeStore*>(this);
     Gtk::TreeIter iter = pThis->get_iter(path);
     Gtk::TreeModel::Row row = *iter;
     if (!row)
@@ -40,9 +40,9 @@ bool ServerTreeStore::row_draggable_vfunc(const Gtk::TreeModel::Path& path) cons
 }
 
 
-bool ServerTreeStore::row_drop_possible_vfunc(const Gtk::TreeModel::Path& destPath, const Gtk::SelectionData& selectionData) const
+bool HostTreeStore::row_drop_possible_vfunc(const Gtk::TreeModel::Path& destPath, const Gtk::SelectionData& selectionData) const
 {
-    Trace trace("ServerTreeStore::row_drop_possible_vfunc");
+    Trace trace("HostTreeStore::row_drop_possible_vfunc");
 
     Glib::RefPtr<Gtk::TreeModel> srcModel;
     Gtk::TreePath srcPath;
@@ -55,7 +55,7 @@ bool ServerTreeStore::row_drop_possible_vfunc(const Gtk::TreeModel::Path& destPa
         {
         case XenObject::HOST:
         {
-            ServerTreeStore* pThis = const_cast<ServerTreeStore*>(this);
+            HostTreeStore* pThis = const_cast<HostTreeStore*>(this);
             Gtk::TreeIter dstIter = pThis->get_iter(destPath);
             Gtk::TreeModel::Row dstRow = *dstIter;
             if (!dstRow)
@@ -79,7 +79,7 @@ bool ServerTreeStore::row_drop_possible_vfunc(const Gtk::TreeModel::Path& destPa
 }
 
 
-ServerTreeStore::Record::Record()
+HostTreeStore::Record::Record()
 {
     add(colPix);
     add(colKey);

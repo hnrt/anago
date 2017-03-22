@@ -17,6 +17,8 @@ namespace hnrt
 
         static Glib::RefPtr<Notebook> create(const char* = "");
 
+        virtual const Gtk::Notebook& getInstance() const { return *this; }
+        virtual Gtk::Notebook& getInstance() { return *this; }
         virtual void update() {}
 
     protected:

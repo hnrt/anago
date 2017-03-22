@@ -1,33 +1,33 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
-#ifndef HNRT_SERVERTREEVIEW_H
-#define HNRT_SERVERTREEVIEW_H
+#ifndef HNRT_HOSTTREEVIEW_H
+#define HNRT_HOSTTREEVIEW_H
 
 
 #include <gtkmm.h>
 #include "Base/RefPtr.h"
-//#include "ServerMenu.h"
-//#include "VirtualMachineMenu.h"
+#include "HostMenu.h"
 //#include "StorageRepositoryMenu.h"
+//#include "VirtualMachineMenu.h"
 
 
 namespace hnrt
 {
     class Host;
+    class HostTreeStore;
     class Network;
-    class ServerTreeStore;
     class StorageRepository;
     class VirtualMachine;
     class XenObject;
 
-    class ServerTreeView
+    class HostTreeView
         : public Gtk::TreeView
     {
     public:
 
-        ServerTreeView();
-        virtual ~ServerTreeView();
+        HostTreeView();
+        virtual ~HostTreeView();
         void clear();
         bool add(RefPtr<XenObject>&);
         void remove(const RefPtr<XenObject>&);
@@ -40,8 +40,8 @@ namespace hnrt
 
     protected:
 
-        ServerTreeView(const ServerTreeView&);
-        void operator =(const ServerTreeView&);
+        HostTreeView(const HostTreeView&);
+        void operator =(const HostTreeView&);
         bool add(RefPtr<Host>);
         bool add(RefPtr<VirtualMachine>);
         bool add(RefPtr<StorageRepository>);
@@ -50,12 +50,12 @@ namespace hnrt
         void reorder(RefPtr<StorageRepository>&, Gtk::TreeIter&);
         virtual bool on_button_press_event(GdkEventButton*);
 
-        Glib::RefPtr<ServerTreeStore> _store;
-        //ServerMenu _menuServer;
+        Glib::RefPtr<HostTreeStore> _store;
+        HostMenu _menuHost;
         //VirtualMachineMenu _menuVm;
         //StorageRepositoryMenu _menuSr;
     };
 }
 
 
-#endif //!HNRT_SERVERTREEVIEW_H
+#endif //!HNRT_HOSTTREEVIEW_H

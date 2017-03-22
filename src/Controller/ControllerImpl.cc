@@ -11,6 +11,7 @@
 #include "View/View.h"
 #include "XenServer/Host.h"
 #include "XenServer/Network.h"
+#include "XenServer/PerformanceMonitor.h"
 #include "XenServer/PhysicalBlockDevice.h"
 #include "XenServer/PhysicalInterface.h"
 #include "XenServer/Session.h"
@@ -223,7 +224,8 @@ void ControllerImpl::onNotify()
             if (iter != _refObjSignalMap.end())
             {
                 iter->second.emit(entry.first, entry.second);
-                if (entry.second == XenObject::DESTROYED)
+                if (entry.second == XenObject::DESTROYED
+                    || entry.second == PerformanceMonitor::DESTROYED)
                 {
                     _refObjSignalMap.erase(iter);
                 }
@@ -389,6 +391,8 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
     Background bg("Connect");
     Trace trace("ControllerImpl::connectInBackground", "host=%s", host->getSession().getConnectSpec().hostname.c_str());
     Session& session = host->getSession();
+    RefPtr<PerformanceMonitor> performanceMonitor = PerformanceMonitor::create(session);
+    session.getStore().setPerformanceMonitor(performanceMonitor);
     {
         XenObject::Busy busy(host);
         host->onConnectPending();
@@ -572,13 +576,24 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
         }
     }
     session.setMonitoring(true);
+    Glib::Thread* pThead = Glib::Thread::create(sigc::bind<RefPtr<PerformanceMonitor> >(sigc::mem_fun(*this, &ControllerImpl::performanceMonitorInBackground), performanceMonitor), true);
     XenEventMonitor eventMonitor;
-    eventMonitor.run(session);
+    eventMonitor.run(session);performanceMonitor->terminate();
+    pThead->join();
+    session.getStore().removePerformanceMonitor();
     session.setMonitoring(false);
     if (session.isConnected())
     {
         Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false);
     }
+}
+
+
+void ControllerImpl::performanceMonitorInBackground(RefPtr<PerformanceMonitor> performanceMonitor)
+{
+    Background bg("PerformanceMonitor");
+    Trace trace("ControllerImpl::performanceMonitorInBackground");
+    performanceMonitor->run();
 }
 
 
