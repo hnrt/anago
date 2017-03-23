@@ -8,6 +8,7 @@
 #include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "Model/ThreadManager.h"
+#include "Net/WakeOnLan.h"
 #include "View/View.h"
 #include "XenServer/Host.h"
 #include "XenServer/Network.h"
@@ -400,6 +401,11 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
         if (session.connect())
         {
             trace.put("Connected successfully.");
+            ConnectSpec& cs = session.getConnectSpec();
+            if (cs.mac.isNull())
+            {
+                cs.mac.getByName(cs.hostname.c_str());
+            }
             if (!host->onConnected())
             {
                 return;
@@ -644,7 +650,37 @@ void ControllerImpl::changeHostName()
 
 void ControllerImpl::wakeHost()
 {
-    //TODO: IMPLEMENT
+    RefPtr<Host> host = Model::instance().getSelectedHost();
+    if (!host)
+    {
+        return;
+    }
+    ConnectSpec& cs = host->getSession().getConnectSpec();
+    if (cs.mac.isNull())
+    {
+        if (!cs.mac.getByName(cs.hostname.c_str()))
+        {
+            View::instance().showWarning(Glib::ustring::compose(gettext("MAC address is unavailable.\n\n%1"), cs.hostname));
+            return;
+        }
+    }
+    WakeOnLan wol(cs.mac);
+    int rc = wol.send(cs.hostname.c_str());
+    if (!rc)
+    {
+        View::instance().showInfo(
+            Glib::ustring::compose(
+                gettext("Sent a wake-on-LAN packet to %1.\n\nPlease wait a while for the host to start up."),
+                cs.hostname));
+    }
+    else
+    {
+        View::instance().showWarning(
+            Glib::ustring::compose(
+                gettext("Unable to send a wake-on-LAN packet to %1.\n\n%2"),
+                cs.hostname,
+                strerror(rc)));
+    }
 }
 
 
