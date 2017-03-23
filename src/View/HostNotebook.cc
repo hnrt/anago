@@ -69,6 +69,9 @@ HostNotebook::HostNotebook(const RefPtr<Host>& host)
     append_page(_optBox, Glib::ustring(gettext("Options")));
 
     show_all_children();
+
+    _connectionSession = Controller::instance().signalNotified(RefPtr<RefObj>(&_host->getSession(), 1)).connect(sigc::mem_fun(*this, &HostNotebook::onSessionUpdated));
+    _connectionHost = Controller::instance().signalNotified(RefPtr<RefObj>::castStatic(host)).connect(sigc::mem_fun(*this, &HostNotebook::onHostUpdated));
 }
 
 
@@ -76,12 +79,9 @@ HostNotebook::~HostNotebook()
 {
     Trace trace(StringBuffer().format("HostNotebook@%zx::dtor(%s)", this, _host->getSession().getConnectSpec().hostname.c_str()));
     trace.put("host.ref=%d", _host->refCount());
-}
 
-
-void HostNotebook::initPerformaceMonitor(const RefPtr<PerformanceMonitor>& pm)
-{
-    Controller::instance().signalNotified(RefPtr<RefObj>::castStatic(pm)).connect(sigc::mem_fun(*this, &HostNotebook::onPerformaceStatsUpdated));
+    _connectionSession.disconnect();
+    _connectionHost.disconnect();
 }
 
 
@@ -91,8 +91,50 @@ void HostNotebook::onAutoConnectChanged()
 }
 
 
+void HostNotebook::onSessionUpdated(RefPtr<RefObj> object, int what)
+{
+    Trace trace(StringBuffer().format("HostNotebook@%zx::onSessionUpdated(%zx,%d)", this, object.ptr(), what));
+
+    switch (what)
+    {
+    case XenObject::CONNECTED:
+    case XenObject::DISCONNECTED:
+        update();
+        break;
+    case XenObject::PERFORMANCE_STATS_UPDATED:
+        updatePerformaceStats();
+        break;
+    default:
+        break;
+    }
+}
+
+
+void HostNotebook::onHostUpdated(RefPtr<RefObj> object, int what)
+{
+    Trace trace(StringBuffer().format("HostNotebook@%zx::onHostUpdated(%zx,%d)", this, object.ptr(), what));
+
+    switch (what)
+    {
+    case XenObject::CONNECTED:
+    case XenObject::CONNECT_FAILED:
+    case XenObject::DISCONNECTED:
+    case XenObject::RECORD_UPDATED:
+    case XenObject::NAME_UPDATED:
+    case XenObject::STATUS_UPDATED:
+    case XenObject::SESSION_UPDATED:
+        update();
+        break;
+    default:
+        break;
+    }
+}
+
+
 void HostNotebook::update()
 {
+    Trace trace(StringBuffer().format("HostNotebook@%zx::update", this));
+
     bool tabs = page_num(_optBox) > 0;
 
     Session& session = _host->getSession();
@@ -176,9 +218,9 @@ void HostNotebook::update()
 }
 
 
-void HostNotebook::onPerformaceStatsUpdated(RefPtr<RefObj> object, int notification)
+void HostNotebook::updatePerformaceStats()
 {
-    RefPtr<PerformanceMonitor> pm = RefPtr<PerformanceMonitor>::castStatic(object);
+    RefPtr<PerformanceMonitor> pm = _host->getSession().getStore().getPerformanceMonitor();
 
     for (;;)
     {

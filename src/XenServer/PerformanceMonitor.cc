@@ -193,7 +193,7 @@ void PerformanceMonitor::run()
                     pDoc = pContext->myDoc;
                     //Traverse(pDoc).print();
                     parseRoot(xmlDocGetRootElement(pDoc));
-                    Controller::instance().notify(RefPtr<RefObj>(this, 1), UPDATED);
+                    _session.emit(XenObject::PERFORMANCE_STATS_UPDATED);
                 }
             }
             else

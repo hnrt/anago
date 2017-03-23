@@ -36,8 +36,6 @@ namespace hnrt
 
         ViewImpl(const ViewImpl&);
         void operator =(const ViewImpl&);
-        void onObjectCreated(RefPtr<RefObj>, int);
-        void onObjectUpdated(RefPtr<RefObj>, int);
         void showMessageDialog(const Glib::ustring&, Gtk::MessageType);
 
         Glib::ustring _displayName;

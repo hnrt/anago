@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <libintl.h>
+#include "Controller/Controller.h"
+#include "Logger/Trace.h"
 #include "XenServer/Host.h"
 #include "XenServer/Network.h"
 #include "XenServer/Session.h"
@@ -28,6 +30,7 @@ HostTreeView::HostTreeView()
     append_column(gettext("Contents"), _store->record().colVal);
     Glib::RefPtr<Gtk::TreeSelection> selection = get_selection();
     selection->set_mode(Gtk::SELECTION_MULTIPLE);
+    Controller::instance().signalNotified(XenObject::CREATED).connect(sigc::mem_fun(*this, &HostTreeView::onObjectCreated));
 }
 
 
@@ -42,20 +45,32 @@ void HostTreeView::clear()
 }
 
 
-bool HostTreeView::add(RefPtr<XenObject>& object)
+void HostTreeView::onObjectCreated(RefPtr<RefObj> object0, int what)
 {
-    switch (object->getType())
+    Trace trace("HostTreeView::onObjectCreated");
+    RefPtr<XenObject> object = RefPtr<XenObject>::castStatic(object0);
+    AddObject add = getAdd(object);
+    if ((this->*add)(object))
     {
-    case XenObject::HOST:
-        return add(RefPtr<Host>::castStatic(object));
-    case XenObject::VM:
-        return add(RefPtr<VirtualMachine>::castStatic(object));
-    case XenObject::SR:
-        return add(RefPtr<StorageRepository>::castStatic(object));
-    case XenObject::NETWORK:
-        return add(RefPtr<Network>::castStatic(object));
-    default:
-        return false;
+        trace.put("add=true");
+        Controller::instance().signalNotified(object0).connect(sigc::mem_fun(*this, &HostTreeView::onObjectUpdated));
+        _signalNodeCreated.emit(object);
+    }
+}
+
+
+void HostTreeView::onObjectUpdated(RefPtr<RefObj> object0, int what)
+{
+    RefPtr<XenObject> object = RefPtr<XenObject>::castStatic(object0);
+    if (what == XenObject::DESTROYED)
+    {
+        remove(object);
+        return;
+    }
+    else
+    {
+        UpdateObject update = getUpdate(object);
+        (this->*update)(object, what);
     }
 }
 
@@ -100,47 +115,47 @@ void HostTreeView::remove(const RefPtr<XenObject>& object)
 }
 
 
-bool HostTreeView::add(RefPtr<Host> host)
+HostTreeView::AddObject HostTreeView::getAdd(const RefPtr<XenObject>& object)
 {
-    RefPtr<XenObject> object = RefPtr<XenObject>::castStatic(host);
-    Gtk::TreeModel::Row row;
-    Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
-    while (iter)
+    switch (object->getType())
     {
-        row = *iter;
-        RefPtr<XenObject> object2 = row[_store->record().colXenObject];
-        if (object2 == object)
-        {
-            row[_store->record().colPix] = PixStore::instance().get(host);
-            row[_store->record().colVal] = object->getDisplayStatus();
-            return false;
-        }
-        else if (object2->getSession().getConnectSpec().uuid == object->getSession().getConnectSpec().uuid)
-        {
-            row[_store->record().colPix] = PixStore::instance().get(host);
-            row[_store->record().colVal] = object->getDisplayStatus();
-            row[_store->record().colXenObject] = object;
-            return true;
-        }
-        iter++;
+    case XenObject::HOST:
+        return &HostTreeView::addHost;
+    case XenObject::VM:
+        return &HostTreeView::addVm;
+    case XenObject::SR:
+        return &HostTreeView::addSr;
+    case XenObject::NETWORK:
+        return &HostTreeView::addNw;
+    default:
+        return &HostTreeView::addNothing;
     }
-    iter = _store->get_iter("0"); // point to first item
-    while (1)
+}
+
+
+HostTreeView::UpdateObject HostTreeView::getUpdate(const RefPtr<XenObject>& object)
+{
+    switch (object->getType())
     {
-        if (!iter)
-        {
-            row = *_store->append();
-            break;
-        }
-        row = *iter;
-        RefPtr<XenObject> object2 = row[_store->record().colXenObject];
-        if (object->getSession().getConnectSpec().displayOrder < object2->getSession().getConnectSpec().displayOrder)
-        {
-            row = *_store->insert(iter);
-            break;
-        }
-        iter++;
+    case XenObject::HOST:
+        return &HostTreeView::updateHost;
+    case XenObject::VM:
+        return &HostTreeView::updateVm;
+    case XenObject::SR:
+        return &HostTreeView::updateSr;
+    case XenObject::NETWORK:
+        return &HostTreeView::updateNw;
+    default:
+        return &HostTreeView::updateNothing;
     }
+}
+
+
+bool HostTreeView::addHost(RefPtr<XenObject> object)
+{
+    Gtk::TreeIter iter;
+    Gtk::TreeModel::Row row = findHost(object, iter, true);
+    RefPtr<Host> host = RefPtr<Host>::castStatic(object);
     row[_store->record().colPix] = PixStore::instance().get(host);
     row[_store->record().colKey] = object->getSession().getConnectSpec().displayname;
     row[_store->record().colVal] = object->getDisplayStatus();
@@ -149,8 +164,51 @@ bool HostTreeView::add(RefPtr<Host> host)
 }
 
 
-bool HostTreeView::add(RefPtr<VirtualMachine> vm)
+void HostTreeView::updateHost(RefPtr<XenObject> object, int what)
 {
+    try
+    {
+        Gtk::TreeIter iter;
+        Gtk::TreeModel::Row row = findHost(object, iter);
+        RefPtr<Host> host = RefPtr<Host>::castStatic(object);
+        switch (what)
+        {
+        case XenObject::NAME_UPDATED:
+            row[_store->record().colKey] = object->getSession().getConnectSpec().displayname;
+            break;
+        case XenObject::BUSY_SET:
+        case XenObject::BUSY_RESET:
+            row[_store->record().colPix] = PixStore::instance().get(host);
+            break;
+        case XenObject::CONNECTED:
+            row[_store->record().colPix] = PixStore::instance().get(host);
+            break;
+        case XenObject::DISCONNECTED:
+        {
+            row[_store->record().colPix] = PixStore::instance().get(host);
+            iter = row.children().begin();
+            while (iter)
+            {
+                iter = _store->erase(iter);
+            }
+            break;
+        }
+        case XenObject::STATUS_UPDATED:
+            row[_store->record().colVal] = object->getDisplayStatus();
+            break;
+        default:
+            break;
+        }
+    }
+    catch (...)
+    {
+    }
+}
+
+
+bool HostTreeView::addVm(RefPtr<XenObject> object)
+{
+    RefPtr<VirtualMachine> vm = RefPtr<VirtualMachine>::castStatic(object);
     XenPtr<xen_vm_record> vmRecord = vm->getRecord();
     if (!vmRecord ||
         vmRecord->is_a_template ||
@@ -159,339 +217,126 @@ bool HostTreeView::add(RefPtr<VirtualMachine> vm)
     {
         return false;
     }
-    RefPtr<Host> host = vm->getSession().getStore().getHost();
-    Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
-    while (iter)
+    Gtk::TreeIter iter;
+    Gtk::TreeModel::Row row = findVm(object, iter, true);
+    row[_store->record().colPix] = PixStore::instance().get(vm);
+    row[_store->record().colKey] = object->getName();
+    row[_store->record().colVal] = object->getDisplayStatus();
+    row[_store->record().colXenObject] = object;
+    return true;
+}
+
+
+void HostTreeView::updateVm(RefPtr<XenObject> object, int what)
+{
+    try
     {
-        Gtk::TreeModel::Row row = *iter;
-        RefPtr<XenObject> object = row[_store->record().colXenObject];
-        if (object->getUUID() == host->getUUID())
+        Gtk::TreeIter iter;
+        Gtk::TreeModel::Row row = findVm(object, iter);
+        switch (what)
         {
-            Gtk::TreeIter iter2 = row.children().begin();
-            while (1)
-            {
-                if (!iter2)
-                {
-                    row = *_store->append(iter->children());
-                    expand_row(_store->get_path(iter), true);
-                    break;
-                }
-                row = *iter2;
-                object = row[_store->record().colXenObject];
-                if (object == RefPtr<XenObject>::castStatic(vm))
-                {
-                    return false;
-                }
-                else if (object->getType() == XenObject::VM)
-                {
-                    Glib::ustring key = row[_store->record().colKey];
-                    if (key > vm->getName())
-                    {
-                        row = *_store->insert(iter2);
-                        break;
-                    }
-                }
-                else
-                {
-                    row = *_store->insert(iter2);
-                    break;
-                }
-                iter2++;
-            }
-            row[_store->record().colPix] = PixStore::instance().get(vm);
-            row[_store->record().colKey] = vm->getName();
-            row[_store->record().colVal] = vm->getDisplayStatus();
-            row[_store->record().colXenObject] = RefPtr<XenObject>::castStatic(vm);
-            return true;
+        case XenObject::BUSY_SET:
+        case XenObject::BUSY_RESET:
+        case XenObject::POWER_STATE_UPDATED:
+            row[_store->record().colPix] = PixStore::instance().get(RefPtr<VirtualMachine>::castStatic(object));
+            break;
+        case XenObject::STATUS_UPDATED:
+            row[_store->record().colVal] = object->getDisplayStatus();
+            break;
+        case XenObject::NAME_UPDATED:
+            row[_store->record().colKey] = object->getName();
+            reorder(RefPtr<VirtualMachine>::castStatic(object), iter);
+            break;
+        default:
+            break;
         }
-        iter++;
     }
+    catch (...)
+    {
+    }
+}
+
+
+bool HostTreeView::addSr(RefPtr<XenObject> object)
+{
+    try
+    {
+        Gtk::TreeIter iter;
+        Gtk::TreeModel::Row row = findSr(object, iter, true);
+        row[_store->record().colPix] = PixStore::instance().get(RefPtr<StorageRepository>::castStatic(object));
+        row[_store->record().colKey] = object->getName();
+        row[_store->record().colVal] = object->getDisplayStatus();
+        row[_store->record().colXenObject] = object;
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+
+void HostTreeView::updateSr(RefPtr<XenObject> object, int what)
+{
+    try
+    {
+        Gtk::TreeIter iter;
+        Gtk::TreeModel::Row row = findSr(object, iter);
+        switch (what)
+        {
+        case XenObject::BUSY_SET:
+        case XenObject::BUSY_RESET:
+            row[_store->record().colPix] = PixStore::instance().get(RefPtr<StorageRepository>::castStatic(object));
+            break;
+        case XenObject::STATUS_UPDATED:
+            row[_store->record().colVal] = object->getDisplayStatus();
+            break;
+        case XenObject::NAME_UPDATED:
+            row[_store->record().colKey] = object->getName();
+            reorder(RefPtr<StorageRepository>::castStatic(object), iter);
+            break;
+        default:
+            break;
+        }
+    }
+    catch (...)
+    {
+    }
+}
+
+
+bool HostTreeView::addNw(RefPtr<XenObject> object)
+{
+    try
+    {
+        Gtk::TreeIter iter;
+        Gtk::TreeModel::Row row = findNw(object, iter, true);
+        row[_store->record().colPix] = PixStore::instance().get(RefPtr<Network>::castStatic(object));
+        row[_store->record().colKey] = object->getName();
+        row[_store->record().colVal] = object->getDisplayStatus();
+        row[_store->record().colXenObject] = object;
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+
+void HostTreeView::updateNw(RefPtr<XenObject> object, int what)
+{
+}
+
+
+bool HostTreeView::addNothing(RefPtr<XenObject> object)
+{
     return false;
 }
 
 
-bool HostTreeView::add(RefPtr<StorageRepository> sr)
+void HostTreeView::updateNothing(RefPtr<XenObject> object, int what)
 {
-    RefPtr<Host> host = sr->getSession().getStore().getHost();
-    Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
-    while (iter)
-    {
-        Gtk::TreeModel::Row row = *iter;
-        RefPtr<XenObject> object = row[_store->record().colXenObject];
-        if (object->getUUID() == host->getUUID())
-        {
-            Gtk::TreeIter iter2 = row.children().begin();
-            while (1)
-            {
-                if (!iter2)
-                {
-                    row = *_store->append(iter->children());
-                    expand_row(_store->get_path(iter), true);
-                    break;
-                }
-                row = *iter2;
-                object = row[_store->record().colXenObject];
-                if (object == RefPtr<XenObject>::castStatic(sr))
-                {
-                    return false;
-                }
-                else if (object->getType() == XenObject::VM)
-                {
-                }
-                else if (object->getType() == XenObject::SR)
-                {
-                    Glib::ustring key = row[_store->record().colKey];
-                    if (sr->getSubType() == StorageRepository::ISO)
-                    {
-                        if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::ISO)
-                        {
-                            if (key > sr->getName())
-                            {
-                                row = *_store->insert(iter2);
-                                break;
-                            }
-                        }
-                    }
-                    else if (sr->getSubType() == StorageRepository::DEV)
-                    {
-                        if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::ISO)
-                        {
-                            row = *_store->insert(iter2);
-                            break;
-                        }
-                        else if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::DEV)
-                        {
-                            if (key > sr->getName())
-                            {
-                                row = *_store->insert(iter2);
-                                break;
-                            }
-                        }
-                    }
-                    else if (RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::ISO ||
-                             RefPtr<StorageRepository>::castStatic(object)->getSubType() == StorageRepository::DEV ||
-                             key > sr->getName())
-                    {
-                        row = *_store->insert(iter2);
-                        break;
-                    }
-                }
-                else
-                {
-                    row = *_store->insert(iter2);
-                    break;
-                }
-                iter2++;
-            }
-            row[_store->record().colPix] = PixStore::instance().get(sr);
-            row[_store->record().colKey] = sr->getName();
-            row[_store->record().colVal] = sr->getDisplayStatus();
-            row[_store->record().colXenObject] = RefPtr<XenObject>::castStatic(sr);
-            return true;
-        }
-        iter++;
-    }
-    return false;
-}
-
-
-bool HostTreeView::add(const RefPtr<Network> nw)
-{
-    RefPtr<Host> host = nw->getSession().getStore().getHost();
-    Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
-    while (iter)
-    {
-        Gtk::TreeModel::Row row = *iter;
-        RefPtr<XenObject> object = row[_store->record().colXenObject];
-        if (object->getUUID() == host->getUUID())
-        {
-            XenPtr<xen_network_record> nwRecord = nw->getRecord();
-            bool isInternal = nw->isHostInternalManagement();
-            Gtk::TreeIter iter2 = row.children().begin();
-            while (1)
-            {
-                if (!iter2)
-                {
-                    row = *_store->append(iter->children());
-                    expand_row(_store->get_path(iter), true);
-                    break;
-                }
-                row = *iter2;
-                object = row[_store->record().colXenObject];
-                if (object == RefPtr<XenObject>::castStatic(nw))
-                {
-                    return false;
-                }
-                else if (object->getType() == XenObject::VM)
-                {
-                }
-                else if (object->getType() == XenObject::SR)
-                {
-                }
-                else if (object->getType() == XenObject::NETWORK)
-                {
-                    Glib::ustring key = row[_store->record().colKey];
-                    if (!isInternal && key > nwRecord->name_label)
-                    {
-                        row = *_store->insert(iter2);
-                        break;
-                    }
-                }
-                else
-                {
-                    row = *_store->insert(iter2);
-                    break;
-                }
-                iter2++;
-            }
-            row[_store->record().colPix] = PixStore::instance().get(nw);
-            row[_store->record().colKey] = nw->getName();
-            row[_store->record().colVal] = nw->getDisplayStatus();
-            row[_store->record().colXenObject] = RefPtr<XenObject>::castStatic(nw);
-            return true;
-        }
-        iter++;
-    }
-    return false;
-}
-
-
-void HostTreeView::update(RefPtr<XenObject>& object, int what)
-{
-    switch (object->getType())
-    {
-    case XenObject::HOST:
-    {
-        Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
-        while (iter)
-        {
-            Gtk::TreeModel::Row row = *iter;
-            if (object == row[_store->record().colXenObject])
-            {
-                switch (what)
-                {
-                case XenObject::NAME_UPDATED:
-                    row[_store->record().colKey] = object->getSession().getConnectSpec().displayname;
-                    break;
-                case XenObject::BUSY_SET:
-                case XenObject::BUSY_RESET:
-                    row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
-                    break;
-                case XenObject::CONNECTED:
-                    row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
-                    break;
-                case XenObject::DISCONNECTED:
-                {
-                    row[_store->record().colPix] = PixStore::instance().get(RefPtr<Host>::castStatic(object));
-                    Gtk::TreeIter iter2 = row.children().begin();
-                    while (iter2)
-                    {
-                        iter2 = _store->erase(iter2);
-                    }
-                    break;
-                }
-                case XenObject::STATUS_UPDATED:
-                    row[_store->record().colVal] = object->getDisplayStatus();
-                    break;
-                default:
-                    break;
-                }
-                break;
-            }
-            iter++;
-        }
-        break;
-    }
-    case XenObject::VM:
-    {
-        RefPtr<VirtualMachine> vm = RefPtr<VirtualMachine>::castStatic(object);
-        RefPtr<Host> host = vm->getSession().getStore().getHost();
-        Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
-        while (iter)
-        {
-            Gtk::TreeModel::Row row = *iter;
-            RefPtr<XenObject> current = row[_store->record().colXenObject];
-            if (current->getUUID() == host->getUUID())
-            {
-                Gtk::TreeIter iter2 = row.children().begin();
-                while (iter2)
-                {
-                    row = *iter2;
-                    if (object == row[_store->record().colXenObject])
-                    {
-                        switch (what)
-                        {
-                        case XenObject::BUSY_SET:
-                        case XenObject::BUSY_RESET:
-                        case XenObject::POWER_STATE_UPDATED:
-                            row[_store->record().colPix] = PixStore::instance().get(vm);
-                            break;
-                        case XenObject::STATUS_UPDATED:
-                            row[_store->record().colVal] = vm->getDisplayStatus();
-                            break;
-                        case XenObject::NAME_UPDATED:
-                            row[_store->record().colKey] = vm->getName();
-                            reorder(vm, iter2);
-                            break;
-                        default:
-                            break;
-                        }
-                        break;
-                    }
-                    iter2++;
-                }
-                break;
-            }
-            iter++;
-        }
-        break;
-    }
-    case XenObject::SR:
-    {
-        RefPtr<StorageRepository> sr = RefPtr<StorageRepository>::castStatic(object);
-        RefPtr<Host> host = sr->getSession().getStore().getHost();
-        Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
-        while (iter)
-        {
-            Gtk::TreeModel::Row row = *iter;
-            RefPtr<XenObject> current = row[_store->record().colXenObject];
-            if (current->getUUID() == host->getUUID())
-            {
-                Gtk::TreeIter iter2 = row.children().begin();
-                while (iter2)
-                {
-                    row = *iter2;
-                    if (object == row[_store->record().colXenObject])
-                    {
-                        switch (what)
-                        {
-                        case XenObject::BUSY_SET:
-                        case XenObject::BUSY_RESET:
-                            row[_store->record().colPix] = PixStore::instance().get(sr);
-                            break;
-                        case XenObject::STATUS_UPDATED:
-                            row[_store->record().colVal] = sr->getDisplayStatus();
-                            break;
-                        case XenObject::NAME_UPDATED:
-                            row[_store->record().colKey] = sr->getName();
-                            reorder(sr, iter2);
-                            break;
-                        default:
-                            break;
-                        }
-                        break;
-                    }
-                    iter2++;
-                }
-                break;
-            }
-            iter++;
-        }
-        break;
-    }
-    default:
-        break;
-    }
 }
 
 
@@ -501,7 +346,7 @@ Gtk::TreeIter HostTreeView::getFirst() const
 }
 
 
-void HostTreeView::reorder(RefPtr<VirtualMachine>& vm, Gtk::TreeIter& iterSource)
+void HostTreeView::reorder(RefPtr<VirtualMachine> vm, Gtk::TreeIter& iterSource)
 {
     RefPtr<Host> host = vm->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -546,7 +391,7 @@ void HostTreeView::reorder(RefPtr<VirtualMachine>& vm, Gtk::TreeIter& iterSource
 }
 
 
-void HostTreeView::reorder(RefPtr<StorageRepository>& sr, Gtk::TreeIter& iterSource)
+void HostTreeView::reorder(RefPtr<StorageRepository> sr, Gtk::TreeIter& iterSource)
 {
     RefPtr<Host> host = sr->getSession().getStore().getHost();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -687,5 +532,258 @@ void HostTreeView::updateDisplayOrder()
         object->getSession().getConnectSpec().displayOrder = displayOrder;
         displayOrder += 10;
         iter++;
+    }
+}
+
+
+Gtk::TreeModel::Row HostTreeView::findHost(const RefPtr<XenObject>& object, Gtk::TreeIter& iter, bool addIfNotFound)
+{
+    RefPtr<Host> host = RefPtr<Host>::castStatic(object);
+    iter = _store->get_iter("0"); // point to first item
+    while (iter)
+    {
+        Gtk::TreeModel::Row row = *iter;
+        if (object == row[_store->record().colXenObject])
+        {
+            return row;
+        }
+        iter++;
+    }
+    if (addIfNotFound)
+    {
+        iter = _store->get_iter("0"); // point to first item
+        while (iter)
+        {
+            Gtk::TreeModel::Row row = *iter;
+            RefPtr<XenObject> object2 = row[_store->record().colXenObject];
+            if (object->getSession().getConnectSpec().displayOrder < object2->getSession().getConnectSpec().displayOrder)
+            {
+                return *_store->insert(iter);
+            }
+            iter++;
+        }
+        return *_store->append();
+    }
+    else
+    {
+        throw "Host not found.";
+    }
+}
+
+
+Gtk::TreeModel::Row HostTreeView::findVm(const RefPtr<XenObject>& object, Gtk::TreeIter& iter, bool addIfNotFound)
+{
+    RefPtr<Host> host = object->getSession().getStore().getHost();
+    Gtk::TreeIter iter0;
+    Gtk::TreeModel::Row row = findHost(RefPtr<XenObject>::castStatic(host), iter0);
+    RefPtr<VirtualMachine> vm = RefPtr<VirtualMachine>::castStatic(object);
+    iter = row.children().begin();
+    while (iter)
+    {
+        row = *iter;
+        RefPtr<XenObject> object2 = row[_store->record().colXenObject];
+        if (object2 == object)
+        {
+            return row;
+        }
+        else if (object2->getType() == XenObject::VM)
+        {
+            Glib::ustring key = row[_store->record().colKey];
+            if (key > vm->getName())
+            {
+                if (addIfNotFound)
+                {
+                    return *_store->insert(iter);
+                }
+                else
+                {
+                    throw "VM not found.";
+                }
+            }
+        }
+        else if (addIfNotFound)
+        {
+            return *_store->insert(iter);
+        }
+        else
+        {
+            throw "VM not found.";
+        }
+        iter++;
+    }
+    if (addIfNotFound)
+    {
+        row = *_store->append(iter0->children());
+        expand_row(_store->get_path(iter0), true);
+        return row;
+    }
+    else
+    {
+        throw "VM not found.";
+    }
+}
+
+
+Gtk::TreeModel::Row HostTreeView::findSr(const RefPtr<XenObject>& object, Gtk::TreeIter& iter, bool addIfNotFound)
+{
+    RefPtr<Host> host = object->getSession().getStore().getHost();
+    Gtk::TreeIter iter0;
+    Gtk::TreeModel::Row row = findHost(RefPtr<XenObject>::castStatic(host), iter0);
+    RefPtr<StorageRepository> sr = RefPtr<StorageRepository>::castStatic(object);
+    iter = row.children().begin();
+    while (iter)
+    {
+        row = *iter;
+        RefPtr<XenObject> object2 = row[_store->record().colXenObject];
+        if (object2 == object)
+        {
+            return row;
+        }
+        else if (object2->getType() == XenObject::VM)
+        {
+        }
+        else if (object2->getType() == XenObject::SR)
+        {
+            RefPtr<StorageRepository> sr2 = RefPtr<StorageRepository>::castStatic(object2);
+            Glib::ustring key = row[_store->record().colKey];
+            if (sr->getSubType() == StorageRepository::ISO)
+            {
+                if (sr2->getSubType() == StorageRepository::ISO)
+                {
+                    if (key > sr->getName())
+                    {
+                        if (addIfNotFound)
+                        {
+                            return *_store->insert(iter);
+                        }
+                        else
+                        {
+                            throw "SR not found.";
+                        }
+                    }
+                }
+            }
+            else if (sr->getSubType() == StorageRepository::DEV)
+            {
+                if (sr2->getSubType() == StorageRepository::ISO)
+                {
+                    if (addIfNotFound)
+                    {
+                        return *_store->insert(iter);
+                    }
+                    else
+                    {
+                        throw "SR not found.";
+                    }
+                }
+                else if (sr2->getSubType() == StorageRepository::DEV)
+                {
+                    if (key > sr->getName())
+                    {
+                        if (addIfNotFound)
+                        {
+                            return *_store->insert(iter);
+                        }
+                        else
+                        {
+                            throw "SR not found.";
+                        }
+                    }
+                }
+            }
+            else if (sr2->getSubType() == StorageRepository::ISO ||
+                     sr2->getSubType() == StorageRepository::DEV ||
+                     key > sr->getName())
+            {
+                if (addIfNotFound)
+                {
+                    return *_store->insert(iter);
+                }
+                else
+                {
+                    throw "SR not found.";
+                }
+            }
+        }
+        else if (addIfNotFound)
+        {
+            return *_store->insert(iter);
+        }
+        else
+        {
+            throw "SR not found.";
+        }
+        iter++;
+    }
+    if (addIfNotFound)
+    {
+        row = *_store->append(iter0->children());
+        expand_row(_store->get_path(iter0), true);
+        return row;
+    }
+    else
+    {
+        throw "SR not found.";
+    }
+}
+
+
+Gtk::TreeModel::Row HostTreeView::findNw(const RefPtr<XenObject>& object, Gtk::TreeIter& iter, bool addIfNotFound)
+{
+    RefPtr<Host> host = object->getSession().getStore().getHost();
+    Gtk::TreeIter iter0;
+    Gtk::TreeModel::Row row = findHost(RefPtr<XenObject>::castStatic(host), iter0);
+    RefPtr<Network> nw = RefPtr<Network>::castStatic(object);
+    XenPtr<xen_network_record> nwRecord = nw->getRecord();
+    bool isInternal = nw->isHostInternalManagement();
+    iter = row.children().begin();
+    while (iter)
+    {
+        row = *iter;
+        RefPtr<XenObject> object2 = row[_store->record().colXenObject];
+        if (object2 == object)
+        {
+            return row;
+        }
+        else if (object2->getType() == XenObject::VM)
+        {
+        }
+        else if (object2->getType() == XenObject::SR)
+        {
+        }
+        else if (object2->getType() == XenObject::NETWORK)
+        {
+            Glib::ustring key = row[_store->record().colKey];
+            if (!isInternal && key > nwRecord->name_label)
+            {
+                if (addIfNotFound)
+                {
+                    return *_store->insert(iter);
+                }
+                else
+                {
+                    throw "Network not found.";
+                }
+            }
+        }
+        else if (addIfNotFound)
+        {
+            return *_store->insert(iter);
+        }
+        else
+        {
+            throw "Network not found.";
+        }
+        iter++;
+    }
+    if (addIfNotFound)
+    {
+        row = *_store->append(iter0->children());
+        expand_row(_store->get_path(iter0), true);
+        return row;
+    }
+    else
+    {
+        throw "Network not found.";
     }
 }

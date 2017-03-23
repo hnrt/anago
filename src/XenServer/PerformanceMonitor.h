@@ -25,13 +25,6 @@ namespace hnrt
     {
     public:
 
-        enum Notification
-        {
-            CREATED = 512,
-            UPDATED,
-            DESTROYED,
-        };
-
         typedef std::pair<Glib::ustring, Glib::ustring> MapEntry;
         typedef std::map<Glib::ustring, Glib::ustring> Map;
         typedef std::pair<unsigned long, Map*> ListEntry;

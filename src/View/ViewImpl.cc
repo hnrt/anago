@@ -22,8 +22,6 @@ ViewImpl::ViewImpl()
     : _displayName("Anago")
 {
     Trace trace("ViewImpl::ctor");
-    Controller::instance().signalNotified(XenObject::CREATED).connect(sigc::mem_fun(*this, &ViewImpl::onObjectCreated));
-    Controller::instance().signalNotified(PerformanceMonitor::CREATED).connect(sigc::mem_fun(*this, &ViewImpl::onObjectCreated));
 }
 
 
@@ -65,38 +63,6 @@ void ViewImpl::clear()
 {
     Trace trace("ViewImpl::clear");
     _mainWindow.clear();
-}
-
-
-void ViewImpl::onObjectCreated(RefPtr<RefObj> object, int what)
-{
-    if (what == XenObject::CREATED)
-    {
-        RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
-        if (_mainWindow.addObject(xenObject))
-        {
-            Controller::instance().signalNotified(object).connect(sigc::mem_fun(*this, &ViewImpl::onObjectUpdated));
-        }
-    }
-    else if (what == PerformanceMonitor::CREATED)
-    {
-        RefPtr<PerformanceMonitor> pmObject = RefPtr<PerformanceMonitor>::castStatic(object);
-        _mainWindow.addPerformanceMonitor(pmObject);
-    }
-}
-
-
-void ViewImpl::onObjectUpdated(RefPtr<RefObj> object, int what)
-{
-    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
-    if (what == XenObject::DESTROYED)
-    {
-        _mainWindow.removeObject(xenObject);
-    }
-    else
-    {
-        _mainWindow.updateObject(xenObject, what);
-    }
 }
 
 

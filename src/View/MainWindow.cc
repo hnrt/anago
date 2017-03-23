@@ -300,6 +300,7 @@ MainWindow::MainWindow()
     signal_window_state_event().connect(sigc::mem_fun(*this, &MainWindow::onWindowStateChange));
     signal_size_allocate().connect(sigc::mem_fun(*this, &MainWindow::onResize));
 
+    _serverTreeView.signalNodeCreated().connect(sigc::mem_fun(*this, &MainWindow::onNodeCreated));
     _serverTreeView.signalSelectionChanged().connect(sigc::mem_fun(*this, &MainWindow::onHostTreeViewSelectionChanged));
 
     show_all_children();
@@ -315,6 +316,8 @@ MainWindow::MainWindow()
 MainWindow::~MainWindow()
 {
     Trace trace("MainWindow::dtor");
+
+    _connObjectCreated.disconnect();
 }
 
 
@@ -431,84 +434,48 @@ void MainWindow::onResize(Gtk::Allocation& a)
 }
 
 
-bool MainWindow::addObject(RefPtr<XenObject>& object)
+void MainWindow::onNodeCreated(RefPtr<XenObject> object)
 {
-    if (_serverTreeView.add(object))
+    RefPtr<Notebook> notebook = NotebookFactory::create(object);
+    _notebookStore.set(object, notebook);
+    addNotebook(notebook);
+    updateSensitivity();
+    Controller::instance().signalNotified(RefPtr<RefObj>::castStatic(object)).connect(sigc::mem_fun(*this, &MainWindow::onObjectUpdated));
+}
+
+
+void MainWindow::onObjectUpdated(RefPtr<RefObj> object, int what)
+{
+    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
+    if (what == XenObject::DESTROYED)
     {
-        RefPtr<Notebook> notebook = NotebookFactory::create(object);
-        _notebookStore.set(object, notebook);
-        notebook->update();
-        addNotebook(notebook);
+        RefPtr<Notebook> notebook = _notebookStore.remove(xenObject);
+        if (!notebook)
+        {
+            return;
+        }
+        if (notebook == _currentNotebook)
+        {
+            onHostTreeViewSelectionChanged();
+        }
+        removeNotebook(notebook);
         updateSensitivity();
-        return true;
     }
     else
     {
-        return false;
-    }
-}
-
-
-void MainWindow::removeObject(RefPtr<XenObject>& object)
-{
-    _serverTreeView.remove(object);
-    RefPtr<Notebook> notebook = _notebookStore.remove(object);
-    if (!notebook)
-    {
-        return;
-    }
-    if (notebook == _currentNotebook)
-    {
-        onHostTreeViewSelectionChanged();
-    }
-    removeNotebook(notebook);
-    updateSensitivity();
-}
-
-
-void MainWindow::updateObject(RefPtr<XenObject>& object, int what)
-{
-    _serverTreeView.update(object, what);
-    RefPtr<Notebook> notebook = _notebookStore.get(object);
-    if (notebook)
-    {
         switch (what)
         {
+        case XenObject::BUSY_SET:
+        case XenObject::BUSY_RESET:
         case XenObject::CONNECTED:
         case XenObject::DISCONNECTED:
         case XenObject::RECORD_UPDATED:
-            notebook->update();
-            break;
-        case XenObject::BUSY_SET:
-        case XenObject::BUSY_RESET:
-        case XenObject::POWER_STATE_UPDATED:
-        case XenObject::SNAPSHOT_UPDATED:
-            notebook->updateSnapshots();
+            updateSensitivity();
             break;
         default:
             break;
         }
     }
-    switch (what)
-    {
-    case XenObject::BUSY_SET:
-    case XenObject::BUSY_RESET:
-    case XenObject::CONNECTED:
-    case XenObject::DISCONNECTED:
-    case XenObject::RECORD_UPDATED:
-        updateSensitivity();
-        break;
-    default:
-        break;
-    }
-}
-
-
-void MainWindow::addPerformanceMonitor(RefPtr<PerformanceMonitor>& pm)
-{
-    RefPtr<Host> host = pm->getSession().getStore().getHost();
-    RefPtr<Notebook> notebook = _notebookStore.get(RefPtr<XenObject>::castStatic(host));
-    RefPtr<HostNotebook>::castStatic(notebook)->initPerformaceMonitor(pm);
 }
 
 
@@ -559,7 +526,7 @@ void MainWindow::onHostTreeViewSelectionChanged()
 void MainWindow::addNotebook(RefPtr<Notebook>& notebook)
 {
     notebook->hide();
-    _box2.pack_start(notebook->getInstance());
+    _box2.pack_start(*notebook);
 }
 
 
@@ -569,7 +536,7 @@ void MainWindow::removeNotebook(RefPtr<Notebook>& notebook)
     {
         showNotebook(_defaultNotebook);
     }
-    _box2.remove(notebook->getInstance());
+    _box2.remove(*notebook);
 }
 
 

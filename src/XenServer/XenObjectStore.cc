@@ -285,21 +285,8 @@ RefPtr<PerformanceMonitor> XenObjectStore::getPerformanceMonitor() const
 
 void XenObjectStore::setPerformanceMonitor(const RefPtr<PerformanceMonitor>& performanceMonitor)
 {
-    RefPtr<PerformanceMonitor> prev;
-    RefPtr<PerformanceMonitor> next;
-    {
-        Glib::RecMutex::Lock lock(_mutex);
-        prev = _performanceMonitor;
-        next = _performanceMonitor = performanceMonitor;
-    }
-    if (prev)
-    {
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(prev), PerformanceMonitor::DESTROYED);
-    }
-    if (next)
-    {
-        Controller::instance().notify(RefPtr<RefObj>::castStatic(next), PerformanceMonitor::CREATED);
-    }
+    Glib::RecMutex::Lock lock(_mutex);
+    _performanceMonitor = performanceMonitor;
 }
 
 

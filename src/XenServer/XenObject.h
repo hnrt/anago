@@ -74,6 +74,7 @@ namespace hnrt
             TASK_ON_FAILURE,
             TASK_ON_CANCELLED,
             TASK_IN_PROGRESS,
+            PERFORMANCE_STATS_UPDATED,
             ERROR,
             DESTROYED = 511,
             NOTIFICATION_MIN = CREATED,

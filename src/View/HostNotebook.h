@@ -18,7 +18,6 @@
 namespace hnrt
 {
     class Host;
-    class PerformanceMonitor;
 
     class HostNotebook
         : public Notebook
@@ -28,10 +27,6 @@ namespace hnrt
         static RefPtr<Notebook> create(const RefPtr<Host>&);
 
         virtual ~HostNotebook();
-        virtual const Gtk::Notebook& getInstance() const { return *this; }
-        virtual Gtk::Notebook& getInstance() { return *this; }
-        virtual void update();
-        void initPerformaceMonitor(const RefPtr<PerformanceMonitor>&);
 
     protected:
 
@@ -39,7 +34,10 @@ namespace hnrt
         HostNotebook(const HostNotebook&);
         void operator =(const HostNotebook&);
         void onAutoConnectChanged();
-        void onPerformaceStatsUpdated(RefPtr<RefObj>, int);
+        void onSessionUpdated(RefPtr<RefObj>, int);
+        void onHostUpdated(RefPtr<RefObj>, int);
+        void update();
+        void updatePerformaceStats();
 
         Gtk::VBox _genBox;
         NameValueListViewSw _genLvSw;
@@ -76,6 +74,9 @@ namespace hnrt
         Gtk::CheckButton _autoConnect;
 
         RefPtr<Host> _host;
+
+        sigc::connection _connectionSession;
+        sigc::connection _connectionHost;
     };
 }
 

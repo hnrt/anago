@@ -30,10 +30,6 @@ namespace hnrt
         int getPane1Width() const;
         void setPane1Width(int);
         void clear();
-        bool addObject(RefPtr<XenObject>&);
-        void removeObject(RefPtr<XenObject>&);
-        void updateObject(RefPtr<XenObject>&, int);
-        void addPerformanceMonitor(RefPtr<PerformanceMonitor>&);
 
     private:
 
@@ -44,6 +40,8 @@ namespace hnrt
         bool onWindowStateChange(GdkEventWindowState*);
         void onResize(Gtk::Allocation&);
         void onHostTreeViewSelectionChanged();
+        void onNodeCreated(RefPtr<XenObject>);
+        void onObjectUpdated(RefPtr<RefObj>, int);
         void addNotebook(RefPtr<Notebook>&);
         void removeNotebook(RefPtr<Notebook>&);
         void showNotebook(const RefPtr<Notebook>&);
@@ -75,6 +73,8 @@ namespace hnrt
         int _width;
         int _height;
         GdkWindowState _windowState;
+
+        sigc::connection _connObjectCreated;
     };
 }
 

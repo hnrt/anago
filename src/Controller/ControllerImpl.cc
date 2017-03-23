@@ -225,8 +225,7 @@ void ControllerImpl::onNotify()
             if (iter != _refObjSignalMap.end())
             {
                 iter->second.emit(entry.first, entry.second);
-                if (entry.second == XenObject::DESTROYED
-                    || entry.second == PerformanceMonitor::DESTROYED)
+                if (entry.second == XenObject::DESTROYED)
                 {
                     _refObjSignalMap.erase(iter);
                 }
