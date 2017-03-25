@@ -7,8 +7,8 @@
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
-#include "Model/ThreadManager.h"
 #include "Net/WakeOnLan.h"
+#include "Thread/ThreadManager.h"
 #include "View/View.h"
 #include "XenServer/Host.h"
 #include "XenServer/Network.h"
@@ -25,7 +25,6 @@
 #include "XenServer/XenObject.h"
 #include "XenServer/XenObjectStore.h"
 #include "XenServer/XenTask.h"
-#include "Background.h"
 #include "ControllerImpl.h"
 #include "SignalManager.h"
 
@@ -146,8 +145,7 @@ void ControllerImpl::onConnectFailed(RefPtr<XenObject> object, int what)
         message.format(gettext("Failed to connect to %s.\n"), session.getConnectSpec().hostname.c_str());
         XenServer::getError(session, message, "\n");
         session.clearError();
-        RefPtr<Host> host = session.getStore().getHost();
-        Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false);
+        disconnect(session.getStore().getHost());
     }
     View::instance().showWarning(message.str());
 }
@@ -277,7 +275,7 @@ void ControllerImpl::connect()
             busyHosts.push_back(cs.hostname);
             continue;
         }
-        Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::connectInBackground), host), false);
+        ThreadManager::instance().create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::connectInBackground), host), false, "Connect");
     }
     if (busyHosts.size())
     {
@@ -288,7 +286,6 @@ void ControllerImpl::connect()
 
 void ControllerImpl::connectInBackground(RefPtr<Host> host)
 {
-    Background bg("Connect");
     Trace trace("ControllerImpl::connectInBackground", "host=%s", host->getSession().getConnectSpec().hostname.c_str());
     Session& session = host->getSession();
     RefPtr<PerformanceMonitor> performanceMonitor = PerformanceMonitor::create(session);
@@ -481,7 +478,7 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
         }
     }
     session.setMonitoring(true);
-    Glib::Thread* pThead = Glib::Thread::create(sigc::bind<RefPtr<PerformanceMonitor> >(sigc::mem_fun(*this, &ControllerImpl::performanceMonitorInBackground), performanceMonitor), true);
+    Glib::Thread* pThead = ThreadManager::instance().create(sigc::bind<RefPtr<PerformanceMonitor> >(sigc::mem_fun(*this, &ControllerImpl::performanceMonitorInBackground), performanceMonitor), true, "PerformanceMonitor");
     XenEventMonitor eventMonitor;
     eventMonitor.run(session);performanceMonitor->terminate();
     pThead->join();
@@ -489,14 +486,13 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
     session.setMonitoring(false);
     if (session.isConnected())
     {
-        Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false);
+        disconnect(host);
     }
 }
 
 
 void ControllerImpl::performanceMonitorInBackground(RefPtr<PerformanceMonitor> performanceMonitor)
 {
-    Background bg("PerformanceMonitor");
     Trace trace("ControllerImpl::performanceMonitorInBackground");
     performanceMonitor->run();
 }
@@ -513,18 +509,22 @@ void ControllerImpl::disconnect()
     {
         RefPtr<Host>& host = *iter;
         Session& session = host->getSession();
-        if (!session.isConnected() || host->isBusy())
+        if (session.isConnected() || !host->isBusy())
         {
-            continue;
+            disconnect(host);
         }
-        Glib::Thread::create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false);
     }
+}
+
+
+void ControllerImpl::disconnect(const RefPtr<Host>& host)
+{
+    ThreadManager::instance().create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false, "Disconnect");
 }
 
 
 void ControllerImpl::disconnectInBackground(RefPtr<Host> host)
 {
-    Background bg("Disconnect");
     Trace trace("ControllerImpl::disconnectInBackground", "host=%s", host->getSession().getConnectSpec().hostname.c_str());
     Session& session = host->getSession();
     XenObject::Busy busy(host);
@@ -533,10 +533,6 @@ void ControllerImpl::disconnectInBackground(RefPtr<Host> host)
     {
         trace.put("Disconnected successfully.");
         host->onDisconnected();
-    }
-    else
-    {
-        trace.put("Disconnect failed.");
     }
 }
 

@@ -1,60 +1,33 @@
 // Copyright (C) 2017 Hideaki Narita
 
 
+#include <stdexcept>
 #include "Base/StringBuffer.h"
-#include "ThreadManager.h"
+#include "ThreadManagerImpl.h"
 
 
 using namespace hnrt;
 
 
-static ThreadManager* _singleton;
-
-
-void ThreadManager::init()
-{
-    _singleton = new ThreadManager();
-}
-
-
-void ThreadManager::fini()
-{
-    delete _singleton;
-}
-
-
-ThreadManager& ThreadManager::instance()
-{
-    return *_singleton;
-}
-
-
-ThreadManager::ThreadManager()
+ThreadManagerImpl::ThreadManagerImpl()
     : _mainThread(Glib::Thread::self())
 {
 }
 
 
-ThreadManager::~ThreadManager()
+ThreadManagerImpl::~ThreadManagerImpl()
 {
 }
 
 
-int ThreadManager::count()
+int ThreadManagerImpl::count() const
 {
-    Glib::Mutex::Lock lock(_mutex);
+    Glib::Mutex::Lock lock(const_cast<ThreadManagerImpl*>(this)->_mutex);
     return static_cast<int>(_nameMap.size());
 }
 
 
-Glib::ustring ThreadManager::add(const char* basename)
-{
-    Glib::ustring key(basename);
-    return add(key);
-}
-
-
-Glib::ustring ThreadManager::add(const Glib::ustring& basename)
+Glib::ustring ThreadManagerImpl::add(const Glib::ustring& basename)
 {
     Glib::Thread* thread = Glib::Thread::self();
     Glib::Mutex::Lock lock(_mutex);
@@ -70,7 +43,7 @@ Glib::ustring ThreadManager::add(const Glib::ustring& basename)
         iter2 = _countMap.find(basename);
         if (iter2 == _countMap.end())
         {
-            g_printerr("ERROR: ThreadManager::add(%zx,%s): Entry just inserted not found.\n", (size_t)thread, basename.c_str());
+            g_printerr("ERROR: ThreadManagerImpl::add(%zx,%s): Entry just inserted not found.\n", (size_t)thread, basename.c_str());
             return basename;
         }
     }
@@ -82,13 +55,9 @@ Glib::ustring ThreadManager::add(const Glib::ustring& basename)
 }
 
 
-void ThreadManager::remove()
+void ThreadManagerImpl::remove()
 {
     Glib::Thread* thread = Glib::Thread::self();
-    if (thread == _mainThread)
-    {
-        return;
-    }
     Glib::Mutex::Lock lock(_mutex);
     std::map<Glib::Thread*, Glib::ustring>::iterator iter = _nameMap.find(thread);
     if (iter != _nameMap.end())
@@ -98,21 +67,44 @@ void ThreadManager::remove()
 }
 
 
-Glib::ustring ThreadManager::find()
+const char* ThreadManagerImpl::getName() const
 {
     Glib::Thread* thread = Glib::Thread::self();
     if (thread == _mainThread)
     {
-        return Glib::ustring("Main");
+        return "Main";
     }
-    Glib::Mutex::Lock lock(_mutex);
+    Glib::Mutex::Lock lock(const_cast<ThreadManagerImpl*>(this)->_mutex);
     std::map<Glib::Thread*, Glib::ustring>::const_iterator iter = _nameMap.find(thread);
     if (iter != _nameMap.end())
     {
-        return iter->second;
+        return iter->second.c_str();
     }
     else
     {
-        return Glib::ustring(StringBuffer().format("%zx", thread));
+        StringBuffer msg;
+        msg.format("ThreadManagerImpl::getName: Thread[%zx] not found.", thread);
+        g_printerr("ERROR: %s\n", msg.str());
+        throw std::runtime_error(msg.str());
+    }
+}
+
+
+Glib::Thread* ThreadManagerImpl::create(const sigc::slot<void>& slot, bool joinable, const char* name)
+{
+    return Glib::Thread::create(sigc::bind<sigc::slot<void>, Glib::ustring>(sigc::mem_fun(*this, &ThreadManagerImpl::run), slot, Glib::ustring(name)), joinable);
+}
+
+
+void ThreadManagerImpl::run(sigc::slot<void> slot, Glib::ustring name)
+{
+    Registrant registrant(*this, name);
+    try
+    {
+        slot();
+    }
+    catch (...)
+    {
+        throw;
     }
 }

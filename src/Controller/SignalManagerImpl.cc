@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 #include "Logger/Trace.h"
-#include "Model/ThreadManager.h"
+#include "Thread/ThreadManager.h"
 #include "XenServer/XenObject.h"
 #include "SignalManagerImpl.h"
 
@@ -34,7 +34,7 @@ void SignalManagerImpl::clear()
     }
     else
     {
-        Logger::instance().error("signal clearance requested in thread %s.", ThreadManager::instance().find().c_str());
+        Logger::instance().error("signal clearance requested in thread %s.", ThreadManager::instance().getName());
         throw std::runtime_error("SignalManagerImpl::clear invoked from a background thread.");
     }
     Glib::Mutex::Lock lock(_mutex);
@@ -56,7 +56,7 @@ SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(int notificati
     }
     else
     {
-        Logger::instance().error("signal notification=%d requested in thread %s.", notification, ThreadManager::instance().find().c_str());
+        Logger::instance().error("signal notification=%d requested in thread %s.", notification, ThreadManager::instance().getName());
         throw std::runtime_error("SignalManagerImpl::xenObjectSignal invoked from a background thread.");
     }
 }
@@ -77,7 +77,7 @@ SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(const XenObjec
     }
     else
     {
-        Logger::instance().error("signal object=%zx requested in thread %s.", &object, ThreadManager::instance().find().c_str());
+        Logger::instance().error("signal object=%zx requested in thread %s.", &object, ThreadManager::instance().getName());
         throw std::runtime_error("SignalManagerImpl::xenObjectSignal invoked from a background thread.");
     }
 }

@@ -77,6 +77,7 @@ namespace hnrt
         void onXenTaskUpdated(RefPtr<XenObject>, int);
         void connectInBackground(RefPtr<Host>);
         void performanceMonitorInBackground(RefPtr<PerformanceMonitor>);
+        void disconnect(const RefPtr<Host>&);
         void disconnectInBackground(RefPtr<Host>);
 
         bool _quitInProgress;

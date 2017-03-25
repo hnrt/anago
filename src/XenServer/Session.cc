@@ -204,7 +204,7 @@ bool Session::disconnect()
         _objectStore->clear();
         xen_session_logout(_ptr);
         _ptr = NULL;
-        retval = true;
+        retval = true; // only if primary is disconnected successfully.
         break;
     case SECONDARY_PENDING: // This is the case that secondary connect operation failed.
         xen_session_local_logout(_ptr);
@@ -213,7 +213,6 @@ bool Session::disconnect()
     case SECONDARY:
         xen_session_local_logout(_ptr);
         _ptr = NULL;
-        retval = true;
         break;
     default:
         break;

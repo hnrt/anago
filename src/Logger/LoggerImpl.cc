@@ -12,7 +12,7 @@
 #include <sys/time.h>
 #include <stdexcept>
 #include "App/Constants.h"
-#include "Model/ThreadManager.h"
+#include "Thread/ThreadManager.h"
 #include "LoggerImpl.h"
 
 
@@ -70,7 +70,7 @@ static char* GetHeader(char* buf, size_t len, LogLevel level)
              lt.tm_sec,
              now.tv_usec,
              level.toLocalizedString(),
-             ThreadManager::instance().find().c_str());
+             ThreadManager::instance().getName());
     return buf;
 }
 

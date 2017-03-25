@@ -127,7 +127,6 @@ $(OBJDIR)/Base/InterlockedExchange.o \
 $(OBJDIR)/Base/InterlockedExchangeAdd.o \
 $(OBJDIR)/Base/RefObj.o \
 $(OBJDIR)/Base/StringBuffer.o \
-$(OBJDIR)/Controller/Background.o \
 $(OBJDIR)/Controller/Controller.o \
 $(OBJDIR)/Controller/ControllerImpl.o \
 $(OBJDIR)/Controller/SignalManager.o \
@@ -152,13 +151,14 @@ $(OBJDIR)/Model/ModelImpl.o \
 $(OBJDIR)/Model/ModelImpl_load.o \
 $(OBJDIR)/Model/ModelImpl_save.o \
 $(OBJDIR)/Model/PatchBase.o \
-$(OBJDIR)/Model/ThreadManager.o \
 $(OBJDIR)/Net/AddressResolution.o \
 $(OBJDIR)/Net/HostEntry.o \
 $(OBJDIR)/Net/MacAddress.o \
 $(OBJDIR)/Net/NetRoute.o \
 $(OBJDIR)/Net/UdpSocket.o \
 $(OBJDIR)/Net/WakeOnLan.o \
+$(OBJDIR)/Thread/ThreadManager.o \
+$(OBJDIR)/Thread/ThreadManagerImpl.o \
 $(OBJDIR)/Util/Base64Decoder.o \
 $(OBJDIR)/Util/Base64Encoder.o \
 $(OBJDIR)/Util/ByteString.o \
@@ -222,14 +222,13 @@ clean::
 
 ######################################################################
 
-$(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Base/RefPtr.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/ThreadManager.h View/View.h XenServer/Api.h 
+$(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Base/RefPtr.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Thread/ThreadManager.h View/View.h XenServer/Api.h 
 $(OBJDIR)/Base/RefObj.o: Base/RefObj.cc Base/Atomic.h Base/RefObj.h Logger/LogLevel.h Logger/Logger.h 
 $(OBJDIR)/Base/StringBuffer.o: Base/StringBuffer.cc Base/StringBuffer.h 
-$(OBJDIR)/Controller/Background.o: Controller/Background.cc Controller/Background.h Model/ThreadManager.h 
 $(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Base/RefPtr.h Controller/Controller.h Controller/ControllerImpl.h Controller/SignalManager.h 
-$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Background.h Controller/Controller.h Controller/ControllerImpl.h Controller/SignalManager.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ThreadManager.h Net/MacAddress.h Net/WakeOnLan.h View/View.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Network.h XenServer/PerformanceMonitor.h XenServer/PhysicalBlockDevice.h XenServer/PhysicalInterface.h XenServer/Session.h XenServer/StorageRepository.h XenServer/VirtualBlockDevice.h XenServer/VirtualDiskImage.h XenServer/VirtualInterface.h XenServer/VirtualMachine.h XenServer/XenEventMonitor.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h XenServer/XenTask.h 
+$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h Controller/ControllerImpl.h Controller/SignalManager.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Net/MacAddress.h Net/WakeOnLan.h Thread/ThreadManager.h View/View.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Network.h XenServer/PerformanceMonitor.h XenServer/PhysicalBlockDevice.h XenServer/PhysicalInterface.h XenServer/Session.h XenServer/StorageRepository.h XenServer/VirtualBlockDevice.h XenServer/VirtualDiskImage.h XenServer/VirtualInterface.h XenServer/VirtualMachine.h XenServer/XenEventMonitor.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h XenServer/XenTask.h 
 $(OBJDIR)/Controller/SignalManager.o: Controller/SignalManager.cc Base/RefPtr.h Controller/SignalManager.h Controller/SignalManagerImpl.h 
-$(OBJDIR)/Controller/SignalManagerImpl.o: Controller/SignalManagerImpl.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/SignalManager.h Controller/SignalManagerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ThreadManager.h XenServer/Api.h XenServer/Constants.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
+$(OBJDIR)/Controller/SignalManagerImpl.o: Controller/SignalManagerImpl.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/SignalManager.h Controller/SignalManagerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Thread/ThreadManager.h XenServer/Api.h XenServer/Constants.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/Env/Env.o: Env/Env.cc Env/Env.h Env/Locale.h Env/Process.h 
 $(OBJDIR)/Env/Locale.o: Env/Locale.cc Env/Locale.h Env/LocaleImpl.h 
 $(OBJDIR)/Env/LocaleImpl.o: Env/LocaleImpl.cc Env/Locale.h Env/LocaleImpl.h Env/Process.h 
@@ -242,7 +241,7 @@ $(OBJDIR)/File/JsonWriter.o: File/JsonWriter.cc Base/RefObj.h Base/RefPtr.h File
 $(OBJDIR)/Logger/Debug.o: Logger/Debug.cc Logger/Debug.h Logger/LogLevel.h Logger/Logger.h 
 $(OBJDIR)/Logger/LogLevel.o: Logger/LogLevel.cc Logger/LogLevel.h 
 $(OBJDIR)/Logger/Logger.o: Logger/Logger.cc Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h 
-$(OBJDIR)/Logger/LoggerImpl.o: Logger/LoggerImpl.cc App/Constants.h Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h Model/ThreadManager.h 
+$(OBJDIR)/Logger/LoggerImpl.o: Logger/LoggerImpl.cc App/Constants.h Logger/LogLevel.h Logger/Logger.h Logger/LoggerImpl.h Thread/ThreadManager.h 
 $(OBJDIR)/Logger/Trace.o: Logger/Trace.cc Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h 
 $(OBJDIR)/Model/ConnectSpec.o: Model/ConnectSpec.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/ConnectSpec.h Net/MacAddress.h Util/Base64.h Util/ByteString.h Util/Scrambler.h Util/ScramblerBase.h Util/UUID.h 
 $(OBJDIR)/Model/Model.o: Model/Model.cc Base/RefPtr.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/ModelImpl.h 
@@ -250,13 +249,14 @@ $(OBJDIR)/Model/ModelImpl.o: Model/ModelImpl.cc App/Constants.h Base/RefObj.h Ba
 $(OBJDIR)/Model/ModelImpl_load.o: Model/ModelImpl_load.cc Base/RefObj.h Base/RefPtr.h File/Json.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ModelImpl.h Net/MacAddress.h View/View.h 
 $(OBJDIR)/Model/ModelImpl_save.o: Model/ModelImpl_save.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h File/Json.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ModelImpl.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/Model/PatchBase.o: Model/PatchBase.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/PatchBase.h Model/PatchRecord.h Model/PatchState.h 
-$(OBJDIR)/Model/ThreadManager.o: Model/ThreadManager.cc Base/StringBuffer.h Model/ThreadManager.h 
 $(OBJDIR)/Net/AddressResolution.o: Net/AddressResolution.cc Net/AddressResolution.h 
 $(OBJDIR)/Net/HostEntry.o: Net/HostEntry.cc Net/HostEntry.h 
 $(OBJDIR)/Net/MacAddress.o: Net/MacAddress.cc Net/AddressResolution.h Net/HostEntry.h Net/MacAddress.h 
 $(OBJDIR)/Net/NetRoute.o: Net/NetRoute.cc Net/NetRoute.h 
 $(OBJDIR)/Net/UdpSocket.o: Net/UdpSocket.cc Net/UdpSocket.h 
 $(OBJDIR)/Net/WakeOnLan.o: Net/WakeOnLan.cc Net/HostEntry.h Net/MacAddress.h Net/NetRoute.h Net/UdpSocket.h Net/WakeOnLan.h 
+$(OBJDIR)/Thread/ThreadManager.o: Thread/ThreadManager.cc Thread/ThreadManager.h Thread/ThreadManagerImpl.h 
+$(OBJDIR)/Thread/ThreadManagerImpl.o: Thread/ThreadManagerImpl.cc Base/StringBuffer.h Thread/ThreadManager.h Thread/ThreadManagerImpl.h 
 $(OBJDIR)/Util/Base64Decoder.o: Util/Base64Decoder.cc Util/Base64.h Util/ByteString.h 
 $(OBJDIR)/Util/Base64Encoder.o: Util/Base64Encoder.cc Util/Base64.h Util/ByteString.h 
 $(OBJDIR)/Util/ByteString.o: Util/ByteString.cc Util/ByteString.h 

@@ -11,7 +11,7 @@
 #include "Env/Locale.h"
 #include "Logger/Logger.h"
 #include "Model/Model.h"
-#include "Model/ThreadManager.h"
+#include "Thread/ThreadManager.h"
 #include "View/View.h"
 #include "XenServer/Api.h"
 #include "Constants.h"
