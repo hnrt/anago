@@ -2,6 +2,7 @@
 
 
 #include <libintl.h>
+#include <stdexcept>
 #include "App/Constants.h"
 #include "Base/StringBuffer.h"
 #include "Controller/SignalManager.h"
@@ -22,6 +23,25 @@ ViewImpl::ViewImpl()
     : _displayName("Anago")
 {
     Trace trace("ViewImpl::ctor");
+    Gdk::VisualType vt = Gdk::Visual::get_best_type();
+    trace.put("visual=%s depth=%d",
+              vt == Gdk::VISUAL_STATIC_GRAY ? "STATIC_GRAY" :
+              vt == Gdk::VISUAL_GRAYSCALE ? "GRAYSCALE" :
+              vt == Gdk::VISUAL_STATIC_COLOR ? "STATIC_COLOR" :
+              vt == Gdk::VISUAL_PSEUDO_COLOR ? "PSEUDO_COLOR" :
+              vt == Gdk::VISUAL_TRUE_COLOR ? "TRUE_COLOR" :
+              vt == Gdk::VISUAL_DIRECT_COLOR ? "DIRECT_COLOR" :
+              "?",
+              Gdk::Visual::get_best_depth());
+    if (vt == Gdk::VISUAL_DIRECT_COLOR
+        || vt == Gdk::VISUAL_TRUE_COLOR)
+    {
+        // OK
+    }
+    else
+    {
+        throw std::runtime_error("Current visual setting not supported.");
+    }
 }
 
 
