@@ -3,7 +3,9 @@
 
 #include <stdio.h>
 #include <libintl.h>
+#include <stdexcept>
 #include "Controller/Controller.h"
+#include "Controller/SignalManager.h"
 #include "Logger/Trace.h"
 #include "XenServer/Host.h"
 #include "XenServer/Network.h"
@@ -30,7 +32,7 @@ HostTreeView::HostTreeView()
     append_column(gettext("Contents"), _store->record().colVal);
     Glib::RefPtr<Gtk::TreeSelection> selection = get_selection();
     selection->set_mode(Gtk::SELECTION_MULTIPLE);
-    Controller::instance().signalNotified(XenObject::CREATED).connect(sigc::mem_fun(*this, &HostTreeView::onObjectCreated));
+    SignalManager::instance().xenObjectSignal(XenObject::CREATED).connect(sigc::mem_fun(*this, &HostTreeView::onObjectCreated));
 }
 
 
@@ -45,23 +47,21 @@ void HostTreeView::clear()
 }
 
 
-void HostTreeView::onObjectCreated(RefPtr<RefObj> object0, int what)
+void HostTreeView::onObjectCreated(RefPtr<XenObject> object, int what)
 {
     Trace trace("HostTreeView::onObjectCreated");
-    RefPtr<XenObject> object = RefPtr<XenObject>::castStatic(object0);
     AddObject add = getAdd(object);
     if ((this->*add)(object))
     {
         trace.put("add=true");
-        Controller::instance().signalNotified(object0).connect(sigc::mem_fun(*this, &HostTreeView::onObjectUpdated));
+        SignalManager::instance().xenObjectSignal(*object).connect(sigc::mem_fun(*this, &HostTreeView::onObjectUpdated));
         _signalNodeCreated.emit(object);
     }
 }
 
 
-void HostTreeView::onObjectUpdated(RefPtr<RefObj> object0, int what)
+void HostTreeView::onObjectUpdated(RefPtr<XenObject> object, int what)
 {
-    RefPtr<XenObject> object = RefPtr<XenObject>::castStatic(object0);
     if (what == XenObject::DESTROYED)
     {
         remove(object);
@@ -71,46 +71,6 @@ void HostTreeView::onObjectUpdated(RefPtr<RefObj> object0, int what)
     {
         UpdateObject update = getUpdate(object);
         (this->*update)(object, what);
-    }
-}
-
-
-void HostTreeView::remove(const RefPtr<XenObject>& object)
-{
-    Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
-    while (iter)
-    {
-        Gtk::TreeModel::Row row = *iter;
-        switch (object->getType())
-        {
-        case XenObject::HOST:
-            if (object == row[_store->record().colXenObject])
-            {
-                _store->erase(iter);
-                return;
-            }
-            break;
-        case XenObject::VM:
-        case XenObject::SR:
-        case XenObject::NETWORK:
-        {
-            Gtk::TreeIter iter2 = row.children().begin();
-            while (iter2)
-            {
-                row = *iter2;
-                if (object == row[_store->record().colXenObject])
-                {
-                    _store->erase(iter2);
-                    return;
-                }
-                iter2++;
-            }
-            break;
-        }
-        default:
-            break;
-        }
-        iter++;
     }
 }
 
@@ -538,7 +498,7 @@ void HostTreeView::updateDisplayOrder()
 
 Gtk::TreeModel::Row HostTreeView::findHost(const RefPtr<XenObject>& object, Gtk::TreeIter& iter, bool addIfNotFound)
 {
-    RefPtr<Host> host = RefPtr<Host>::castStatic(object);
+    RefPtr<Host> host = object->getSession().getStore().getHost();
     iter = _store->get_iter("0"); // point to first item
     while (iter)
     {
@@ -566,7 +526,7 @@ Gtk::TreeModel::Row HostTreeView::findHost(const RefPtr<XenObject>& object, Gtk:
     }
     else
     {
-        throw "Host not found.";
+        throw std::invalid_argument("Host not found.");
     }
 }
 
@@ -607,7 +567,7 @@ Gtk::TreeModel::Row HostTreeView::findVm(const RefPtr<XenObject>& object, Gtk::T
         }
         else
         {
-            throw "VM not found.";
+            throw std::invalid_argument("VM not found.");
         }
         iter++;
     }
@@ -619,7 +579,7 @@ Gtk::TreeModel::Row HostTreeView::findVm(const RefPtr<XenObject>& object, Gtk::T
     }
     else
     {
-        throw "VM not found.";
+        throw std::invalid_argument("VM not found.");
     }
 }
 
@@ -658,7 +618,7 @@ Gtk::TreeModel::Row HostTreeView::findSr(const RefPtr<XenObject>& object, Gtk::T
                         }
                         else
                         {
-                            throw "SR not found.";
+                            throw std::invalid_argument("SR not found.");
                         }
                     }
                 }
@@ -673,7 +633,7 @@ Gtk::TreeModel::Row HostTreeView::findSr(const RefPtr<XenObject>& object, Gtk::T
                     }
                     else
                     {
-                        throw "SR not found.";
+                        throw std::invalid_argument("SR not found.");
                     }
                 }
                 else if (sr2->getSubType() == StorageRepository::DEV)
@@ -686,7 +646,7 @@ Gtk::TreeModel::Row HostTreeView::findSr(const RefPtr<XenObject>& object, Gtk::T
                         }
                         else
                         {
-                            throw "SR not found.";
+                            throw std::invalid_argument("SR not found.");
                         }
                     }
                 }
@@ -701,7 +661,7 @@ Gtk::TreeModel::Row HostTreeView::findSr(const RefPtr<XenObject>& object, Gtk::T
                 }
                 else
                 {
-                    throw "SR not found.";
+                    throw std::invalid_argument("SR not found.");
                 }
             }
         }
@@ -711,7 +671,7 @@ Gtk::TreeModel::Row HostTreeView::findSr(const RefPtr<XenObject>& object, Gtk::T
         }
         else
         {
-            throw "SR not found.";
+            throw std::invalid_argument("SR not found.");
         }
         iter++;
     }
@@ -723,7 +683,7 @@ Gtk::TreeModel::Row HostTreeView::findSr(const RefPtr<XenObject>& object, Gtk::T
     }
     else
     {
-        throw "SR not found.";
+        throw std::invalid_argument("SR not found.");
     }
 }
 
@@ -762,7 +722,7 @@ Gtk::TreeModel::Row HostTreeView::findNw(const RefPtr<XenObject>& object, Gtk::T
                 }
                 else
                 {
-                    throw "Network not found.";
+                    throw std::invalid_argument("Network not found.");
                 }
             }
         }
@@ -772,7 +732,7 @@ Gtk::TreeModel::Row HostTreeView::findNw(const RefPtr<XenObject>& object, Gtk::T
         }
         else
         {
-            throw "Network not found.";
+            throw std::invalid_argument("Network not found.");
         }
         iter++;
     }
@@ -784,6 +744,43 @@ Gtk::TreeModel::Row HostTreeView::findNw(const RefPtr<XenObject>& object, Gtk::T
     }
     else
     {
-        throw "Network not found.";
+        throw std::invalid_argument("Network not found.");
     }
+}
+
+
+void HostTreeView::remove(const RefPtr<XenObject>& object)
+{
+    if (object->getType() == XenObject::HOST)
+    {
+        remove(object, _store->get_iter("0"));
+    }
+    else
+    {
+        try
+        {
+            Gtk::TreeIter iter;
+            Gtk::TreeModel::Row row = findHost(object, iter);
+            remove(object, row.children().begin());
+        }
+        catch (...)
+        {
+        }
+    }
+}
+
+
+bool HostTreeView::remove(const RefPtr<XenObject>& object, Gtk::TreeIter iter)
+{
+    while (iter)
+    {
+        Gtk::TreeModel::Row row = *iter;
+        if (object == row[_store->record().colXenObject])
+        {
+            _store->erase(iter);
+            return true;
+        }
+        iter++;
+    }
+    return false;
 }

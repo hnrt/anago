@@ -4,6 +4,7 @@
 #include <libintl.h>
 #include "App/Constants.h"
 #include "Controller/Controller.h"
+#include "Controller/SignalManager.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "XenServer/Host.h"
@@ -440,11 +441,11 @@ void MainWindow::onNodeCreated(RefPtr<XenObject> object)
     _notebookStore.set(object, notebook);
     addNotebook(notebook);
     updateSensitivity();
-    Controller::instance().signalNotified(RefPtr<RefObj>::castStatic(object)).connect(sigc::mem_fun(*this, &MainWindow::onObjectUpdated));
+    SignalManager::instance().xenObjectSignal(*object).connect(sigc::mem_fun(*this, &MainWindow::onObjectUpdated));
 }
 
 
-void MainWindow::onObjectUpdated(RefPtr<RefObj> object, int what)
+void MainWindow::onObjectUpdated(RefPtr<XenObject> object, int what)
 {
     RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
     if (what == XenObject::DESTROYED)

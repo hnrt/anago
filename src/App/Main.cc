@@ -79,7 +79,6 @@ int main(int argc, char *argv[])
         }
 
         View::instance().clear();
-        Controller::instance().clear();
         Model::instance().clear();
 
         View::fini();

@@ -45,9 +45,8 @@ namespace hnrt
 
         HostTreeView(const HostTreeView&);
         void operator =(const HostTreeView&);
-        void onObjectCreated(RefPtr<RefObj>, int);
-        void onObjectUpdated(RefPtr<RefObj>, int);
-        void remove(const RefPtr<XenObject>&);
+        void onObjectCreated(RefPtr<XenObject>, int);
+        void onObjectUpdated(RefPtr<XenObject>, int);
         AddObject getAdd(const RefPtr<XenObject>&);
         UpdateObject getUpdate(const RefPtr<XenObject>&);
         bool addHost(RefPtr<XenObject>);
@@ -63,6 +62,8 @@ namespace hnrt
         void reorder(RefPtr<VirtualMachine>, Gtk::TreeIter&);
         void reorder(RefPtr<StorageRepository>, Gtk::TreeIter&);
         virtual bool on_button_press_event(GdkEventButton*);
+        void remove(const RefPtr<XenObject>&);
+        bool remove(const RefPtr<XenObject>&, Gtk::TreeIter);
         Gtk::TreeModel::Row findHost(const RefPtr<XenObject>&, Gtk::TreeIter&, bool = false);
         Gtk::TreeModel::Row findVm(const RefPtr<XenObject>&, Gtk::TreeIter&, bool = false);
         Gtk::TreeModel::Row findSr(const RefPtr<XenObject>&, Gtk::TreeIter&, bool = false);

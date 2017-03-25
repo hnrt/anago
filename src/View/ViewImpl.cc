@@ -4,7 +4,7 @@
 #include <libintl.h>
 #include "App/Constants.h"
 #include "Base/StringBuffer.h"
-#include "Controller/Controller.h"
+#include "Controller/SignalManager.h"
 #include "Logger/Trace.h"
 #include "Model/ConnectSpec.h"
 #include "Model/Model.h"
@@ -62,6 +62,7 @@ void ViewImpl::save()
 void ViewImpl::clear()
 {
     Trace trace("ViewImpl::clear");
+    SignalManager::instance().clear();
     _mainWindow.clear();
 }
 

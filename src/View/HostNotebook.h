@@ -18,6 +18,7 @@
 namespace hnrt
 {
     class Host;
+    class XenObject;
 
     class HostNotebook
         : public Notebook
@@ -34,8 +35,8 @@ namespace hnrt
         HostNotebook(const HostNotebook&);
         void operator =(const HostNotebook&);
         void onAutoConnectChanged();
-        void onSessionUpdated(RefPtr<RefObj>, int);
-        void onHostUpdated(RefPtr<RefObj>, int);
+        void onSessionUpdated(RefPtr<XenObject>, int);
+        void onHostUpdated(RefPtr<XenObject>, int);
         void update();
         void updatePerformaceStats();
 

@@ -3,7 +3,7 @@
 
 #include <libintl.h>
 #include "Base/StringBuffer.h"
-#include "Controller/Controller.h"
+#include "Controller/SignalManager.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "Model/PatchBase.h"
@@ -70,8 +70,9 @@ HostNotebook::HostNotebook(const RefPtr<Host>& host)
 
     show_all_children();
 
-    _connectionSession = Controller::instance().signalNotified(RefPtr<RefObj>(&_host->getSession(), 1)).connect(sigc::mem_fun(*this, &HostNotebook::onSessionUpdated));
-    _connectionHost = Controller::instance().signalNotified(RefPtr<RefObj>::castStatic(host)).connect(sigc::mem_fun(*this, &HostNotebook::onHostUpdated));
+    SignalManager& sm = SignalManager::instance();
+    _connectionSession = sm.xenObjectSignal(_host->getSession()).connect(sigc::mem_fun(*this, &HostNotebook::onSessionUpdated));
+    _connectionHost = sm.xenObjectSignal(*host).connect(sigc::mem_fun(*this, &HostNotebook::onHostUpdated));
 }
 
 
@@ -91,7 +92,7 @@ void HostNotebook::onAutoConnectChanged()
 }
 
 
-void HostNotebook::onSessionUpdated(RefPtr<RefObj> object, int what)
+void HostNotebook::onSessionUpdated(RefPtr<XenObject> object, int what)
 {
     Trace trace(StringBuffer().format("HostNotebook@%zx::onSessionUpdated(%zx,%d)", this, object.ptr(), what));
 
@@ -110,7 +111,7 @@ void HostNotebook::onSessionUpdated(RefPtr<RefObj> object, int what)
 }
 
 
-void HostNotebook::onHostUpdated(RefPtr<RefObj> object, int what)
+void HostNotebook::onHostUpdated(RefPtr<XenObject> object, int what)
 {
     Trace trace(StringBuffer().format("HostNotebook@%zx::onHostUpdated(%zx,%d)", this, object.ptr(), what));
 

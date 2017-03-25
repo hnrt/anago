@@ -27,6 +27,7 @@
 #include "XenServer/XenTask.h"
 #include "Background.h"
 #include "ControllerImpl.h"
+#include "SignalManager.h"
 
 
 using namespace hnrt;
@@ -36,6 +37,14 @@ ControllerImpl::ControllerImpl()
     : _quitInProgress(false)
 {
     Trace trace("ControllerImpl::ctor");
+
+    SignalManager& sm = SignalManager::instance();
+    sm.xenObjectSignal(XenObject::CONNECT_FAILED).connect(sigc::mem_fun(*this, &ControllerImpl::onConnectFailed));
+    sm.xenObjectSignal(XenObject::ERROR).connect(sigc::mem_fun(*this, &ControllerImpl::onXenObjectError));
+    sm.xenObjectSignal(XenObject::TASK_ON_SUCCESS).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
+    sm.xenObjectSignal(XenObject::TASK_ON_FAILURE).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
+    sm.xenObjectSignal(XenObject::TASK_ON_CANCELLED).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
+    sm.xenObjectSignal(XenObject::TASK_IN_PROGRESS).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
 }
 
 
@@ -45,28 +54,9 @@ ControllerImpl::~ControllerImpl()
 }
 
 
-void ControllerImpl::clear()
-{
-    Trace trace("ControllerImpl::clear");
-    Glib::RecMutex::Lock k(_mutex);
-    _notified.clear();
-    _notificationSignalMap.clear();
-    _refObjSignalMap.clear();
-}
-
-
 void ControllerImpl::parseCommandLine(int argc, char *argv[])
 {
     Trace trace("ControllerImpl::parseCommandLine");
-
-    signalNotified(XenObject::CONNECT_FAILED).connect(sigc::mem_fun(*this, &ControllerImpl::onConnectFailed));
-    signalNotified(XenObject::ERROR).connect(sigc::mem_fun(*this, &ControllerImpl::onXenObjectError));
-    signalNotified(XenObject::TASK_ON_SUCCESS).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
-    signalNotified(XenObject::TASK_ON_FAILURE).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
-    signalNotified(XenObject::TASK_ON_CANCELLED).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
-    signalNotified(XenObject::TASK_IN_PROGRESS).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
-
-    _dispatcher.connect(sigc::mem_fun(*this, &ControllerImpl::onNotify));
 
     for (int index = 1; index < argc; index++)
     {
@@ -147,100 +137,11 @@ bool ControllerImpl::quit2()
 }
 
 
-Controller::Signal ControllerImpl::signalNotified(int notification)
+void ControllerImpl::onConnectFailed(RefPtr<XenObject> object, int what)
 {
-    Glib::RecMutex::Lock k(_mutex);
-    NotificationSignalMap::iterator iter = _notificationSignalMap.find(notification);
-    if (iter == _notificationSignalMap.end())
-    {
-        _notificationSignalMap.insert(NotificationSignalMapEntry(notification, Signal()));
-        iter = _notificationSignalMap.find(notification);
-    }
-    return iter->second;
-}
-
-
-Controller::Signal ControllerImpl::signalNotified(const RefPtr<RefObj>& object)
-{
-    Glib::RecMutex::Lock k(_mutex);
-    void* key = const_cast<RefObj*>(object.ptr());
-    RefObjSignalMap::iterator iter = _refObjSignalMap.find(key);
-    if (iter == _refObjSignalMap.end())
-    {
-        _refObjSignalMap.insert(RefObjSignalMapEntry(key, Signal()));
-        iter = _refObjSignalMap.find(key);
-    }
-    return iter->second;
-}
-
-
-void ControllerImpl::notify(const RefPtr<RefObj>& object, int notification)
-{
-    Trace trace("ControllerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
-    std::list<RefPtrNotificationPair>::size_type size;
-    {
-        Glib::RecMutex::Lock k(_mutex);
-        _notified.push_back(RefPtrNotificationPair(object, notification));
-        size = _notified.size();
-    }
-    if (ThreadManager::instance().isMain())
-    {
-        onNotify();
-    }
-    else if (size == 1)
-    {
-        _dispatcher();
-    }
-}
-
-
-void ControllerImpl::onNotify()
-{
-    Trace trace("ControllerImpl::onNotify");
-
-    for (;;)
-    {
-        RefPtrNotificationPair entry;
-        {
-            Glib::RecMutex::Lock lock(_mutex);
-            if (!_notified.size())
-            {
-                break;
-            }
-            entry = _notified.front();
-            _notified.pop_front();
-        }
-        trace.put("object=%zx notification=%d", (size_t)entry.first.ptr(), entry.second);
-        {
-            int key = entry.second;
-            NotificationSignalMap::iterator iter = _notificationSignalMap.find(key);
-            if (iter != _notificationSignalMap.end())
-            {
-                iter->second.emit(entry.first, entry.second);
-            }
-        }
-        {
-            void* key = entry.first.ptr();
-            RefObjSignalMap::iterator iter = _refObjSignalMap.find(key);
-            if (iter != _refObjSignalMap.end())
-            {
-                iter->second.emit(entry.first, entry.second);
-                if (entry.second == XenObject::DESTROYED)
-                {
-                    _refObjSignalMap.erase(iter);
-                }
-            }
-        }
-    }
-}
-
-
-void ControllerImpl::onConnectFailed(RefPtr<RefObj> object, int what)
-{
-    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
     StringBuffer message;
     {
-        Session& session = xenObject->getSession();
+        Session& session = object->getSession();
         Session::Lock lock(session);
         message.format(gettext("Failed to connect to %s.\n"), session.getConnectSpec().hostname.c_str());
         XenServer::getError(session, message, "\n");
@@ -252,12 +153,11 @@ void ControllerImpl::onConnectFailed(RefPtr<RefObj> object, int what)
 }
 
 
-void ControllerImpl::onXenObjectError(RefPtr<RefObj> object, int what)
+void ControllerImpl::onXenObjectError(RefPtr<XenObject> object, int what)
 {
-    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
     StringBuffer message;
     {
-        Session& session = xenObject->getSession();
+        Session& session = object->getSession();
         Session::Lock lock(session);
         XenServer::getError(session, message, "\n");
         session.clearError();
@@ -266,7 +166,7 @@ void ControllerImpl::onXenObjectError(RefPtr<RefObj> object, int what)
 }
 
 
-void ControllerImpl::onXenTaskUpdated(RefPtr<RefObj> object, int what)
+void ControllerImpl::onXenTaskUpdated(RefPtr<XenObject> object, int what)
 {
     RefPtr<XenTask> task = RefPtr<XenTask>::castStatic(object);
     switch (what)

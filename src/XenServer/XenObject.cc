@@ -3,7 +3,7 @@
 
 #include <glibmm.h>
 #include "Base/Atomic.h"
-#include "Controller/Controller.h"
+#include "Controller/SignalManager.h"
 #include "Constants.h"
 #include "Session.h"
 #include "XenObject.h"
@@ -124,5 +124,5 @@ int XenObject::setBusy(bool value)
 
 void XenObject::emit(Notification notification)
 {
-    Controller::instance().notify(RefPtr<RefObj>(this, 1), notification);
+    SignalManager::instance().notify(RefPtr<XenObject>(this, 1), notification);
 }

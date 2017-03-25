@@ -2,6 +2,7 @@
 
 
 #include "ControllerImpl.h"
+#include "SignalManager.h"
 
 
 using namespace hnrt;
@@ -12,6 +13,8 @@ static ControllerImpl* _singleton = NULL;
 
 void Controller::init()
 {
+    SignalManager::init();
+
     _singleton = new ControllerImpl();
 }
 
@@ -19,6 +22,8 @@ void Controller::init()
 void Controller::fini()
 {
     delete _singleton;
+
+    SignalManager::fini();
 }
 
 

@@ -41,7 +41,7 @@ namespace hnrt
         void onResize(Gtk::Allocation&);
         void onHostTreeViewSelectionChanged();
         void onNodeCreated(RefPtr<XenObject>);
-        void onObjectUpdated(RefPtr<RefObj>, int);
+        void onObjectUpdated(RefPtr<XenObject>, int);
         void addNotebook(RefPtr<Notebook>&);
         void removeNotebook(RefPtr<Notebook>&);
         void showNotebook(const RefPtr<Notebook>&);
