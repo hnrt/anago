@@ -15,6 +15,7 @@ namespace hnrt
     class StorageRepository;
     class VirtualMachine;
     class Network;
+    class XenObject;
 
     class PixStore
     {
@@ -28,10 +29,7 @@ namespace hnrt
         Glib::RefPtr<Gdk::Pixbuf> getApp() const { return _pixApp; }
         Glib::RefPtr<Gdk::Pixbuf> getYes() const { return _pixYes; }
         Glib::RefPtr<Gdk::Pixbuf> getNo() const { return _pixNo; }
-        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<Host>) const;
-        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<StorageRepository>) const;
-        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<VirtualMachine>) const;
-        Glib::RefPtr<Gdk::Pixbuf> get(RefPtr<Network> nw) const;
+        Glib::RefPtr<Gdk::Pixbuf> get(const XenObject&) const;
 
     protected:
 

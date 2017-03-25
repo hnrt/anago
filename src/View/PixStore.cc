@@ -71,54 +71,26 @@ PixStore::PixStore()
 }
 
 
-Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<Host> host) const
+Glib::RefPtr<Gdk::Pixbuf> PixStore::get(const XenObject& object) const
 {
-    return
-        !host ? _pixError :
-        host->isBusy() ? _pixHourglass :
-        host->getSession().isConnected() ? _pixYes :
-        _pixNo;
-}
-
-
-Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<StorageRepository> sr) const
-{
-    if (!sr)
-    {
-        return _pixError;
-    }
-    else if (sr->isBusy())
+    if (object.isBusy())
     {
         return _pixHourglass;
     }
-    else
+    switch (object.getType())
     {
-        switch (sr->getSubType())
+    case XenObject::HOST:
+        if (object.getSession().isConnected())
         {
-        case StorageRepository::DEV:
-            return _pixRemovableMedia;
-        case StorageRepository::ISO:
-            return _pixCdRom;
-        default:
-            return _pixHardDisk;
+            return _pixYes;
         }
-    }
-}
-
-
-Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<VirtualMachine> vm) const
-{
-    if (!vm)
+        else
+        {
+            return _pixNo;
+        }
+    case XenObject::VM:
     {
-        return _pixError;
-    }
-    else if (vm->isBusy())
-    {
-        return _pixHourglass;
-    }
-    else
-    {
-        XenPtr<xen_vm_record> record = vm->getRecord();
+        XenPtr<xen_vm_record> record = static_cast<const VirtualMachine&>(object).getRecord();
         return
             //record->is_a_snapshot ? _pixComputer :
             record->power_state == XEN_VM_POWER_STATE_HALTED ? _pixPowerOff :
@@ -127,21 +99,21 @@ Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<VirtualMachine> vm) const
             record->power_state == XEN_VM_POWER_STATE_SUSPENDED ? _pixPause :
             _pixError;
     }
-}
-
-
-Glib::RefPtr<Gdk::Pixbuf> PixStore::get(RefPtr<Network> nw) const
-{
-    if (!nw)
-    {
-        return _pixError;
-    }
-    else if (nw->isBusy())
-    {
-        return _pixHourglass;
-    }
-    else
-    {
+    case XenObject::SR:
+        switch (static_cast<const StorageRepository&>(object).getSubType())
+        {
+        case StorageRepository::USR:
+            return _pixHardDisk;
+        case StorageRepository::DEV:
+            return _pixRemovableMedia;
+        case StorageRepository::ISO:
+            return _pixCdRom;
+        default:
+            return _pixError;
+        }
+    case XenObject::NETWORK:
         return _pixNetworkAdapter;
+    default:
+        return _pixError;
     }
 }
