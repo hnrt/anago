@@ -24,6 +24,7 @@ ViewImpl::ViewImpl()
 {
     Trace trace("ViewImpl::ctor");
     Gdk::VisualType vt = Gdk::Visual::get_best_type();
+    int depth = Gdk::Visual::get_best_depth();
     trace.put("visual=%s depth=%d",
               vt == Gdk::VISUAL_STATIC_GRAY ? "STATIC_GRAY" :
               vt == Gdk::VISUAL_GRAYSCALE ? "GRAYSCALE" :
@@ -32,7 +33,7 @@ ViewImpl::ViewImpl()
               vt == Gdk::VISUAL_TRUE_COLOR ? "TRUE_COLOR" :
               vt == Gdk::VISUAL_DIRECT_COLOR ? "DIRECT_COLOR" :
               "?",
-              Gdk::Visual::get_best_depth());
+              depth);
     if (vt == Gdk::VISUAL_DIRECT_COLOR
         || vt == Gdk::VISUAL_TRUE_COLOR)
     {
@@ -40,7 +41,16 @@ ViewImpl::ViewImpl()
     }
     else
     {
-        throw std::runtime_error("Current visual setting not supported.");
+        throw std::runtime_error("Current visual type not supported.");
+    }
+    if (depth == 32
+        || depth == 24)
+    {
+        // OK
+    }
+    else
+    {
+        throw std::runtime_error("Current color depth not supported.");
     }
 }
 
