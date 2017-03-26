@@ -1,6 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "PhysicalBlockDevice.h"
 #include "Session.h"

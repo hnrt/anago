@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Macros.h"
 #include "Session.h"

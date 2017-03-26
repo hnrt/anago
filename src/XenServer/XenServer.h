@@ -7,12 +7,13 @@
 
 #include <glibmm.h>
 #include <vector>
-#include "Base/StringBuffer.h"
 #include "XenServer/Api.h"
 
 
 namespace hnrt
 {
+    class StringBuffer;
+
     struct XenServer
     {
         static StringBuffer& getError(xen_session* session, StringBuffer& buffer, const char* separator);

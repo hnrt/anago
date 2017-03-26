@@ -2,6 +2,7 @@
 
 
 #include <libintl.h>
+#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Session.h"
 #include "VirtualBlockDevice.h"

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <new>
+#include "Base/StringBuffer.h"
 #include "Util/Util.h"
 #include "Constants.h"
 #include "XenPtr.h"
