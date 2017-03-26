@@ -31,6 +31,7 @@ namespace hnrt
         virtual bool getConnectSpec(ConnectSpec&);
         virtual bool confirmServerToRemove(const char*);
         virtual void showBusyServers(const std::list<Glib::ustring>&);
+        virtual bool confirmServersToShutdown(const std::list<Glib::ustring>&, bool);
 
     private:
 

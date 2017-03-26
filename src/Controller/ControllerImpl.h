@@ -79,6 +79,8 @@ namespace hnrt
         void performanceMonitorInBackground(RefPtr<PerformanceMonitor>);
         void disconnect(const RefPtr<Host>&);
         void disconnectInBackground(RefPtr<Host>);
+        void shutdownHostInBackground(RefPtr<Host>);
+        void restartHostInBackground(RefPtr<Host>);
 
         bool _quitInProgress;
     };

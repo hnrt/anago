@@ -175,7 +175,47 @@ void ViewImpl::showBusyServers(const std::list<Glib::ustring>& names)
     for (std::list<Glib::ustring>::const_iterator iter = names.begin(); iter != names.end(); iter++)
     {
         message += "\n";
-        message += (*iter).c_str();
+        message += iter->c_str();
     }
     showWarning(message.str());
+}
+
+
+bool ViewImpl::confirmServersToShutdown(const std::list<Glib::ustring>& names, bool reboot)
+{
+    if (names.size() == 0)
+    {
+        return false;
+    }
+    StringBuffer message;
+    if (reboot)
+    {
+        message =
+            names.size() > 1 ?
+            gettext("Do you wish to shut down and to restart the following hosts?\n") :
+            gettext("Do you wish to shut down and to restart the following host?\n");
+    }
+    else
+    {
+        message =
+            names.size() > 1 ?
+            gettext("Do you wish to shut down the following hosts?\n") :
+            gettext("Do you wish to shut down the following host?\n");
+    }
+    for (std::list<Glib::ustring>::const_iterator iter = names.begin(); iter != names.end(); iter++)
+    {
+        message += "\n";
+        message += iter->c_str();
+    }
+    Gtk::MessageDialog dialog(_mainWindow, message.str(), false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_YES_NO);
+    dialog.set_title(_displayName);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_YES)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }

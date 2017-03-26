@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <new>
+#include <stdexcept>
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
 #include "Controller/Controller.h"
@@ -57,12 +58,12 @@ void XenEventMonitor::run(Session& sessionPrimary)
     {
         if (_connected)
         {
-            throw "XenEventMonitor: Already connected.";
+            throw std::runtime_error("XenEventMonitor: Already connected.");
         }
 
         if (!session.connect(sessionPrimary))
         {
-            throw "connect failed.";
+            goto done;
         }
 
         _connected = true;
@@ -70,18 +71,18 @@ void XenEventMonitor::run(Session& sessionPrimary)
         xen_string_set *classes = xen_string_set_alloc(1);
         if (!classes)
         {
-            throw "xen_string_set_alloc(1) failed.";
+            throw std::bad_alloc();
         }
 
         classes->contents[0] = xen_strdup_("*");
         if (!classes->contents[0])
         {
-            throw "xen_strdup failed.";
+            throw std::bad_alloc();
         }
 
         if (!xen_event_register(session, classes))
         {
-            throw "xen_event_register failed.";
+            goto done;
         }
 
         while (sessionPrimary.isConnected() && _connected)
@@ -90,7 +91,7 @@ void XenEventMonitor::run(Session& sessionPrimary)
 
             if (!xen_event_next(session, events.address()))
             {
-                throw "xen_event_next failed.";
+                goto done;
             }
 
             if (!sessionPrimary.isConnected())
@@ -146,14 +147,20 @@ void XenEventMonitor::run(Session& sessionPrimary)
             }
         }
     }
-    catch (char* message)
+    catch (std::bad_alloc e)
     {
-        Logger::instance().error("%s", message);
+        Logger::instance().error("Out of memory.");
+    }
+    catch (std::runtime_error e)
+    {
+        Logger::instance().error("%s", e.what());
     }
     catch (...)
     {
         Logger::instance().error("Unhandled exception caught.");
     }
+
+done:
 
     if (session.failed())
     {

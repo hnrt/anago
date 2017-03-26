@@ -581,13 +581,63 @@ void ControllerImpl::wakeHost()
 
 void ControllerImpl::shutdownHosts()
 {
-    //TODO: IMPLEMENT
+    std::list<RefPtr<Host> > hosts;
+    if (!Model::instance().getSelected(hosts))
+    {
+        return;
+    }
+    std::list<Glib::ustring> names;
+    for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
+    {
+        names.push_back((*iter)->getSession().getConnectSpec().hostname);
+    }
+    if (!View::instance().confirmServersToShutdown(names, false))
+    {
+        return;
+    }
+    for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
+    {
+        ThreadManager::instance().create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::shutdownHostInBackground), *iter), false, "ShutdownHost");
+    }
+}
+
+
+void ControllerImpl::shutdownHostInBackground(RefPtr<Host> host)
+{
+    Session& session = host->getSession();
+    Session::Lock lock(session);
+    host->shutdown();
 }
 
 
 void ControllerImpl::restartHosts()
 {
-    //TODO: IMPLEMENT
+    std::list<RefPtr<Host> > hosts;
+    if (!Model::instance().getSelected(hosts))
+    {
+        return;
+    }
+    std::list<Glib::ustring> names;
+    for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
+    {
+        names.push_back((*iter)->getSession().getConnectSpec().hostname);
+    }
+    if (!View::instance().confirmServersToShutdown(names, true))
+    {
+        return;
+    }
+    for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
+    {
+        ThreadManager::instance().create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::restartHostInBackground), *iter), false, "RestartHost");
+    }
+}
+
+
+void ControllerImpl::restartHostInBackground(RefPtr<Host> host)
+{
+    Session& session = host->getSession();
+    Session::Lock lock(session);
+    host->reboot();
 }
 
 
