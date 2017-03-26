@@ -16,7 +16,6 @@ namespace hnrt
         XenEventMonitor();
         ~XenEventMonitor();
         void run(Session&);
-        void disconnect() { _connected = false; }
 
     private:
 
@@ -34,6 +33,7 @@ namespace hnrt
 
         XenEventMonitor(const XenEventMonitor&);
         void operator =(const XenEventMonitor&);
+        void disconnect() { _connected = false; }
 
         bool _connected;
     };

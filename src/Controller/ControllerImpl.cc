@@ -480,7 +480,8 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
     session.setMonitoring(true);
     Glib::Thread* pThead = ThreadManager::instance().create(sigc::bind<RefPtr<PerformanceMonitor> >(sigc::mem_fun(*this, &ControllerImpl::performanceMonitorInBackground), performanceMonitor), true, "PerformanceMonitor");
     XenEventMonitor eventMonitor;
-    eventMonitor.run(session);performanceMonitor->terminate();
+    eventMonitor.run(session);
+    performanceMonitor->terminate();
     pThead->join();
     session.getStore().removePerformanceMonitor();
     session.setMonitoring(false);
