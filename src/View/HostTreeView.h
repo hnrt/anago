@@ -9,7 +9,7 @@
 #include "Base/RefPtr.h"
 #include "HostMenu.h"
 #include "StorageRepositoryMenu.h"
-//#include "VirtualMachineMenu.h"
+#include "VirtualMachineMenu.h"
 
 
 namespace hnrt
@@ -67,7 +67,7 @@ namespace hnrt
 
         Glib::RefPtr<HostTreeStore> _store;
         HostMenu _menuHost;
-        //VirtualMachineMenu _menuVm;
+        VirtualMachineMenu _menuVm;
         StorageRepositoryMenu _menuSr;
 
         SignalNodeCreated _signalNodeCreated;
