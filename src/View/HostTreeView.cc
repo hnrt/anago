@@ -296,7 +296,7 @@ bool HostTreeView::on_button_press_event(GdkEventButton* event)
                 //_menuVm.popup(event->button, event->time, RefPtr<VirtualMachine>::castStatic(object));
                 break;
             case XenObject::SR:
-                //_menuSr.popup(event->button, event->time, RefPtr<StorageRepository>::castStatic(object));
+                _menuSr.popup(event->button, event->time, static_cast<StorageRepository&>(*object));
                 break;
             default:
                 break;

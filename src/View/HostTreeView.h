@@ -8,7 +8,7 @@
 #include <gtkmm.h>
 #include "Base/RefPtr.h"
 #include "HostMenu.h"
-//#include "StorageRepositoryMenu.h"
+#include "StorageRepositoryMenu.h"
 //#include "VirtualMachineMenu.h"
 
 
@@ -68,7 +68,7 @@ namespace hnrt
         Glib::RefPtr<HostTreeStore> _store;
         HostMenu _menuHost;
         //VirtualMachineMenu _menuVm;
-        //StorageRepositoryMenu _menuSr;
+        StorageRepositoryMenu _menuSr;
 
         SignalNodeCreated _signalNodeCreated;
     };
