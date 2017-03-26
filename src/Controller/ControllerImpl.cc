@@ -540,7 +540,18 @@ void ControllerImpl::disconnectInBackground(RefPtr<Host> host)
 
 void ControllerImpl::changeHostName()
 {
-    //TODO: IMPLEMENT
+    RefPtr<Host> host = Model::instance().getSelectedHost();
+    if (!host || host->isBusy() || !host->getSession() || !host->getRecord())
+    {
+        return;
+    }
+    Glib::ustring label;
+    Glib::ustring description;
+    if (!View::instance().getName(*host, label, description))
+    {
+        return;
+    }
+    host->setName(label.c_str(), description.c_str());
 }
 
 

@@ -11,6 +11,7 @@
 
 namespace hnrt
 {
+    class Host;
     struct ConnectSpec;
 
     class View
@@ -34,6 +35,7 @@ namespace hnrt
         virtual bool confirmServerToRemove(const char*) = 0;
         virtual void showBusyServers(const std::list<Glib::ustring>&) = 0;
         virtual bool confirmServersToShutdown(const std::list<Glib::ustring>&, bool) = 0;
+        virtual bool getName(const Host&, Glib::ustring&, Glib::ustring&) = 0;
     };
 }
 

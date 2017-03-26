@@ -32,6 +32,7 @@ namespace hnrt
         virtual bool confirmServerToRemove(const char*);
         virtual void showBusyServers(const std::list<Glib::ustring>&);
         virtual bool confirmServersToShutdown(const std::list<Glib::ustring>&, bool);
+        virtual bool getName(const Host&, Glib::ustring&, Glib::ustring&);
 
     private:
 
