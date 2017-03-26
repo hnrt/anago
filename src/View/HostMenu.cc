@@ -5,7 +5,6 @@
 #include "Controller/Controller.h"
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
-#include "XenServer/XenObjectStore.h"
 #include "HostMenu.h"
 
 
@@ -74,10 +73,10 @@ HostMenu::~HostMenu()
 }
 
 
-void HostMenu::popup(guint button, guint32 activateTime, const RefPtr<Host> host)
+void HostMenu::popup(guint button, guint32 activateTime, Host& host)
 {
-    bool sensitive = host->isBusy() ? false : true;
-    if (host->getSession().isConnected())
+    bool sensitive = host.isBusy() ? false : true;
+    if (host.getSession().isConnected())
     {
         _menuConnect.hide();
         _menuWake.hide();

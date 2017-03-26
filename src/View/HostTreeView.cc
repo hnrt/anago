@@ -290,7 +290,7 @@ bool HostTreeView::on_button_press_event(GdkEventButton* event)
             switch (object->getType())
             {
             case XenObject::HOST:
-                _menuHost.popup(event->button, event->time, RefPtr<Host>::castStatic(object));
+                _menuHost.popup(event->button, event->time, static_cast<Host&>(*object));
                 break;
             case XenObject::VM:
                 _menuVm.popup(event->button, event->time, static_cast<VirtualMachine&>(*object));

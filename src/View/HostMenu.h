@@ -5,7 +5,6 @@
 #define HNRT_HOSTMENU_H
 
 
-#include "Base/RefPtr.h"
 #include "NameValueMenu.h"
 
 
@@ -26,8 +25,8 @@ namespace hnrt
 
         HostMenu(Type = DEFAULT);
         virtual ~HostMenu();
-        void popup(guint button, guint32 activateTime, const RefPtr<Host> host);
-        virtual void popup(guint button, guint32 activateTime, const Glib::ustring& name);
+        void popup(guint, guint32, Host&);
+        virtual void popup(guint, guint32, const Glib::ustring&);
 
     protected:
 
