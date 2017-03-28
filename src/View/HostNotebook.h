@@ -25,13 +25,13 @@ namespace hnrt
     {
     public:
 
-        static RefPtr<Notebook> create(const RefPtr<Host>&);
+        static RefPtr<Notebook> create(Host&);
 
         virtual ~HostNotebook();
 
     protected:
 
-        HostNotebook(const RefPtr<Host>&);
+        HostNotebook(Host&);
         HostNotebook(const HostNotebook&);
         void operator =(const HostNotebook&);
         void onAutoConnectChanged();
@@ -74,7 +74,7 @@ namespace hnrt
         Gtk::VBox _optBox;
         Gtk::CheckButton _autoConnect;
 
-        RefPtr<Host> _host;
+        Host& _host;
 
         sigc::connection _connectionSession;
         sigc::connection _connectionHost;

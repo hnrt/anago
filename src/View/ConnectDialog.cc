@@ -192,7 +192,7 @@ void ConnectDialog::select(const ConnectSpec& cs)
     {
         Gtk::TreeModel::Row row = *iter;
         Glib::ustring id = row[_credRecord.colId];
-        if (cs.uuid == id.c_str())
+        if (cs.uuid == id)
         {
             _editMode = true;
             _dispnameCombo.set_active(iter);

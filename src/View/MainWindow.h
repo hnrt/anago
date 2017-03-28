@@ -64,7 +64,7 @@ namespace hnrt
         Gtk::VBox _box;
         Gtk::HPaned _hpaned;
         Gtk::ScrolledWindow _sw1;
-        HostTreeView _serverTreeView;
+        HostTreeView _hostTreeView;
         Gtk::HBox _box2;
         RefPtr<Notebook> _defaultNotebook;
         RefPtr<Notebook> _currentNotebook;

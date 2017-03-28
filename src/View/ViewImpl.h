@@ -25,6 +25,7 @@ namespace hnrt
         virtual void load();
         virtual void save();
         virtual void clear();
+        virtual void about();
         virtual void showInfo(const Glib::ustring&);
         virtual void showWarning(const Glib::ustring&);
         virtual void showError(const Glib::ustring&);

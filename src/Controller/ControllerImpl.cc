@@ -7,6 +7,7 @@
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
+#include "Net/PingAgent.h"
 #include "Net/WakeOnLan.h"
 #include "Thread/ThreadManager.h"
 #include "View/View.h"
@@ -76,6 +77,8 @@ void ControllerImpl::parseCommandLine(int argc, char *argv[])
             throw std::runtime_error(msg);
         }
     }
+
+    PingAgent::instance().open();
 }
 
 
@@ -87,6 +90,7 @@ void ControllerImpl::quit()
     {
         _quitInProgress = true;
         View::instance().getWindow().set_title(gettext("Quitting..."));
+        PingAgent::instance().close();
         if (quit2())
         {
             Glib::signal_timeout().connect(sigc::mem_fun(*this, &ControllerImpl::quit2), 100); // 100 milleseconds
@@ -835,5 +839,5 @@ void ControllerImpl::openVmStatusWindow()
 
 void ControllerImpl::showAbout()
 {
-    //TODO: IMPLEMENT
+    View::instance().about();
 }

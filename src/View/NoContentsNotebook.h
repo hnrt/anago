@@ -16,7 +16,7 @@ namespace hnrt
     {
     public:
 
-        static RefPtr<Notebook> create(const char* = "");
+        static RefPtr<Notebook> create(const Glib::ustring&);
 
         virtual const Gtk::Notebook& getInstance() const { return *this; }
         virtual Gtk::Notebook& getInstance() { return *this; }
@@ -24,7 +24,7 @@ namespace hnrt
 
     protected:
 
-        NoContentsNotebook(const char*);
+        NoContentsNotebook(const Glib::ustring&);
         NoContentsNotebook(const NoContentsNotebook&);
         void operator =(const NoContentsNotebook&);
 

@@ -12,6 +12,7 @@
 #include "XenServer/Host.h"
 #include "XenServer/PerformanceMonitor.h"
 #include "XenServer/XenObject.h"
+#include "AboutDialog.h"
 #include "ConnectDialog.h"
 #include "NameDialog.h"
 #include "PixStore.h"
@@ -96,6 +97,14 @@ void ViewImpl::clear()
     Trace trace("ViewImpl::clear");
     SignalManager::instance().clear();
     _mainWindow.clear();
+}
+
+
+void ViewImpl::about()
+{
+    AboutDialog dialog;
+    dialog.move(_mainWindow);
+    dialog.run();
 }
 
 

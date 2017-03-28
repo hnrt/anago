@@ -150,6 +150,10 @@ bool Host::onConnected()
         _record = record;
         _uuid = record->uuid ? record->uuid : "";
         _name = record->name_label ? record->name_label : "";
+        if (!_uuid.empty())
+        {
+            _session.getConnectSpec().uuid = _uuid;
+        }
     }
     else
     {

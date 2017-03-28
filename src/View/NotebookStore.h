@@ -16,20 +16,20 @@ namespace hnrt
     class XenObject;
 
     class NotebookStore
-        : public std::map<RefPtr<XenObject>, RefPtr<Notebook> >
+        : public std::map<const XenObject*, RefPtr<Notebook> >
     {
     public:
 
-        typedef std::map<RefPtr<XenObject>, RefPtr<Notebook> > Super;
-        typedef std::map<RefPtr<XenObject>, RefPtr<Notebook> >::iterator Iter;
-        typedef std::map<RefPtr<XenObject>, RefPtr<Notebook> >::const_iterator ConstIter;
-        typedef std::pair<RefPtr<XenObject>, RefPtr<Notebook> > Entry;
+        typedef std::map<const XenObject*, RefPtr<Notebook> > Super;
+        typedef std::map<const XenObject*, RefPtr<Notebook> >::iterator Iter;
+        typedef std::map<const XenObject*, RefPtr<Notebook> >::const_iterator ConstIter;
+        typedef std::pair<const XenObject*, RefPtr<Notebook> > Entry;
 
         NotebookStore();
         ~NotebookStore();
-        RefPtr<Notebook> get(const RefPtr<XenObject>&);
-        RefPtr<Notebook> set(const RefPtr<XenObject>&, const RefPtr<Notebook>&);
-        RefPtr<Notebook> remove(const RefPtr<XenObject>&);
+        RefPtr<Notebook> get(const XenObject&);
+        RefPtr<Notebook> set(const XenObject&, const RefPtr<Notebook>&);
+        RefPtr<Notebook> remove(const XenObject&);
 
     private:
 

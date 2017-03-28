@@ -24,17 +24,17 @@ NotebookStore::~NotebookStore()
 }
 
 
-RefPtr<Notebook> NotebookStore::get(const RefPtr<XenObject>& node)
+RefPtr<Notebook> NotebookStore::get(const XenObject& node)
 {
-    ConstIter iter = find(node);
+    ConstIter iter = find(&node);
     return iter != end() ? iter->second : RefPtr<Notebook>();
 }
 
 
-RefPtr<Notebook> NotebookStore::set(const RefPtr<XenObject>& node, const RefPtr<Notebook>& notebook)
+RefPtr<Notebook> NotebookStore::set(const XenObject& node, const RefPtr<Notebook>& notebook)
 {
     RefPtr<Notebook> old;
-    Iter iter = find(node);
+    Iter iter = find(&node);
     if (iter != end())
     {
         old = iter->second;
@@ -42,16 +42,16 @@ RefPtr<Notebook> NotebookStore::set(const RefPtr<XenObject>& node, const RefPtr<
     }
     else
     {
-        insert(Entry(node, notebook));
+        insert(Entry(&node, notebook));
     }
     return old;
 }
 
 
-RefPtr<Notebook> NotebookStore::remove(const RefPtr<XenObject>& node)
+RefPtr<Notebook> NotebookStore::remove(const XenObject& node)
 {
     RefPtr<Notebook> old;
-    Iter iter = find(node);
+    Iter iter = find(&node);
     if (iter != end())
     {
         old = iter->second;

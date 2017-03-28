@@ -11,6 +11,7 @@
 #include "Env/Locale.h"
 #include "Logger/Logger.h"
 #include "Model/Model.h"
+#include "Net/PingAgent.h"
 #include "Thread/ThreadManager.h"
 #include "View/View.h"
 #include "XenServer/Api.h"
@@ -38,6 +39,7 @@ int main(int argc, char *argv[])
         ThreadManager::init();
         Logger::init();
         Env::init();
+        PingAgent::init();
 
         // initialization for UI localization
         bindtextdomain(TEXTDOMAIN, Locale::instance().getMessageCatalogDir(TEXTDOMAIN).c_str());
@@ -84,6 +86,8 @@ int main(int argc, char *argv[])
         View::fini();
         Controller::fini();
         Model::fini();
+
+        PingAgent::fini();
         Env::fini();
         Logger::fini();
         ThreadManager::fini();

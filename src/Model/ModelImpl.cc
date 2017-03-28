@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include "App/Constants.h"
 #include "Logger/Trace.h"
+#include "Net/PingAgent.h"
+#include "Util/UUID.h"
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
@@ -88,23 +90,31 @@ int ModelImpl::get(std::list<RefPtr<Host> >& list)
 void ModelImpl::add(const ConnectSpec& cs)
 {
     Glib::RecMutex::Lock k(_mutex);
-    for (std::list<RefPtr<Host> >::iterator iter = _hosts.begin(); iter != _hosts.end(); iter++)
+    if (!cs.uuid.empty())
     {
-        RefPtr<Host>& host = *iter;
-        Session& session = host->getSession();
-        ConnectSpec& cs2 = session.getConnectSpec();
-        if (cs2.uuid == cs.uuid)
+        for (std::list<RefPtr<Host> >::iterator iter = _hosts.begin(); iter != _hosts.end(); iter++)
         {
-            cs2.displayname = cs.displayname;
-            cs2.hostname = cs.hostname;
-            cs2.username = cs.username;
-            cs2.password = cs.password;
-            cs2.autoConnect = cs.autoConnect;
-            return;
+            RefPtr<Host>& host = *iter;
+            Session& session = host->getSession();
+            ConnectSpec& cs2 = session.getConnectSpec();
+            if (cs2.uuid == cs.uuid)
+            {
+                cs2.displayname = cs.displayname;
+                cs2.hostname = cs.hostname;
+                cs2.username = cs.username;
+                cs2.password = cs.password;
+                cs2.autoConnect = cs.autoConnect;
+                return;
+            }
         }
     }
     RefPtr<Host> host = Host::create(cs);
+    if (host->getSession().getConnectSpec().uuid.empty())
+    {
+        host->getSession().getConnectSpec().uuid = UUID::generate();
+    }
     _hosts.push_back(host);
+    PingAgent::instance().add(host->getSession().getConnectSpec().hostname.c_str());
 }
 
 
@@ -124,6 +134,7 @@ void ModelImpl::ModelImpl::remove(Session& session)
                     host->onDisconnected();
                 }
             }
+            PingAgent::instance().remove(session.getConnectSpec().hostname.c_str());
             session.getStore().removeHost();
             return;
         }
@@ -133,6 +144,7 @@ void ModelImpl::ModelImpl::remove(Session& session)
 
 void ModelImpl::removeAllSessions()
 {
+    PingAgent::instance().clear();
     Glib::RecMutex::Lock k(_mutex);
     while (!_hosts.empty())
     {

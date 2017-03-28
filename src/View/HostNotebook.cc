@@ -18,13 +18,13 @@
 using namespace hnrt;
 
 
-RefPtr<Notebook> HostNotebook::create(const RefPtr<Host>& host)
+RefPtr<Notebook> HostNotebook::create(Host& host)
 {
     return RefPtr<Notebook>(new HostNotebook(host));
 }
 
 
-HostNotebook::HostNotebook(const RefPtr<Host>& host)
+HostNotebook::HostNotebook(Host& host)
     : _genLv(_genLvSw.listView())
     , _genLvMenu(HostMenu::NAME_VALUE)
     , _cpuLv(_cpuLvSw.listView())
@@ -33,7 +33,7 @@ HostNotebook::HostNotebook(const RefPtr<Host>& host)
     , _patLv(_patLvSw.listView())
     , _host(host)
 {
-    Trace trace(StringBuffer().format("HostNotebook@%zx::ctor(%s)", this, _host->getSession().getConnectSpec().hostname.c_str()));
+    Trace trace(StringBuffer().format("HostNotebook@%zx::ctor(%s)", this, _host.getSession().getConnectSpec().hostname.c_str()));
 
     _genBox.pack_start(_genLvSw);
     _genLv.setMenu(&_genLvMenu);
@@ -63,7 +63,7 @@ HostNotebook::HostNotebook(const RefPtr<Host>& host)
     _pfmBox.pack_start(_pfmSw);
 
     _autoConnect.set_label(gettext("Automatically connect to this host at start time"));
-    _autoConnect.set_active(_host->getSession().getConnectSpec().autoConnect);
+    _autoConnect.set_active(_host.getSession().getConnectSpec().autoConnect);
     _autoConnect.signal_toggled().connect(sigc::mem_fun(*this, &HostNotebook::onAutoConnectChanged));
     _optBox.pack_start(_autoConnect, Gtk::PACK_SHRINK);
     append_page(_optBox, Glib::ustring(gettext("Options")));
@@ -71,24 +71,28 @@ HostNotebook::HostNotebook(const RefPtr<Host>& host)
     show_all_children();
 
     SignalManager& sm = SignalManager::instance();
-    _connectionSession = sm.xenObjectSignal(_host->getSession()).connect(sigc::mem_fun(*this, &HostNotebook::onSessionUpdated));
-    _connectionHost = sm.xenObjectSignal(*host).connect(sigc::mem_fun(*this, &HostNotebook::onHostUpdated));
+    _connectionSession = sm.xenObjectSignal(_host.getSession()).connect(sigc::mem_fun(*this, &HostNotebook::onSessionUpdated));
+    _connectionHost = sm.xenObjectSignal(_host).connect(sigc::mem_fun(*this, &HostNotebook::onHostUpdated));
+
+    _host.incRef();
 }
 
 
 HostNotebook::~HostNotebook()
 {
-    Trace trace(StringBuffer().format("HostNotebook@%zx::dtor(%s)", this, _host->getSession().getConnectSpec().hostname.c_str()));
-    trace.put("host.ref=%d", _host->refCount());
+    Trace trace(StringBuffer().format("HostNotebook@%zx::dtor(%s)", this, _host.getSession().getConnectSpec().hostname.c_str()));
+    trace.put("host.ref=%d", _host.refCount());
 
     _connectionSession.disconnect();
     _connectionHost.disconnect();
+
+    _host.decRef();
 }
 
 
 void HostNotebook::onAutoConnectChanged()
 {
-    _host->getSession().getConnectSpec().autoConnect = _autoConnect.get_active();
+    _host.getSession().getConnectSpec().autoConnect = _autoConnect.get_active();
 }
 
 
@@ -138,7 +142,7 @@ void HostNotebook::update()
 
     bool tabs = page_num(_optBox) > 0;
 
-    Session& session = _host->getSession();
+    Session& session = _host.getSession();
     if (session && session.isConnected())
     {
         if (!tabs)
@@ -166,7 +170,7 @@ void HostNotebook::update()
         return;
     }
 
-    XenPtr<xen_host_record> record = _host->getRecord();
+    XenPtr<xen_host_record> record = _host.getRecord();
     if (record)
     {
         SetHostProperties(_genLv, record);
@@ -191,7 +195,7 @@ void HostNotebook::update()
 
         _patLv.clear();
         std::list<RefPtr<PatchRecord> > patchList;
-        if (_host->getPatchList(patchList))
+        if (_host.getPatchList(patchList))
         {
             for (std::list<RefPtr<PatchRecord> >::const_iterator i = patchList.begin(); i != patchList.end(); i++)
             {
@@ -207,7 +211,7 @@ void HostNotebook::update()
         _patLv.clear();
     }
 
-    XenPtr<xen_host_metrics_record> metricsRecord = _host->getMetricsRecord();
+    XenPtr<xen_host_metrics_record> metricsRecord = _host.getMetricsRecord();
     if (metricsRecord)
     {
         SetHostMemoryProperties(_memLv, metricsRecord);
@@ -221,11 +225,11 @@ void HostNotebook::update()
 
 void HostNotebook::updatePerformaceStats()
 {
-    RefPtr<PerformanceMonitor> pm = _host->getSession().getStore().getPerformanceMonitor();
+    RefPtr<PerformanceMonitor> pm = _host.getSession().getStore().getPerformanceMonitor();
 
     for (;;)
     {
-        PerformanceMonitor::ListEntry entry = pm->getEntry(_host->getUUID());
+        PerformanceMonitor::ListEntry entry = pm->getEntry(_host.getUUID());
         if (!entry.first)
         {
             break;

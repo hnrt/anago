@@ -13,20 +13,20 @@ using namespace hnrt;
 
 SignalManagerImpl::SignalManagerImpl()
 {
-    Trace trace("SignalManagerImpl::ctor");
+    TRACE("SignalManagerImpl::ctor");
     _dispatcher.connect(sigc::mem_fun(*this, &SignalManagerImpl::onNotify));
 }
 
 
 SignalManagerImpl::~SignalManagerImpl()
 {
-    Trace trace("SignalManagerImpl::dtor");
+    TRACE("SignalManagerImpl::dtor");
 }
 
 
 void SignalManagerImpl::clear()
 {
-    Trace trace("SignalManagerImpl::clear");
+    TRACE("SignalManagerImpl::clear");
     if (ThreadManager::instance().isMain())
     {
         _notificationXenObjectSignalMap.clear();
@@ -112,10 +112,8 @@ inline bool SignalManagerImpl::dequeue(RefPtr<XenObject>& object, int& notificat
 
 void SignalManagerImpl::notify(const RefPtr<XenObject>& object, int notification)
 {
-    Trace trace("SignalManagerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
-
+    TRACE("SignalManagerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
     int size = enqueue(object, notification);
-
     if (ThreadManager::instance().isMain())
     {
         onNotify();
@@ -129,14 +127,12 @@ void SignalManagerImpl::notify(const RefPtr<XenObject>& object, int notification
 
 void SignalManagerImpl::onNotify()
 {
-    Trace trace("SignalManagerImpl::onNotify");
-
+    TRACE("SignalManagerImpl::onNotify");
     RefPtr<XenObject> object;
     int notification;
     while (dequeue(object, notification))
     {
-        trace.put("object=%zx notification=%d", object.ptr(), notification);
-
+        TRACEPUT("object=%zx notification=%d", object.ptr(), notification);
         {
             NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
             if (iter != _notificationXenObjectSignalMap.end())
@@ -145,7 +141,6 @@ void SignalManagerImpl::onNotify()
                 continue;
             }
         }
-
         {
             XenObjectSignalMap::iterator iter = _xenObjectSignalMap.find(object.ptr());
             if (iter != _xenObjectSignalMap.end())

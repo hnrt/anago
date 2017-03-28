@@ -3,6 +3,7 @@
 
 #include <libintl.h>
 #include "Controller/Controller.h"
+#include "Net/PingAgent.h"
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "HostMenu.h"
@@ -106,7 +107,7 @@ void HostMenu::popup(guint button, guint32 activateTime, Host& host)
         _menuAddVm.hide();
         _menuAddCifs.hide();
         _menuConnect.set_sensitive(sensitive);
-        //_menuWake.set_sensitive(!host->getPing());
+        _menuWake.set_sensitive(PingAgent::instance().get(host.getSession().getConnectSpec().hostname.c_str()) != PingAgent::ACTIVE);
         _menuEditConnectSpec.show();
         _menuRemove.show();
     }

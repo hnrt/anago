@@ -7,14 +7,13 @@
 #include "Controller/SignalManager.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
+#include "Net/PingAgent.h"
 #include "XenServer/Host.h"
 #include "XenServer/PerformanceMonitor.h"
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
 #include "XenServer/VirtualMachine.h"
 #include "XenServer/XenObjectStore.h"
-#include "HostNotebook.h"
-#include "NoContentsNotebook.h"
 #include "NotebookFactory.h"
 #include "MainWindow.h"
 #include "PixStore.h"
@@ -44,6 +43,7 @@ MainWindow::MainWindow()
 
     initStockItems();
 
+    set_title(APPDISPNAME);
     set_icon(PixStore::instance().getApp());
 
     Glib::RefPtr<Gtk::ActionGroup> actionGroup = Gtk::ActionGroup::create();
@@ -292,7 +292,7 @@ MainWindow::MainWindow()
 
     _sw1.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
     _sw1.set_size_request(PANE1WIDTH_DEFAULT, -1);
-    _sw1.add(_serverTreeView);
+    _sw1.add(_hostTreeView);
 
     _hpaned.pack1(_sw1, false, true);
     _hpaned.pack2(_box2, true, true);
@@ -301,12 +301,12 @@ MainWindow::MainWindow()
     signal_window_state_event().connect(sigc::mem_fun(*this, &MainWindow::onWindowStateChange));
     signal_size_allocate().connect(sigc::mem_fun(*this, &MainWindow::onResize));
 
-    _serverTreeView.signalNodeCreated().connect(sigc::mem_fun(*this, &MainWindow::onNodeCreated));
-    _serverTreeView.signalSelectionChanged().connect(sigc::mem_fun(*this, &MainWindow::onHostTreeViewSelectionChanged));
+    _hostTreeView.signalNodeCreated().connect(sigc::mem_fun(*this, &MainWindow::onNodeCreated));
+    _hostTreeView.signalSelectionChanged().connect(sigc::mem_fun(*this, &MainWindow::onHostTreeViewSelectionChanged));
 
     show_all_children();
 
-    _defaultNotebook = NoContentsNotebook::create(APPNAME);
+    _defaultNotebook = NotebookFactory::create();
     addNotebook(_defaultNotebook);
     showNotebook(_defaultNotebook);
 
@@ -437,8 +437,8 @@ void MainWindow::onResize(Gtk::Allocation& a)
 
 void MainWindow::onNodeCreated(RefPtr<XenObject> object)
 {
-    RefPtr<Notebook> notebook = NotebookFactory::create(object);
-    _notebookStore.set(object, notebook);
+    RefPtr<Notebook> notebook = NotebookFactory::create(*object);
+    _notebookStore.set(*object, notebook);
     addNotebook(notebook);
     updateSensitivity();
     SignalManager::instance().xenObjectSignal(*object).connect(sigc::mem_fun(*this, &MainWindow::onObjectUpdated));
@@ -447,10 +447,9 @@ void MainWindow::onNodeCreated(RefPtr<XenObject> object)
 
 void MainWindow::onObjectUpdated(RefPtr<XenObject> object, int what)
 {
-    RefPtr<XenObject> xenObject = RefPtr<XenObject>::castStatic(object);
     if (what == XenObject::DESTROYED)
     {
-        RefPtr<Notebook> notebook = _notebookStore.remove(xenObject);
+        RefPtr<Notebook> notebook = _notebookStore.remove(*object);
         if (!notebook)
         {
             return;
@@ -484,26 +483,26 @@ void MainWindow::onHostTreeViewSelectionChanged()
 {
     RefPtr<XenObject> node;
     Model::instance().deselectAll();
-    Gtk::TreeIter iter = _serverTreeView.getFirst();
+    Gtk::TreeIter iter = _hostTreeView.getFirst();
     while (iter)
     {
-        if (_serverTreeView.isSelected(iter))
+        if (_hostTreeView.isSelected(iter))
         {
-            Model::instance().select(_serverTreeView.getObject(iter));
+            Model::instance().select(_hostTreeView.getObject(iter));
             if (!node)
             {
-                node = _serverTreeView.getObject(iter);
+                node = _hostTreeView.getObject(iter);
             }
         }
         Gtk::TreeIter iter2 = iter->children().begin();
         while (iter2)
         {
-            if (_serverTreeView.isSelected(iter2))
+            if (_hostTreeView.isSelected(iter2))
             {
-                Model::instance().select(_serverTreeView.getObject(iter2));
+                Model::instance().select(_hostTreeView.getObject(iter2));
                 if (!node)
                 {
-                    node = _serverTreeView.getObject(iter2);
+                    node = _hostTreeView.getObject(iter2);
                 }
             }
             iter2++;
@@ -513,7 +512,7 @@ void MainWindow::onHostTreeViewSelectionChanged()
     RefPtr<Notebook> notebook;
     if (node)
     {
-        notebook = _notebookStore.get(node);
+        notebook = _notebookStore.get(*node);
     }
     if (!notebook)
     {
@@ -588,11 +587,10 @@ void MainWindow::updateSensitivity()
     bTurnOnHost = hosts.size() == 1 && !hosts.front()->getSession().isConnected() && !hosts.front()->getSession().getConnectSpec().mac.isNull();
     if (bTurnOnHost)
     {
-        //RefPtr<Host> host = hostList.front();
-        //if (host->getPing())
-        //{
-        //    bTurnOnHost = false;
-        //}
+        if (PingAgent::instance().get(hosts.front()->getSession().getConnectSpec().hostname.c_str()) == PingAgent::ACTIVE)
+        {
+            bTurnOnHost = false;
+        }
     }
     bChangeHost = hosts.size() == 1 && hosts.front()->getSession().isConnected() && !hosts.front()->isBusy();
     bool bStartVm, bShutdownVm, bResumeVm, bChangeCd, bLive, bChangeVM;
@@ -754,7 +752,7 @@ void MainWindow::setPane1Width(int cx)
 void MainWindow::clear()
 {
     Trace trace("MainWindow::clear");
-    _serverTreeView.clear();
+    _hostTreeView.clear();
     _defaultNotebook.clear();
     _currentNotebook.clear();
     _notebookStore.clear();

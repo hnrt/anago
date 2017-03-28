@@ -34,19 +34,19 @@ using namespace hnrt;
 XenEventMonitor::XenEventMonitor()
     : _connected(false)
 {
-    Trace trace("XenEventMonitor::ctor");
+    TRACE("XenEventMonitor::ctor");
 }
 
 
 XenEventMonitor::~XenEventMonitor()
 {
-    Trace trace("XenEventMonitor::dtor");
+    TRACE("XenEventMonitor::dtor");
 }
 
 
 void XenEventMonitor::run(Session& sessionPrimary)
 {
-    Trace trace("XenEventMonitor::run");
+    TRACE("XenEventMonitor::run");
 
     RefPtr<Session> pSession = RefPtr<Session>(new Session());
 
@@ -101,13 +101,13 @@ void XenEventMonitor::run(Session& sessionPrimary)
 
             std::vector<Record> cache;
 
-            trace.put("count=%zu", events->size);
+            TRACEPUT("count=%zu", events->size);
 
             for (size_t i = 0; i < events->size; i++)
             {
                 xen_event_record* ev = events->contents[i];
 
-                trace.put("%s %s %s",
+                TRACEPUT("%s %s %s",
                           xen_event_operation_to_string(ev->operation),
                           ev->XEN_CLAZZ,
                           ev->ref);
@@ -205,7 +205,7 @@ XenEventMonitor::Record::Record(int type_, const xen_event_record* ev)
 
 bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& sessionPrimary, Session& session)
 {
-    Trace trace("XenEventMonitor::Record::process");
+    TRACE("XenEventMonitor::Record::process");
 
     XenObjectStore& store = session.getStore();
 
@@ -225,11 +225,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_host_record> record;
             if (xen_host_get_record(session, record.address(), host->getHandle()))
             {
-                trace.put("xen_host_get_record succeeded.");
+                TRACEPUT("xen_host_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_host_get_record failed.");
+                TRACEPUT("xen_host_get_record failed.");
                 return false;
             }
             host->setRecord(record);
@@ -242,11 +242,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_host_metrics_record> record;
             if (xen_host_metrics_get_record(session, record.address(), ref))
             {
-                trace.put("xen_host_metrics_get_record succeeded.");
+                TRACEPUT("xen_host_metrics_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_host_metrics_get_record failed.");
+                TRACEPUT("xen_host_metrics_get_record failed.");
                 return false;
             }
             host->setMetricsRecord(record);
@@ -258,11 +258,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_network_record> record;
             if (xen_network_get_record(session, record.address(), ref))
             {
-                trace.put("xen_network_get_record succeeded.");
+                TRACEPUT("xen_network_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_network_get_record failed.");
+                TRACEPUT("xen_network_get_record failed.");
                 return false;
             }
             RefPtr<Network> object = store.getNw(ref);
@@ -300,12 +300,12 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
                     XenPtr<xen_sr_record> record;
                     if (xen_sr_get_record(session, record.address(), sr->getHandle()))
                     {
-                        trace.put("xen_sr_get_record succeeded.");
+                        TRACEPUT("xen_sr_get_record succeeded.");
                         sr->setRecord(record);
                     }
                     else
                     {
-                        trace.put("xen_sr_get_record failed.");
+                        TRACEPUT("xen_sr_get_record failed.");
                         session.clearError();
                     }
                 }
@@ -326,11 +326,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_pbd_record> record;
             if (xen_pbd_get_record(session, record.address(), ref))
             {
-                trace.put("xen_pbd_get_record succeeded.");
+                TRACEPUT("xen_pbd_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_pbd_get_record failed.");
+                TRACEPUT("xen_pbd_get_record failed.");
                 return false;
             }
             RefPtr<PhysicalBlockDevice> pbd = store.getPbd(ref);
@@ -355,11 +355,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_pif_record> record;
             if (xen_pif_get_record(session, record.address(), ref))
             {
-                trace.put("xen_pif_get_record succeeded.");
+                TRACEPUT("xen_pif_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_pif_get_record failed.");
+                TRACEPUT("xen_pif_get_record failed.");
                 return false;
             }
             RefPtr<PhysicalInterface> object = store.getPif(ref);
@@ -379,11 +379,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_sr_record> record;
             if (xen_sr_get_record(session, record.address(), ref))
             {
-                trace.put("xen_sr_get_record succeeded.");
+                TRACEPUT("xen_sr_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_sr_get_record failed.");
+                TRACEPUT("xen_sr_get_record failed.");
                 return false;
             }
             RefPtr<StorageRepository> sr = store.getSr(ref);
@@ -412,11 +412,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_task_record> record;
             if (xen_task_get_record(session, record.address(), ref))
             {
-                trace.put("xen_task_get_record succeeded.");
+                TRACEPUT("xen_task_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_task_get_record failed.");
+                TRACEPUT("xen_task_get_record failed.");
                 return false;
             }
             if (!strcmp(record->name_label, "disconnect"))
@@ -426,11 +426,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             xen_task_status_type status = XEN_TASK_STATUS_TYPE_UNDEFINED;
             if (xen_task_get_status(session, &status, ref))
             {
-                trace.put("xen_task_get_status succeeded: %s", xen_task_status_type_to_string(status));
+                TRACEPUT("xen_task_get_status succeeded: %s", xen_task_status_type_to_string(status));
             }
             else
             {
-                trace.put("xen_task_get_status failed.");
+                TRACEPUT("xen_task_get_status failed.");
                 return false;
             }
             task->setStatus(status);
@@ -457,12 +457,12 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
                 task->broadcast();
                 if (xen_task_destroy(session, ref))
                 {
-                    trace.put("xen_task_destroy succeeded.");
+                    TRACEPUT("xen_task_destroy succeeded.");
                     store.remove(ref);
                 }
                 else
                 {
-                    trace.put("xen_task_destroy failed.");
+                    TRACEPUT("xen_task_destroy failed.");
                     return false;
                 }
                 break;
@@ -471,13 +471,13 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
                 double progress = 0.0;
                 if (xen_task_get_progress(session, &progress, ref))
                 {
-                    trace.put("xen_task_get_progress succeeded: %g", progress);
+                    TRACEPUT("xen_task_get_progress succeeded: %g", progress);
                     task->setProgress(progress);
                     task->emit(XenObject::TASK_IN_PROGRESS);
                 }
                 else
                 {
-                    trace.put("xen_task_get_progress failed.");
+                    TRACEPUT("xen_task_get_progress failed.");
                     return false;
                 }
                 break;
@@ -495,11 +495,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_vbd_record> record;
             if (xen_vbd_get_record(session, record.address(), ref))
             {
-                trace.put("xen_vbd_get_record succeeded.");
+                TRACEPUT("xen_vbd_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_vbd_get_record failed.");
+                TRACEPUT("xen_vbd_get_record failed.");
                 return false;
             }
             RefPtr<VirtualBlockDevice> vbd = store.getVbd(ref);
@@ -524,11 +524,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_vdi_record> record;
             if (xen_vdi_get_record(session, record.address(), ref))
             {
-                trace.put("xen_vdi_get_record succeeded.");
+                TRACEPUT("xen_vdi_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_vdi_get_record failed.");
+                TRACEPUT("xen_vdi_get_record failed.");
                 return false;
             }
             RefPtr<VirtualDiskImage> vdi = store.getVdi(ref);
@@ -565,11 +565,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_vif_record> record;
             if (xen_vif_get_record(session, record.address(), ref))
             {
-                trace.put("xen_vif_get_record succeeded.");
+                TRACEPUT("xen_vif_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_vif_get_record failed.");
+                TRACEPUT("xen_vif_get_record failed.");
                 return false;
             }
             RefPtr<VirtualInterface> vif = store.getVif(ref);
@@ -594,11 +594,11 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_vm_record> record;
             if (xen_vm_get_record(session, record.address(), ref))
             {
-                trace.put("xen_vm_get_record succeeded.");
+                TRACEPUT("xen_vm_get_record succeeded.");
             }
             else
             {
-                trace.put("xen_vm_get_record failed.");
+                TRACEPUT("xen_vm_get_record failed.");
                 return false;
             }
             RefPtr<VirtualMachine> vm = store.getVm(ref);
@@ -626,17 +626,17 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_vm_metrics_record> record;
             if (xen_vm_metrics_get_record(session, record.address(), ref))
             {
-                trace.put("xen_vm_metrics_get_record succeeded.");
+                TRACEPUT("xen_vm_metrics_get_record succeeded.");
                 RefPtr<VirtualMachine> vm = store.getVmByMetrics(ref);
                 if (vm)
                 {
-                    trace.put("getVmByMetrics: %s", vm->getREFID().c_str());
+                    TRACEPUT("getVmByMetrics: %s", vm->getREFID().c_str());
                     vm->setRecord(record);
                 }
             }
             else
             {
-                trace.put("xen_vm_metrics_get_record failed.");
+                TRACEPUT("xen_vm_metrics_get_record failed.");
                 return false;
             }
             break;
@@ -647,17 +647,17 @@ bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& session
             XenPtr<xen_vm_guest_metrics_record> record;
             if (xen_vm_guest_metrics_get_record(session, record.address(), ref))
             {
-                trace.put("xen_vm_guest_metrics_get_record succeeded.");
+                TRACEPUT("xen_vm_guest_metrics_get_record succeeded.");
                 RefPtr<VirtualMachine> vm = store.getVmByGuestMetrics(ref);
                 if (vm)
                 {
-                    trace.put("getVmByGuestMetrics: %s", vm->getREFID().c_str());
+                    TRACEPUT("getVmByGuestMetrics: %s", vm->getREFID().c_str());
                     vm->setRecord(record);
                 }
             }
             else
             {
-                trace.put("xen_vm_guest_metrics_get_record failed.");
+                TRACEPUT("xen_vm_guest_metrics_get_record failed.");
                 return false;
             }
             break;

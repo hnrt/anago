@@ -9,13 +9,13 @@
 using namespace hnrt;
 
 
-RefPtr<Notebook> NoContentsNotebook::create(const char* text)
+RefPtr<Notebook> NoContentsNotebook::create(const Glib::ustring& text)
 {
     return RefPtr<Notebook>(new NoContentsNotebook(text));
 }
 
 
-NoContentsNotebook::NoContentsNotebook(const char* text)
+NoContentsNotebook::NoContentsNotebook(const Glib::ustring& text)
 {
     _label.set_text(text);
     _box.pack_start(_label);

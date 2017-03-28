@@ -8,6 +8,12 @@
 #define APPNAME "anago"
 
 
+#define APPDISPNAME "Anago"
+
+
+#define COPYRIGHT "Copyright \xC2\xA9 2012-2017 Hideaki Narita"
+
+
 #define TEXTDOMAIN "anago"
 
 
