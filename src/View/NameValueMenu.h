@@ -23,7 +23,7 @@ namespace hnrt
         {
         }
 
-        virtual void popup(guint button, guint32 activateTime, const Glib::ustring& name) = 0;
+        virtual void popup(guint, guint32, const Glib::ustring&) = 0;
 
     protected:
 
