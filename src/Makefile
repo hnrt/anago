@@ -182,6 +182,8 @@ $(OBJDIR)/View/MemoryGraph.o \
 $(OBJDIR)/View/NameDialog.o \
 $(OBJDIR)/View/NameValueListView.o \
 $(OBJDIR)/View/NameValueListViewSw.o \
+$(OBJDIR)/View/NetworkMenu.o \
+$(OBJDIR)/View/NetworkNotebook.o \
 $(OBJDIR)/View/NoContentsNotebook.o \
 $(OBJDIR)/View/NotebookFactory.o \
 $(OBJDIR)/View/NotebookStore.o \
@@ -290,8 +292,10 @@ $(OBJDIR)/View/MemoryGraph.o: View/MemoryGraph.cc Base/StringBuffer.h View/Memor
 $(OBJDIR)/View/NameDialog.o: View/NameDialog.cc View/NameDialog.h 
 $(OBJDIR)/View/NameValueListView.o: View/NameValueListView.cc View/NameValueListView.h View/NameValueMenu.h XenServer/Api.h 
 $(OBJDIR)/View/NameValueListViewSw.o: View/NameValueListViewSw.cc View/NameValueListView.h View/NameValueListViewSw.h View/NameValueMenu.h XenServer/Api.h 
+$(OBJDIR)/View/NetworkMenu.o: View/NetworkMenu.cc Base/RefObj.h Base/RefPtr.h Controller/Controller.h View/NameValueMenu.h View/NetworkMenu.h XenServer/Api.h XenServer/Constants.h XenServer/Network.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
+$(OBJDIR)/View/NetworkNotebook.o: View/NetworkNotebook.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/SignalManager.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h View/NameValueListView.h View/NameValueListViewSw.h View/NameValueMenu.h View/NetworkMenu.h View/NetworkNotebook.h View/Notebook.h View/PropertyHelper.h XenServer/Api.h XenServer/Constants.h XenServer/Network.h XenServer/PhysicalInterface.h XenServer/Session.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/View/NoContentsNotebook.o: View/NoContentsNotebook.cc Base/RefObj.h Base/RefPtr.h View/NoContentsNotebook.h View/Notebook.h 
-$(OBJDIR)/View/NotebookFactory.o: View/NotebookFactory.cc App/Constants.h App/Version.h Base/RefObj.h Base/RefPtr.h Model/PatchRecord.h Model/PatchState.h View/CpuGraph.h View/HostMenu.h View/HostNotebook.h View/InputOutputGraph.h View/MemoryGraph.h View/NameValueListView.h View/NameValueListViewSw.h View/NameValueMenu.h View/NoContentsNotebook.h View/Notebook.h View/NotebookFactory.h View/PatchListView.h View/PatchListViewSw.h View/PatchMenu.h View/ResourceHistoryGraph.h View/StorageRepositoryNotebook.h View/VirtualDiskImageListView.h View/VirtualDiskImageListViewSw.h View/VirtualDiskImageMenu.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/StorageRepository.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
+$(OBJDIR)/View/NotebookFactory.o: View/NotebookFactory.cc App/Constants.h App/Version.h Base/RefObj.h Base/RefPtr.h Model/PatchRecord.h Model/PatchState.h View/CpuGraph.h View/HostMenu.h View/HostNotebook.h View/InputOutputGraph.h View/MemoryGraph.h View/NameValueListView.h View/NameValueListViewSw.h View/NameValueMenu.h View/NetworkMenu.h View/NetworkNotebook.h View/NoContentsNotebook.h View/Notebook.h View/NotebookFactory.h View/PatchListView.h View/PatchListViewSw.h View/PatchMenu.h View/ResourceHistoryGraph.h View/StorageRepositoryNotebook.h View/VirtualDiskImageListView.h View/VirtualDiskImageListViewSw.h View/VirtualDiskImageMenu.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Network.h XenServer/StorageRepository.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/View/NotebookStore.o: View/NotebookStore.cc Base/RefObj.h Base/RefPtr.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h View/Notebook.h View/NotebookStore.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/View/PatchListView.o: View/PatchListView.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Model/Model.h Model/PatchBase.h Model/PatchRecord.h Model/PatchState.h View/PatchListView.h View/PatchMenu.h XenServer/Api.h 
 $(OBJDIR)/View/PatchListViewSw.o: View/PatchListViewSw.cc Base/RefObj.h Base/RefPtr.h Model/PatchRecord.h Model/PatchState.h View/PatchListView.h View/PatchListViewSw.h View/PatchMenu.h XenServer/Api.h 

@@ -10,8 +10,8 @@
 #include "HostMenu.h"
 #include "InputOutputGraph.h"
 #include "MemoryGraph.h"
-#include "Notebook.h"
 #include "NameValueListViewSw.h"
+#include "Notebook.h"
 #include "PatchListViewSw.h"
 
 
