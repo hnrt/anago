@@ -36,7 +36,6 @@ namespace hnrt
         virtual void addVm() = 0;
         virtual void copyVm() = 0;
         virtual void deleteVm() = 0;
-        virtual void snapshotVm() = 0;
         virtual void exportVm() = 0;
         virtual void importVm() = 0;
         virtual void verifyVm() = 0;
@@ -56,6 +55,10 @@ namespace hnrt
         virtual void changeSrName() = 0;
         virtual void setDefaultSr() = 0;
         virtual void openVmStatusWindow() = 0;
+        virtual void changeSnapshotName() = 0;
+        virtual void snapshotVm() = 0;
+        virtual void revertVm() = 0;
+        virtual void deleteSnapshot() = 0;
         virtual void showAbout() = 0;
     };
 }

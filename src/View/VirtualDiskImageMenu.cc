@@ -26,10 +26,10 @@ VirtualDiskImageMenu::VirtualDiskImageMenu()
 }
 
 
-VirtualDiskImageMenu::VirtualDiskImageMenu(VirtualDiskImage& vdi)
+VirtualDiskImageMenu::VirtualDiskImageMenu(const RefPtr<VirtualDiskImage>& vdi)
     : _menuChange(gettext("Change"))
     , _menuCancel(gettext("Cancel"))
-    , _vdi(RefPtr<VirtualDiskImage>(&vdi, 1))
+    , _vdi(vdi)
 {
     append(_menuChange);
     init();
@@ -50,9 +50,13 @@ void VirtualDiskImageMenu::init()
 }
 
 
-void VirtualDiskImageMenu::popup(guint button, guint32 activateTime, VirtualDiskImage& vdi)
+void VirtualDiskImageMenu::popup(guint button, guint32 activateTime, const RefPtr<VirtualDiskImage>& vdi)
 {
-    _vdi = RefPtr<VirtualDiskImage>(&vdi, 1);
+    _vdi = vdi;
+    if (!_vdi)
+    {
+        return;
+    }
     _menuRemove.show();
     XenPtr<xen_vdi_record> vdiRecord = _vdi->getRecord();
     if (vdiRecord->read_only)
@@ -82,11 +86,9 @@ void VirtualDiskImageMenu::popup(guint button, guint32 activateTime, const Glib:
     _name = name;
 
     bool sensitive = false;
-    if (
-        _name == "Name" ||
-        _name == "Description" ||
-        _name == "virtual-size"
-        )
+    if (_name == "Name"
+        || _name == "Description"
+        || _name == "virtual-size")
     {
         XenPtr<xen_vdi_record> vdiRecord = _vdi->getRecord();
         if (!vdiRecord->read_only)
@@ -114,23 +116,19 @@ void VirtualDiskImageMenu::onSelectionDone()
     // This is called after all the things are done.
     if (_name.empty())
     {
-        _vdi = RefPtr<VirtualDiskImage>(NULL);
+        _vdi.reset();
     }
 }
 
 
 void VirtualDiskImageMenu::onChange()
 {
-    if (
-        _name == "Name" ||
-        _name == "Description"
-        )
+    if (_name == "Name"
+        || _name == "Description")
     {
         //Controller::instance().changeVdiName(_vdi);
     }
-    else if (
-        _name == "virtual-size"
-        )
+    else if (_name == "virtual-size")
     {
         //Controller::instance().resizeVdi(_vdi);
     }

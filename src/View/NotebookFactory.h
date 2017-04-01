@@ -19,7 +19,7 @@ namespace hnrt
     public:
 
         static RefPtr<Notebook> create();
-        static RefPtr<Notebook> create(XenObject&);
+        static RefPtr<Notebook> create(const RefPtr<XenObject>&);
     };
 }
 

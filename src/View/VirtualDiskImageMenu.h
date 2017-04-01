@@ -19,8 +19,8 @@ namespace hnrt
     public:
 
         VirtualDiskImageMenu();
-        VirtualDiskImageMenu(VirtualDiskImage&);
-        void popup(guint, guint32, VirtualDiskImage&);
+        VirtualDiskImageMenu(const RefPtr<VirtualDiskImage>&);
+        void popup(guint, guint32, const RefPtr<VirtualDiskImage>&);
         virtual void popup(guint, guint32, const Glib::ustring&);
 
     protected:

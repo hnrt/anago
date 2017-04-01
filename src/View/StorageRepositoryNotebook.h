@@ -21,13 +21,13 @@ namespace hnrt
     {
     public:
 
-        static RefPtr<Notebook> create(StorageRepository&);
+        static RefPtr<Notebook> create(const RefPtr<StorageRepository>&);
 
         ~StorageRepositoryNotebook();
 
     private:
 
-        StorageRepositoryNotebook(StorageRepository&);
+        StorageRepositoryNotebook(const RefPtr<StorageRepository>&);
         StorageRepositoryNotebook(const StorageRepositoryNotebook&);
         void operator =(const StorageRepositoryNotebook&);
         void onSrUpdated(RefPtr<XenObject> object, int what);
@@ -47,7 +47,7 @@ namespace hnrt
         Gtk::VBox _vdiBox;
         VirtualDiskImageListViewSw _vdiSw;
 
-        StorageRepository& _sr;
+        RefPtr<StorageRepository> _sr;
 
         sigc::connection _connection;
     };

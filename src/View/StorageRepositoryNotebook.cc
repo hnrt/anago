@@ -16,13 +16,13 @@
 using namespace hnrt;
 
 
-RefPtr<Notebook> StorageRepositoryNotebook::create(StorageRepository& sr)
+RefPtr<Notebook> StorageRepositoryNotebook::create(const RefPtr<StorageRepository>& sr)
 {
     return RefPtr<Notebook>(new StorageRepositoryNotebook(sr));
 }
 
 
-StorageRepositoryNotebook::StorageRepositoryNotebook(StorageRepository& sr)
+StorageRepositoryNotebook::StorageRepositoryNotebook(const RefPtr<StorageRepository>& sr)
     : _srLv(_srLvSw.listView())
     , _pbdLv(_pbdLvSw.listView())
     , _sr(sr)
@@ -48,9 +48,7 @@ StorageRepositoryNotebook::StorageRepositoryNotebook(StorageRepository& sr)
 
     show_all_children();
 
-    _connection = SignalManager::instance().xenObjectSignal(_sr).connect(sigc::mem_fun(*this, &StorageRepositoryNotebook::onSrUpdated));
-
-    _sr.incRef();
+    _connection = SignalManager::instance().xenObjectSignal(*_sr).connect(sigc::mem_fun(*this, &StorageRepositoryNotebook::onSrUpdated));
 }
 
 
@@ -59,17 +57,15 @@ StorageRepositoryNotebook::~StorageRepositoryNotebook()
     Trace trace(StringBuffer().format("StorageRepositoryNotebook@%zx::dtor", this));
 
     _connection.disconnect();
-
-    _sr.decRef();
 }
 
 
 void StorageRepositoryNotebook::onSrUpdated(RefPtr<XenObject> object, int what)
 {
-    XenPtr<xen_sr_record> srRecord = _sr.getRecord();
+    XenPtr<xen_sr_record> srRecord = _sr->getRecord();
     SetSrProperties(_srLv, srRecord);
 
-    RefPtr<PhysicalBlockDevice> pbd = _sr.getPbd();
+    RefPtr<PhysicalBlockDevice> pbd = _sr->getPbd();
     if (pbd)
     {
         XenPtr<xen_pbd_record> pbdRecord = pbd->getRecord();
@@ -80,5 +76,5 @@ void StorageRepositoryNotebook::onSrUpdated(RefPtr<XenObject> object, int what)
         _pbdLv.clear();
     }
 
-    _vdiSw.listView().update(_sr.getSession(), srRecord->vdis);
+    _vdiSw.listView().update(_sr->getSession(), srRecord->vdis);
 }

@@ -10,11 +10,11 @@
 using namespace hnrt;
 
 
-NetworkMenu::NetworkMenu(Network& network)
-    : _network(network)
-    , _readonly(network.isHostInternalManagement())
-    , _menuChange(gettext("Change"))
+NetworkMenu::NetworkMenu(const RefPtr<Network>& network)
+    : _menuChange(gettext("Change"))
     , _menuCancel(gettext("Cancel"))
+    , _network(network)
+    , _readonly(network->isHostInternalManagement())
 {
     append(_menuChange);
     append(*Gtk::manage(new Gtk::SeparatorMenuItem));

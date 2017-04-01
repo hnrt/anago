@@ -3,8 +3,10 @@
 
 #include <gtkmm.h>
 #include "Icon/CdRom.h"
+#include "Icon/Computer.h"
 #include "Icon/HardDisk.h"
 #include "Icon/Hourglass.h"
+#include "Icon/Memory.h"
 #include "Icon/NetworkAdapter.h"
 #include "Icon/No.h"
 #include "Icon/Pause.h"
@@ -14,10 +16,12 @@
 #include "Icon/RemovableMedia.h"
 #include "Icon/Warning.h"
 #include "Icon/Yes.h"
+#include "XenServer/Api.h"
 #include "XenServer/Host.h"
 #include "XenServer/Network.h"
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
+#include "XenServer/VirtualBlockDevice.h"
 #include "XenServer/VirtualMachine.h"
 #include "PixStore.h"
 
@@ -56,9 +60,11 @@ static Glib::RefPtr<Gdk::Pixbuf> RenderIcon(const Gtk::StockID& stockId, Gtk::Ic
 PixStore::PixStore()
     : _pixApp(Gdk::Pixbuf::create_from_inline(-1, _iconRemoteDesktop, false))
     , _pixCdRom(Gdk::Pixbuf::create_from_inline(-1, _iconCdRom, false))
+    , _pixComputer(Gdk::Pixbuf::create_from_inline(-1, _iconComputer, false))
     , _pixError(RenderIcon(Gtk::Stock::DIALOG_ERROR, Gtk::ICON_SIZE_BUTTON))
     , _pixHardDisk(Gdk::Pixbuf::create_from_inline(-1, _iconHardDisk, false))
     , _pixHourglass(Gdk::Pixbuf::create_from_inline(-1, _iconHourglass, false))
+    , _pixMemory(Gdk::Pixbuf::create_from_inline(-1, _iconMemory, false))
     , _pixNetworkAdapter(Gdk::Pixbuf::create_from_inline(-1, _iconNetworkAdapter, false))
     , _pixNo(Gdk::Pixbuf::create_from_inline(-1, _iconNo, false))
     , _pixPause(Gdk::Pixbuf::create_from_inline(-1, _iconPause, false))
@@ -111,7 +117,15 @@ Glib::RefPtr<Gdk::Pixbuf> PixStore::get(const XenObject& object) const
         default:
             return _pixError;
         }
+    case XenObject::VBD:
+        switch (static_cast<const VirtualBlockDevice&>(object).getRecord()->type)
+        {
+        case XEN_VBD_TYPE_CD: return _pixRemovableMedia;
+        case XEN_VBD_TYPE_DISK: return _pixHardDisk;
+        default: return _pixError;
+        }
     case XenObject::NETWORK:
+    case XenObject::VIF:
         return _pixNetworkAdapter;
     default:
         return _pixError;

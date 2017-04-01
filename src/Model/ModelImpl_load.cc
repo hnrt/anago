@@ -150,4 +150,34 @@ void ModelImpl::loadV1(const Json& json)
             }
         }
     }
+
+    value1 = object1->get("consoles");
+    if (value1.ptr() && value1->type() == Json::ARRAY)
+    {
+        const Json::Array& array = value1->array();
+        for (Json::Array::size_type index = 0; index < array.size(); index++)
+        {
+            RefPtr<Json::Value> value2 = array[index];
+            if (value2.ptr() && value2->type() == Json::OBJECT)
+            {
+                RefPtr<Json::Object> object3 = value2->object();
+                RefPtr<Json::Value> valueUuid = object3->get("uuid");
+                RefPtr<Json::Value> valueEnabled = object3->get("enabled");
+                RefPtr<Json::Value> valueScale = object3->get("scale");
+                if (valueUuid.ptr() && valueUuid->type() == Json::STRING)
+                {
+                    ConsoleInfo info(valueUuid->string());
+                    if (valueEnabled.ptr() && valueEnabled->type() == Json::BOOLEAN)
+                    {
+                        info.enabled = valueEnabled->boolean();
+                    }
+                    if (valueScale.ptr() && valueScale->type() == Json::BOOLEAN)
+                    {
+                        info.scale = valueScale->boolean();
+                    }
+                    _consoleMap.insert(ConsoleEntry(info.uuid, info));
+                }
+            }
+        }
+    }
 }

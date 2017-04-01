@@ -36,6 +36,7 @@ namespace hnrt
         static int match(const xen_string_string_map*, const char* key);
         static int match(const xen_string_string_map*, const char* key, const char* value1);
         static int match(const xen_string_string_map*, const char* key, const char* value1, const char* value2);
+        static const char* getText(enum xen_vbd_type);
 
 #define XenPtrFree(type) static void free(type* p) { if (p) type##_free(p); }
 

@@ -1,8 +1,8 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
-#ifndef HNRT_NETWORKMENU_H
-#define HNRT_NETWORKMENU_H
+#ifndef HNRT_VIRTUALMACHINEMEMLVMENU_H
+#define HNRT_VIRTUALMACHINEMEMLVMENU_H
 
 
 #include "Base/RefPtr.h"
@@ -11,31 +11,31 @@
 
 namespace hnrt
 {
-    class Network;
+    class VirtualMachine;
 
-    class NetworkMenu
+    class VirtualMachineMemMenu
         : public NameValueMenu
     {
     public:
 
-        NetworkMenu(const RefPtr<Network>&);
+        VirtualMachineMemMenu(const RefPtr<VirtualMachine>&);
+        virtual void popup(guint, guint32);
         virtual void popup(guint, guint32, const Glib::ustring&);
 
     protected:
 
-        NetworkMenu(const NetworkMenu&);
-        void operator =(const NetworkMenu&);
+        VirtualMachineMemMenu(const VirtualMachineMemMenu&);
+        void operator =(const VirtualMachineMemMenu&);
         void onDeactivate();
         void onSelectionDone();
         void onChange();
 
         Gtk::MenuItem _menuChange;
         Gtk::MenuItem _menuCancel;
-        RefPtr<Network> _network;
-        bool _readonly;
+        RefPtr<VirtualMachine> _vm;
         Glib::ustring _name;
     };
 }
 
 
-#endif //!HNRT_NETWORKMENU_H
+#endif //!HNRT_VIRTUALMACHINEMEMLVMENU_H

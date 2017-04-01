@@ -6,15 +6,10 @@
 
 
 #include <gtkmm.h>
-#include "Base/RefPtr.h"
 
 
 namespace hnrt
 {
-    class Host;
-    class StorageRepository;
-    class VirtualMachine;
-    class Network;
     class XenObject;
 
     class PixStore
@@ -29,6 +24,8 @@ namespace hnrt
         Glib::RefPtr<Gdk::Pixbuf> getApp() const { return _pixApp; }
         Glib::RefPtr<Gdk::Pixbuf> getYes() const { return _pixYes; }
         Glib::RefPtr<Gdk::Pixbuf> getNo() const { return _pixNo; }
+        Glib::RefPtr<Gdk::Pixbuf> getComputer() const { return _pixComputer; }
+        Glib::RefPtr<Gdk::Pixbuf> getMemory() const { return _pixMemory; }
         Glib::RefPtr<Gdk::Pixbuf> get(const XenObject&) const;
 
     protected:
@@ -39,9 +36,11 @@ namespace hnrt
 
         Glib::RefPtr<Gdk::Pixbuf> _pixApp;
         Glib::RefPtr<Gdk::Pixbuf> _pixCdRom;
+        Glib::RefPtr<Gdk::Pixbuf> _pixComputer;
         Glib::RefPtr<Gdk::Pixbuf> _pixError;
         Glib::RefPtr<Gdk::Pixbuf> _pixHardDisk;
         Glib::RefPtr<Gdk::Pixbuf> _pixHourglass;
+        Glib::RefPtr<Gdk::Pixbuf> _pixMemory;
         Glib::RefPtr<Gdk::Pixbuf> _pixNetworkAdapter;
         Glib::RefPtr<Gdk::Pixbuf> _pixNo;
         Glib::RefPtr<Gdk::Pixbuf> _pixPause;

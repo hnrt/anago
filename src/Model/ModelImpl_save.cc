@@ -31,11 +31,15 @@ void ModelImpl::save()
         }
         try
         {
-            Json json;
+            RefPtr<Json::Object> object1(new Json::Object());
+            object1->add("version", 1L);
+
             RefPtr<Json::Object> object2(new Json::Object());
             object2->add("width", (long)getWidth());
             object2->add("height", (long)getHeight());
             object2->add("pane1_width", (long)getPane1Width());
+            object1->add("UI", object2);
+
             Json::Array array3;
             std::list<RefPtr<Host> > hosts;
             get(hosts);
@@ -55,11 +59,23 @@ void ModelImpl::save()
                 object3->add("display_order", (long)cs.displayOrder);
                 array3.push_back(RefPtr<Json::Value>(new Json::Value(object3)));
             }
-            RefPtr<Json::Object> object1(new Json::Object());
-            object1->add("version", 1L);
-            object1->add("UI", object2);
             object1->add("servers", array3);
+
+            Json::Array array4;
+            for (ConsoleMap::const_iterator iter = _consoleMap.begin(); iter != _consoleMap.end(); iter++)
+            {
+                const ConsoleInfo& info = iter->second;
+                RefPtr<Json::Object> object4(new Json::Object());
+                object4->add("uuid", info.uuid.c_str());
+                object4->add("enabled", info.enabled);
+                object4->add("scale", info.scale);
+                array4.push_back(RefPtr<Json::Value>(new Json::Value(object4)));
+            }
+            object1->add("consoles", array4);
+
             RefPtr<Json::Value> root(new Json::Value(object1));
+
+            Json json;
             json.set(root);
             json.save(fp);
         }

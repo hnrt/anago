@@ -175,11 +175,7 @@ bool VirtualDiskImageListView::on_button_press_event(GdkEventButton* event)
         {
             Gtk::TreeModel::Row row = *iter;
             Glib::ustring refid = row[_record.colREFID];
-            RefPtr<VirtualDiskImage> vdi = _pSession->getStore().getVdi(refid);
-            if (vdi)
-            {
-                _menu.popup(event->button, event->time, *vdi);
-            }
+            _menu.popup(event->button, event->time, _pSession->getStore().getVdi(refid));
         }
         // The event has been handled.
         return true;

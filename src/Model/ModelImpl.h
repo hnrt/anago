@@ -6,6 +6,7 @@
 
 
 #include <glibmm.h>
+#include <map>
 #include "Logger/Logger.h"
 #include "Model.h"
 
@@ -39,6 +40,9 @@ namespace hnrt
         virtual int getSelected(std::list<RefPtr<StorageRepository> >&);
         virtual RefPtr<Host> getSelectedHost();
 
+        virtual void selectSnapshot(const RefPtr<VirtualMachine>&);
+        virtual void deselectSnapshot();
+
         virtual RefPtr<PatchBase> getPatchBase();
 
         virtual const char* getAppDir() const { return _appDir.c_str(); }
@@ -49,23 +53,64 @@ namespace hnrt
         virtual void setHeight(int);
         virtual int getPane1Width();
         virtual void setPane1Width(int);
+        virtual bool getConsoleEnabled(const Glib::ustring&);
+        virtual void setConsoleEnabled(const Glib::ustring&, bool);
+        virtual bool getConsoleScale(const Glib::ustring&);
+        virtual void setConsoleScale(const Glib::ustring&, bool);
 
     private:
+
+        struct ConsoleInfo
+        {
+            Glib::ustring uuid;
+            bool enabled;
+            bool scale;
+
+            ConsoleInfo(const Glib::ustring uuid_)
+                : uuid(uuid_)
+                , enabled(true)
+                , scale(false)
+            {
+            }
+
+            ConsoleInfo(const ConsoleInfo& src)
+            {
+                assign(src);
+            }
+
+            void operator =(const ConsoleInfo& rhs)
+            {
+                assign(rhs);
+            }
+
+            void assign(const ConsoleInfo& rhs)
+            {
+                uuid = rhs.uuid;
+                enabled = rhs.enabled;
+                scale = rhs.scale;
+            }
+        };
+
+        typedef std::map<Glib::ustring, ConsoleInfo> ConsoleMap;
+        typedef std::pair<Glib::ustring, ConsoleInfo> ConsoleEntry;
 
         ModelImpl(const ModelImpl&);
         void operator =(const ModelImpl&);
         void loadV1(const Json&);
+        ConsoleInfo& getConsoleInfo(const Glib::ustring&);
 
         Glib::ustring _path;
         Glib::ustring _appDir;
         Glib::RecMutex _mutex;
         std::list<RefPtr<Host> > _hosts;
         std::list<RefPtr<XenObject> > _selected;
+        RefPtr<VirtualMachine> _selectedSnapshot;
         RefPtr<PatchBase> _patchBase;
 
         int _width;
         int _height;
         int _pane1Width;
+        ConsoleMap _consoleMap;
     };
 }
 

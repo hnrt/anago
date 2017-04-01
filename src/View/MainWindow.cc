@@ -437,7 +437,7 @@ void MainWindow::onResize(Gtk::Allocation& a)
 
 void MainWindow::onNodeCreated(RefPtr<XenObject> object)
 {
-    RefPtr<Notebook> notebook = NotebookFactory::create(*object);
+    RefPtr<Notebook> notebook = NotebookFactory::create(object);
     _notebookStore.set(*object, notebook);
     addNotebook(notebook);
     updateSensitivity();
@@ -753,7 +753,7 @@ void MainWindow::clear()
 {
     Trace trace("MainWindow::clear");
     _hostTreeView.clear();
-    _defaultNotebook.clear();
-    _currentNotebook.clear();
+    _defaultNotebook.reset();
+    _currentNotebook.reset();
     _notebookStore.clear();
 }

@@ -509,3 +509,14 @@ int XenServer::match(const xen_string_string_map* ss, const char* key, const cha
     }
     return -1;
 }
+
+
+const char* XenServer::getText(enum xen_vbd_type type)
+{
+    switch (type)
+    {
+    case XEN_VBD_TYPE_CD: return gettext("CD");
+    case XEN_VBD_TYPE_DISK: return gettext("Disk");
+    default: return gettext("Unknown");
+    }
+}

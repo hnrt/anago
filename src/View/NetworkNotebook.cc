@@ -17,13 +17,13 @@
 using namespace hnrt;
 
 
-RefPtr<Notebook> NetworkNotebook::create(Network& network)
+RefPtr<Notebook> NetworkNotebook::create(const RefPtr<Network>& network)
 {
     return RefPtr<Notebook>(new NetworkNotebook(network));
 }
 
 
-NetworkNotebook::NetworkNotebook(Network& network)
+NetworkNotebook::NetworkNotebook(const RefPtr<Network>& network)
     : _networkLv(_networkLvSw.listView())
     , _networkMenu(network)
     , _pifLv(_pifLvSw.listView())
@@ -49,9 +49,9 @@ NetworkNotebook::NetworkNotebook(Network& network)
 
     show_all_children();
 
-    onNetworkUpdated(RefPtr<XenObject>(&_network, 1), XenObject::RECORD_UPDATED);
+    onNetworkUpdated(RefPtr<XenObject>::castStatic(_network), XenObject::RECORD_UPDATED);
  
-    _connection = SignalManager::instance().xenObjectSignal(_network).connect(sigc::mem_fun(*this, &NetworkNotebook::onNetworkUpdated));
+    _connection = SignalManager::instance().xenObjectSignal(*_network).connect(sigc::mem_fun(*this, &NetworkNotebook::onNetworkUpdated));
 }
 
 
@@ -69,14 +69,14 @@ void NetworkNotebook::onNetworkUpdated(RefPtr<XenObject> object, int what)
 
     if (what == XenObject::RECORD_UPDATED)
     {
-        XenPtr<xen_network_record> nwRecord = _network.getRecord();
+        XenPtr<xen_network_record> nwRecord = _network->getRecord();
         SetNetworkProperties(_networkLv, nwRecord);
 
         XenPtr<xen_pif_record> pifRecord;
 
         if (nwRecord->pifs && nwRecord->pifs->size)
         {
-            Session& session = _network.getSession();
+            Session& session = _network->getSession();
             RefPtr<PhysicalInterface> pif = session.getStore().getPif(nwRecord->pifs->contents[0]);
             if (pif)
             {

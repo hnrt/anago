@@ -717,12 +717,6 @@ void ControllerImpl::deleteVm()
 }
 
 
-void ControllerImpl::snapshotVm()
-{
-    //TODO: IMPLEMENT
-}
-
-
 void ControllerImpl::exportVm()
 {
     //TODO: IMPLEMENT
@@ -832,6 +826,30 @@ void ControllerImpl::setDefaultSr()
 
 
 void ControllerImpl::openVmStatusWindow()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::changeSnapshotName()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::snapshotVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::revertVm()
+{
+    //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::deleteSnapshot()
 {
     //TODO: IMPLEMENT
 }

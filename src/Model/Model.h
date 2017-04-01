@@ -5,6 +5,7 @@
 #define HNRT_MODEL_H
 
 
+#include <glibmm/ustring.h>
 #include <list>
 #include "Base/RefPtr.h"
 
@@ -42,6 +43,9 @@ namespace hnrt
         virtual int getSelected(std::list<RefPtr<StorageRepository> >&) = 0;
         virtual RefPtr<Host> getSelectedHost() = 0;
 
+        virtual void selectSnapshot(const RefPtr<VirtualMachine>&) = 0;
+        virtual void deselectSnapshot() = 0;
+
         virtual RefPtr<PatchBase> getPatchBase() = 0;
 
         virtual const char* getAppDir() const = 0;
@@ -52,6 +56,10 @@ namespace hnrt
         virtual void setHeight(int) = 0;
         virtual int getPane1Width() = 0;
         virtual void setPane1Width(int) = 0;
+        virtual bool getConsoleEnabled(const Glib::ustring&) = 0;
+        virtual void setConsoleEnabled(const Glib::ustring&, bool) = 0;
+        virtual bool getConsoleScale(const Glib::ustring&) = 0;
+        virtual void setConsoleScale(const Glib::ustring&, bool) = 0;
     };
 }
 

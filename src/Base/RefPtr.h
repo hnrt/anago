@@ -126,7 +126,7 @@ namespace hnrt
             return instance;
         }
 
-        void clear()
+        void reset()
         {
             if (_ptr)
             {

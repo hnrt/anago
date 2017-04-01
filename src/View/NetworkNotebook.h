@@ -20,13 +20,13 @@ namespace hnrt
     {
     public:
 
-        static RefPtr<Notebook> create(Network&);
+        static RefPtr<Notebook> create(const RefPtr<Network>&);
 
         virtual ~NetworkNotebook();
 
     protected:
 
-        NetworkNotebook(Network&);
+        NetworkNotebook(const RefPtr<Network>&);
         NetworkNotebook(const NetworkNotebook&);
         void operator =(const NetworkNotebook&);
         void onNetworkUpdated(RefPtr<XenObject>, int);
@@ -44,7 +44,7 @@ namespace hnrt
         NameValueListViewSw _pifLvSw;
         NameValueListView& _pifLv;
 
-        Network& _network;
+        RefPtr<Network> _network;
 
         sigc::connection _connection;
     };

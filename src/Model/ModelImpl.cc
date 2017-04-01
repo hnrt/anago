@@ -275,6 +275,20 @@ RefPtr<Host> ModelImpl::getSelectedHost()
 }
 
 
+void ModelImpl::selectSnapshot(const RefPtr<VirtualMachine>& vm)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    _selectedSnapshot = vm;
+}
+
+
+void ModelImpl::deselectSnapshot()
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    _selectedSnapshot.reset();
+}
+
+
 RefPtr<PatchBase> ModelImpl::getPatchBase()
 {
     return _patchBase;
@@ -320,4 +334,45 @@ void ModelImpl::setPane1Width(int value)
 {
     Glib::RecMutex::Lock lock(_mutex);
     _pane1Width = value;
+}
+
+
+ModelImpl::ConsoleInfo& ModelImpl::getConsoleInfo(const Glib::ustring& uuid)
+{
+    ConsoleMap::iterator iter = _consoleMap.find(uuid);
+    if (iter == _consoleMap.end())
+    {
+        ConsoleInfo info(uuid);
+        _consoleMap.insert(ConsoleEntry(info.uuid, info));
+        iter = _consoleMap.find(uuid);
+    }
+    return iter->second;
+}
+
+
+bool ModelImpl::getConsoleEnabled(const Glib::ustring& uuid)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    return getConsoleInfo(uuid).enabled;
+}
+
+
+void ModelImpl::setConsoleEnabled(const Glib::ustring& uuid, bool value)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    getConsoleInfo(uuid).enabled = value;
+}
+
+
+bool ModelImpl::getConsoleScale(const Glib::ustring& uuid)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    return getConsoleInfo(uuid).scale;
+}
+
+
+void ModelImpl::setConsoleScale(const Glib::ustring& uuid, bool value)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    getConsoleInfo(uuid).scale = value;
 }
