@@ -19,8 +19,7 @@ namespace hnrt
     {
     public:
 
-        static RefPtr<Console> create(ConsoleView& view);
-
+        ConsoleImpl(ConsoleView&);
         virtual ~ConsoleImpl();
         virtual bool isActive() const;
         virtual void open(const char* location, const char* authorization);
@@ -33,7 +32,6 @@ namespace hnrt
 
     protected:
 
-        ConsoleImpl(ConsoleView&);
         ConsoleImpl(const ConsoleImpl&);
         void operator =(const ConsoleImpl&);
         void senderMain();

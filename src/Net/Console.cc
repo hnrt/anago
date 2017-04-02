@@ -9,7 +9,7 @@ using namespace hnrt;
 
 RefPtr<Console> Console::create(ConsoleView& view)
 {
-    return ConsoleImpl::create(view);
+    return RefPtr<Console>(new ConsoleImpl(view));
 }
 
 

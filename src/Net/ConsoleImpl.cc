@@ -78,12 +78,6 @@ using namespace hnrt;
 #define READY_COUNT_THRESHOLD(x)   ((unsigned long)(3000 * pow(2, (x) / 10)))
 
 
-RefPtr<Console> ConsoleImpl::create(ConsoleView& view)
-{
-    return RefPtr<Console>(new ConsoleImpl(view));
-}
-
-
 ConsoleImpl::ConsoleImpl(ConsoleView& view)
     : _view(view)
     , _terminate(false)
