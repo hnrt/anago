@@ -209,7 +209,21 @@ void ConsoleImpl::run()
                     for (;;)
                     {
                         ssize_t n = send();
-                        if (n < 0)
+                        if (n == 0)
+                        {
+                            fd_set fds;
+                            FD_ZERO(&fds);
+                            FD_SET(_sockHost, &fds);
+                            struct timeval timeout;
+                            timeout.tv_sec = 0;
+                            timeout.tv_usec = 1000;
+                            int rc = select(_sockHost + 1, NULL, &fds, NULL, &timeout);
+                            if (rc < 0)
+                            {
+                                throw ConsoleException("select failed: %s", strerror(errno));
+                            }
+                        }
+                        else if (n < 0)
                         {
                             // no more data
                             break;
@@ -266,14 +280,24 @@ void ConsoleImpl::senderMain()
             ssize_t n = send();
             if (n == 0)
             {
-                Glib::TimeVal timeout;
-                timeout.assign_current_time();
-                timeout.add_milliseconds(50);
-                _condTx.timed_wait(_mutexTx, timeout);
+                fd_set fds;
+                FD_ZERO(&fds);
+                FD_SET(_sockHost, &fds);
+                struct timeval timeout;
+                timeout.tv_sec = 0;
+                timeout.tv_usec = 1000;
+                int rc = select(_sockHost + 1, NULL, &fds, NULL, &timeout);
+                if (rc < 0)
+                {
+                    throw ConsoleException("select failed: %s", strerror(errno));
+                }
             }
             else if (n < 0)
             {
-                _condTx.wait(_mutexTx);
+                Glib::TimeVal timeout;
+                timeout.assign_current_time();
+                timeout.add_milliseconds(1000);
+                _condTx.timed_wait(_mutexTx, timeout);
             }
         }
     }
