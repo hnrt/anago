@@ -39,11 +39,17 @@ namespace hnrt
     {
     public:
 
-        CommunicationConsoleException();
+        CommunicationConsoleException(int);
         CommunicationConsoleException(const CommunicationConsoleException&);
-        CommunicationConsoleException(const Glib::ustring&);
-        CommunicationConsoleException(const char*, ...);
-        CommunicationConsoleException& operator =(const CommunicationConsoleException& rhs) { return static_cast<CommunicationConsoleException&>(assign(rhs)); }
+        CommunicationConsoleException(int, const Glib::ustring&);
+        CommunicationConsoleException(int, const char*, ...);
+        CommunicationConsoleException& assign(const CommunicationConsoleException& rhs);
+        CommunicationConsoleException& operator =(const CommunicationConsoleException& rhs) { return assign(rhs); }
+        int error() const { return _error; }
+
+    protected:
+
+        int _error;
     };
 }
 

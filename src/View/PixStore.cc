@@ -98,7 +98,7 @@ Glib::RefPtr<Gdk::Pixbuf> PixStore::get(const XenObject& object) const
     {
         XenPtr<xen_vm_record> record = static_cast<const VirtualMachine&>(object).getRecord();
         return
-            //record->is_a_snapshot ? _pixComputer :
+            record->is_a_snapshot ? _pixComputer :
             record->power_state == XEN_VM_POWER_STATE_HALTED ? _pixPowerOff :
             record->power_state == XEN_VM_POWER_STATE_PAUSED ? _pixWarning :
             record->power_state == XEN_VM_POWER_STATE_RUNNING ? _pixPowerOn :
