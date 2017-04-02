@@ -5,7 +5,6 @@
 #define HNRT_VIRTUALMACHINENOTEBOOK_H
 
 
-//#include "ConsoleView.h"
 #include "CpuGraph.h"
 #include "InputOutputGraph.h"
 #include "MemoryGraph.h"
@@ -17,7 +16,8 @@
 
 namespace hnrt
 {
-    //class ConsoleViewKeyboardInputFilterImp;
+    class ConsoleViewImpl;
+    class ConsoleViewKeyboardInputFilterImpl;
     class PerformanceMonitor;
     class VirtualMachine;
 
@@ -59,9 +59,9 @@ namespace hnrt
 
         VirtualMachinePropertyView _propertyView;
 
-        //ConsoleView _consoleView;
+        ConsoleViewImpl& _consoleView;
 
-        //RefPtr<ConsoleViewKeyboardInputFilterImp> _keyboardInputFilter;
+        RefPtr<ConsoleViewKeyboardInputFilterImpl> _keyboardInputFilter;
 
         Gtk::ScrolledWindow _conDockingSw;
         Gtk::HBox _conBox1;

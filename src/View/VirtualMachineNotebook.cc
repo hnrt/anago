@@ -4,8 +4,7 @@
 #include <libintl.h>
 #include <string.h>
 #include "Base/StringBuffer.h"
-//#include "Controller/Console.h"
-//#include "Controller/ConsoleViewKeyboardInputFilterImp.h"
+#include "Net/Console.h"
 #include "Controller/Controller.h"
 #include "Controller/SignalManager.h"
 #include "Exception/Exception.h"
@@ -19,6 +18,8 @@
 #include "XenServer/VirtualInterface.h"
 #include "XenServer/VirtualMachine.h"
 #include "XenServer/XenObjectStore.h"
+#include "ConsoleViewImpl.h"
+#include "ConsoleViewKeyboardInputFilterImpl.h"
 #include "PixStore.h"
 #include "VirtualMachineDevicePage.h"
 #include "VirtualMachineNotebook.h"
@@ -36,6 +37,7 @@ RefPtr<Notebook> VirtualMachineNotebook::create(const RefPtr<VirtualMachine>& vm
 VirtualMachineNotebook::VirtualMachineNotebook(const RefPtr<VirtualMachine>& vm)
     : _vm(vm)
     , _propertyView(vm)
+    , _consoleView(*(new ConsoleViewImpl()))
     , _consoleDocked(true)
     , _consoleFullscreen(false)
     , _lastPowerState(XEN_VM_POWER_STATE_UNDEFINED)
@@ -44,11 +46,11 @@ VirtualMachineNotebook::VirtualMachineNotebook(const RefPtr<VirtualMachine>& vm)
 
     append_page(_propertyView, Glib::ustring(gettext("Properties")));
 
-    //_keyboardInputFilter = ConsoleViewKeyboardInputFilterImp::create();
-    //_keyboardInputFilter->signalUnfullscreen().connect(sigc::mem_fun(*this, &VirtualMachineNotebook::onUnfullscreen));
+    _keyboardInputFilter = ConsoleViewKeyboardInputFilterImpl::create();
+    _keyboardInputFilter->signalUnfullscreen().connect(sigc::mem_fun(*this, &VirtualMachineNotebook::onUnfullscreen));
 
-    //_consoleView.signal_size_allocate().connect(sigc::mem_fun(*this, &VirtualMachineNotebook::onConsoleResized));
-    //_consoleView.setKeyboardInputFilter(RefPtr<ConsoleViewKeyboardInputFilter>::castStatic(_keyboardInputFilter));
+    _consoleView.signal_size_allocate().connect(sigc::mem_fun(*this, &VirtualMachineNotebook::onConsoleResized));
+    _consoleView.setKeyboardInputFilter(RefPtr<ConsoleViewKeyboardInputFilter>::castStatic(_keyboardInputFilter));
 
     _conFloatingBox2.set_spacing(0);
     _conFloatingBox2.set_border_width(0);
@@ -80,7 +82,7 @@ VirtualMachineNotebook::VirtualMachineNotebook(const RefPtr<VirtualMachine>& vm)
     _conBox3.pack_start(_sasButton, Gtk::PACK_SHRINK);
 
     _conBox2.set_spacing(0);
-    //_conBox2.pack_start(_consoleView, Gtk::PACK_EXPAND_PADDING);
+    _conBox2.pack_start(_consoleView, Gtk::PACK_EXPAND_PADDING);
     _conBox2.pack_start(_conBox3, Gtk::PACK_SHRINK, 8);
 
     _conBox1.set_spacing(0);
@@ -92,7 +94,7 @@ VirtualMachineNotebook::VirtualMachineNotebook(const RefPtr<VirtualMachine>& vm)
 
     append_page(_conDockingSw, Glib::ustring(gettext("Console")));
 
-    //_consoleView.enableScale(Model::instance().getConsoleScale(_vm->getUUID()));
+    _consoleView.enableScale(Model::instance().getConsoleScale(_vm->getUUID()));
 
     _ssv.getTreeView().set(vm);
     _ssvBox.pack_start(_ssv);
@@ -158,13 +160,15 @@ VirtualMachineNotebook::~VirtualMachineNotebook()
 
     closeConsole();
 
-    //_keyboardInputFilter = RefPtr<ConsoleViewKeyboardInputFilterImp>(NULL);
-    //_consoleView.setKeyboardInputFilter(RefPtr<ConsoleViewKeyboardInputFilter>(NULL));
+    _keyboardInputFilter.reset();
+    _consoleView.setKeyboardInputFilter(RefPtr<ConsoleViewKeyboardInputFilter>::castStatic(_keyboardInputFilter));
 
     //Model::instance().removeConsole(_vm->getREFID());
 
     _connectionSession.disconnect();
     _connection.disconnect();
+
+    delete &_consoleView;
 }
 
 
@@ -187,10 +191,10 @@ void VirtualMachineNotebook::onScaleConsoleChanged()
 {
     bool scaleValue = _scaleConsole.get_active();
     Model::instance().setConsoleScale(_vm->getUUID(), scaleValue);
-    //_consoleView.enableScale(scaleValue);
+    _consoleView.enableScale(scaleValue);
     if (_consoleDocked)
     {
-        //_consoleView.onContainerResized(_conDockingSw);
+        _consoleView.onContainerResized(_conDockingSw);
     }
     else if (_consoleFullscreen)
     {
@@ -198,25 +202,25 @@ void VirtualMachineNotebook::onScaleConsoleChanged()
         _conFloatingWin.get_root_window()->get_geometry(x0, y0, cx0, cy0, depth);
         if (cx0 == _consoleWidth && cy0 == _consoleHeight)
         {
-            //_consoleView.onContainerResized(cx0, cy0);
+            _consoleView.onContainerResized(cx0, cy0);
         }
         else
         {
-            //_consoleView.onContainerResized(_conFloatingSw);
+            _consoleView.onContainerResized(_conFloatingSw);
         }
     }
     else
     {
-        //_consoleView.onContainerResized(_conFloatingSw);
+        _consoleView.onContainerResized(_conFloatingSw);
     }
-    //_consoleView.queue_draw();
+    _consoleView.queue_draw();
 }
 
 
 void VirtualMachineNotebook::onScaleByThreadsChanged()
 {
-    //bool value = _scaleByThreads.get_active();
-    //_consoleView.enableScaleByThreads(value);
+    bool value = _scaleByThreads.get_active();
+    _consoleView.enableScaleByThreads(value);
 }
 
 
@@ -277,7 +281,6 @@ void VirtualMachineNotebook::update()
 
 void VirtualMachineNotebook::openConsole()
 {
-#if 0
     if (!_consoleView.getConsole()->isActive())
     {
         _consoleWidth = 0;
@@ -285,15 +288,14 @@ void VirtualMachineNotebook::openConsole()
         Session& session = _vm->getSession();
         Session::Lock lock(session);
         _consoleView.show();
-        _consoleView.open(_vm->getConsoleLocation(), session.getConnectSpec().getBasicAuthString().str());
+        _consoleView.open(_vm->getConsoleLocation().c_str(), session.getConnectSpec().getBasicAuthString().c_str());
     }
-#endif
 }
 
 
 void VirtualMachineNotebook::closeConsole()
 {
-    //_consoleView.close();
+    _consoleView.close();
 }
 
 
@@ -308,7 +310,6 @@ void VirtualMachineNotebook::onConsoleResized(Gtk::Allocation&)
 
 void VirtualMachineNotebook::onUnfullscreen()
 {
-#if 0
     if (_consoleFullscreen)
     {
         _consoleFullscreen = false;
@@ -321,7 +322,6 @@ void VirtualMachineNotebook::onUnfullscreen()
         _consoleWidth = 0;
         _consoleHeight = 0;
     }
-#endif
 }
 
 
@@ -329,7 +329,7 @@ void VirtualMachineNotebook::onDockingContainerResized(Gtk::Allocation& unused)
 {
     if (_consoleDocked)
     {
-        //_consoleView.onContainerResized(_conDockingSw);
+        _consoleView.onContainerResized(_conDockingSw);
     }
 }
 
@@ -338,14 +338,13 @@ void VirtualMachineNotebook::onFloatingContainerResized(Gtk::Allocation& unused)
 {
     if (!_consoleDocked)
     {
-        //_consoleView.onContainerResized(_conFloatingSw);
+        _consoleView.onContainerResized(_conFloatingSw);
     }
 }
 
 
 void VirtualMachineNotebook::reparentConsoleViewOnFullscreen()
 {
-#if 0
     int x0, y0, cx0, cy0, depth;
     _conFloatingWin.get_root_window()->get_geometry(x0, y0, cx0, cy0, depth);
     int cx = _consoleView.getFrameWidth();
@@ -368,7 +367,6 @@ void VirtualMachineNotebook::reparentConsoleViewOnFullscreen()
             _consoleView.onContainerResized(_conFloatingSw);
         }
     }
-#endif
 }
 
 
@@ -445,19 +443,18 @@ void VirtualMachineNotebook::dockConsole(bool dock)
         _conFloatingWin.unfullscreen();
         _conFloatingWin.unmaximize();
         _consoleFullscreen = false;
-        //_consoleView.get_parent()->remove(_consoleView);
+        _consoleView.get_parent()->remove(_consoleView);
         _conBox2.remove(_conBox3);
-        //_conBox2.pack_start(_consoleView, Gtk::PACK_EXPAND_PADDING);
+        _conBox2.pack_start(_consoleView, Gtk::PACK_EXPAND_PADDING);
         _conBox2.pack_start(_conBox3, Gtk::PACK_SHRINK, 8);
         _conButton.set_label(gettext("Undock"));
         _conButton.set_tooltip_text(gettext("Detach the console from the main window and float it as another window"));
-        //_consoleView.onContainerResized(_conDockingSw);
+        _consoleView.onContainerResized(_conDockingSw);
     }
     else
     {
         if (!_conFloatingWin.is_realized())
         {
-#if 0
             int x0, y0, cx0, cy0, depth;
             _conFloatingWin.get_root_window()->get_geometry(x0, y0, cx0, cy0, depth);
             int cxMax = cx0 * 8 / 10;
@@ -473,10 +470,9 @@ void VirtualMachineNotebook::dockConsole(bool dock)
                 cy = cyMax;
             }
             _conFloatingWin.set_default_size(cx, cy);
-#endif
         }
-        //_consoleView.get_parent()->remove(_consoleView);
-        //_conFloatingBox2.pack_start(_consoleView, Gtk::PACK_EXPAND_PADDING);
+        _consoleView.get_parent()->remove(_consoleView);
+        _conFloatingBox2.pack_start(_consoleView, Gtk::PACK_EXPAND_PADDING);
         _conFloatingWin.remove();
         _conFloatingWin.add(_conFloatingSw);
         _conFloatingWin.show_all();
@@ -484,7 +480,7 @@ void VirtualMachineNotebook::dockConsole(bool dock)
         _conBox2.pack_start(_conBox3, Gtk::PACK_EXPAND_PADDING);
         _conButton.set_label(gettext("Dock"));
         _conButton.set_tooltip_text(gettext("Attach the console back to the main window from the floating window"));
-        //_consoleView.onContainerResized(_conFloatingSw);
+        _consoleView.onContainerResized(_conFloatingSw);
     }
 }
 

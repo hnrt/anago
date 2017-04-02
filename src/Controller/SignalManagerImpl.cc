@@ -24,11 +24,65 @@ SignalManagerImpl::~SignalManagerImpl()
 }
 
 
+inline int SignalManagerImpl::enqueue(const ConsoleView& cv, const ConsoleView::Message& message)
+{
+    Glib::Mutex::Lock lock(_virtualMachineMessageMutex);
+    _virtualMachineMessageList.push_back(VirtualMachineMessagePair(const_cast<ConsoleView*>(&cv), message));
+    return static_cast<int>(_virtualMachineMessageList.size());
+}
+
+
+inline bool SignalManagerImpl::dequeue(ConsoleView*& cv, ConsoleView::Message& message)
+{
+    Glib::Mutex::Lock lock(_virtualMachineMessageMutex);
+    if (_virtualMachineMessageList.size())
+    {
+        VirtualMachineMessagePair entry = _virtualMachineMessageList.front();
+        _virtualMachineMessageList.pop_front();
+        cv = entry.first;
+        message = entry.second;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+inline int SignalManagerImpl::enqueue(const RefPtr<XenObject>& object, int notification)
+{
+    Glib::Mutex::Lock lock(_xenObjectNotificationMutex);
+    _xenObjectNotificationList.push_back(XenObjectNotificationPair(object, notification));
+    return static_cast<int>(_xenObjectNotificationList.size());
+}
+
+
+inline bool SignalManagerImpl::dequeue(RefPtr<XenObject>& object, int& notification)
+{
+    Glib::Mutex::Lock lock(_xenObjectNotificationMutex);
+    if (_xenObjectNotificationList.size())
+    {
+        XenObjectNotificationPair entry;
+        entry = _xenObjectNotificationList.front();
+        _xenObjectNotificationList.pop_front();
+        object = entry.first;
+        notification = entry.second;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
 void SignalManagerImpl::clear()
 {
     TRACE("SignalManagerImpl::clear");
     if (ThreadManager::instance().isMain())
     {
+        _consoleViewSignalMap.clear();
         _notificationXenObjectSignalMap.clear();
         _xenObjectSignalMap.clear();
     }
@@ -37,8 +91,50 @@ void SignalManagerImpl::clear()
         Logger::instance().error("signal clearance requested in thread %s.", ThreadManager::instance().getName());
         throw std::runtime_error("SignalManagerImpl::clear invoked from a background thread.");
     }
-    Glib::Mutex::Lock lock(_mutex);
-    _notified.clear();
+    {
+        Glib::Mutex::Lock lock(_virtualMachineMessageMutex);
+        _virtualMachineMessageList.clear();
+    }
+    {
+        Glib::Mutex::Lock lock(_xenObjectNotificationMutex);
+        _xenObjectNotificationList.clear();
+    }
+}
+
+
+SignalManagerImpl::ConsoleViewSignal SignalManagerImpl::consoleViewSignal(const ConsoleView& cv)
+{
+    if (ThreadManager::instance().isMain())
+    {
+        void* key = const_cast<ConsoleView*>(&cv);
+        ConsoleViewSignalMap::iterator iter = _consoleViewSignalMap.find(key);
+        if (iter == _consoleViewSignalMap.end())
+        {
+            _consoleViewSignalMap.insert(ConsoleViewSignalEntry(key, ConsoleViewSignal()));
+            iter = _consoleViewSignalMap.find(key);
+        }
+        return iter->second;
+    }
+    else
+    {
+        Logger::instance().error("signal cv=%zx requested in thread %s.", &cv, ThreadManager::instance().getName());
+        throw std::runtime_error("SignalManagerImpl::consoleViewSignal invoked from a background thread.");
+    }
+}
+
+
+void SignalManagerImpl::notify(const ConsoleView& cv, const ConsoleView::Message& message)
+{
+    TRACE("SignalManagerImpl::notify", "cv=%zx message.type=%d", &cv, message.type);
+    int size = enqueue(cv, message);
+    if (ThreadManager::instance().isMain())
+    {
+        onNotify();
+    }
+    else if (size == 1)
+    {
+        _dispatcher();
+    }
 }
 
 
@@ -83,33 +179,6 @@ SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(const XenObjec
 }
 
 
-inline int SignalManagerImpl::enqueue(const RefPtr<XenObject>& object, int notification)
-{
-    Glib::Mutex::Lock lock(_mutex);
-    _notified.push_back(XenObjectNotificationPair(object, notification));
-    return static_cast<int>(_notified.size());
-}
-
-
-inline bool SignalManagerImpl::dequeue(RefPtr<XenObject>& object, int& notification)
-{
-    Glib::Mutex::Lock lock(_mutex);
-    if (_notified.size())
-    {
-        XenObjectNotificationPair entry;
-        entry = _notified.front();
-        _notified.pop_front();
-        object = entry.first;
-        notification = entry.second;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
 void SignalManagerImpl::notify(const RefPtr<XenObject>& object, int notification)
 {
     TRACE("SignalManagerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
@@ -128,29 +197,47 @@ void SignalManagerImpl::notify(const RefPtr<XenObject>& object, int notification
 void SignalManagerImpl::onNotify()
 {
     TRACE("SignalManagerImpl::onNotify");
-    RefPtr<XenObject> object;
-    int notification;
-    while (dequeue(object, notification))
+restart:
     {
-        TRACEPUT("object=%zx notification=%d", object.ptr(), notification);
+        ConsoleView* cv;
+        ConsoleView::Message message;
+        if (dequeue(cv, message))
         {
-            NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
-            if (iter != _notificationXenObjectSignalMap.end())
+            TRACEPUT("cv=%zx message.type=%d", cv, message.type);
+            ConsoleViewSignalMap::iterator iter = _consoleViewSignalMap.find(cv);
+            if (iter != _consoleViewSignalMap.end())
             {
-                iter->second.emit(object, notification);
-                continue;
+                iter->second.emit(message);
             }
+            goto restart;
         }
+    }
+    {
+        RefPtr<XenObject> object;
+        int notification;
+        if (dequeue(object, notification))
         {
-            XenObjectSignalMap::iterator iter = _xenObjectSignalMap.find(object.ptr());
-            if (iter != _xenObjectSignalMap.end())
+            TRACEPUT("object=%zx notification=%d", object.ptr(), notification);
             {
-                iter->second.emit(object, notification);
-                if (notification == XenObject::DESTROYED)
+                NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
+                if (iter != _notificationXenObjectSignalMap.end())
                 {
-                    _xenObjectSignalMap.erase(iter);
+                    iter->second.emit(object, notification);
+                    goto restart;
                 }
             }
+            {
+                XenObjectSignalMap::iterator iter = _xenObjectSignalMap.find(object.ptr());
+                if (iter != _xenObjectSignalMap.end())
+                {
+                    iter->second.emit(object, notification);
+                    if (notification == XenObject::DESTROYED)
+                    {
+                        _xenObjectSignalMap.erase(iter);
+                    }
+                }
+            }
+            goto restart;
         }
     }
 }
