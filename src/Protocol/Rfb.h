@@ -77,11 +77,12 @@ namespace hnrt
             U8 rShift;
             U8 gShift;
             U8 bShift;
-            U8 padding[3];
+            U8 padding1;
+            U8 padding2;
+            U8 padding3;
 
             PixelFormat();
             const U8* read(const U8* r);
-            U8* write(U8* w);
 
         } __attribute__((__packed__));
 
@@ -239,11 +240,12 @@ namespace hnrt
         struct SetPixelFormat
         {
             U8 messageType; // 0
-            U8 padding[3];
+            U8 padding1;
+            U8 padding2;
+            U8 padding3;
             PixelFormat pixelFormat;
 
             SetPixelFormat(const PixelFormat& value);
-            void write(U8*& w, U8* s);
 
         } __attribute__((__packed__));
 
@@ -268,7 +270,6 @@ namespace hnrt
             U16 height;
 
             FramebufferUpdateRequest(U8 incremental_, U16 x_, U16 y_, U16 width_, U16 height_);
-            void write(U8*& w, U8* s);
 
         } __attribute__((__packed__));
 
@@ -276,11 +277,11 @@ namespace hnrt
         {
             U8 messageType; // 4
             U8 downFlag;
-            U8 padding[2];
+            U8 padding1;
+            U8 padding2;
             U32 key;
 
             KeyEvent(U8 downFlag_, U32 key_);
-            U8* write(U8* w);
 
         } __attribute__((__packed__));
 
@@ -289,11 +290,11 @@ namespace hnrt
         {
             U8 messageType; // 254
             U8 downFlag;
-            U8 padding[2];
+            U8 padding1;
+            U8 padding2;
             U32 key;
 
             ScanKeyEvent(U8 downFlag_, U32 key_);
-            U8* write(U8* w);
 
         } __attribute__((__packed__));
 
@@ -306,7 +307,6 @@ namespace hnrt
             U16 y;
 
             PointerEvent(U8 buttonMask_, U16 x_, U16 y_);
-            U8* write(U8* w);
 
         } __attribute__((__packed__));
 

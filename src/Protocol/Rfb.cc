@@ -275,21 +275,12 @@ Rfb::ServerInitPtr::~ServerInitPtr()
 
 
 Rfb::SetPixelFormat::SetPixelFormat(const PixelFormat& value)
+    : messageType(SET_PIXEL_FORMAT)
+    , padding1(0)
+    , padding2(0)
+    , padding3(0)
+    , pixelFormat(value)
 {
-    messageType = SET_PIXEL_FORMAT;
-    pixelFormat = value;
-}
-
-
-void Rfb::SetPixelFormat::write(U8*& w, U8* s)
-{
-    if (w + sizeof(SetPixelFormat) > s)
-    {
-        throw NotEnoughSpaceException(sizeof(SetPixelFormat));
-    }
-    WRITE8(w, messageType);
-    PAD(w, padding);
-    w = pixelFormat.write(w);
 }
 
 
@@ -315,54 +306,23 @@ Rfb::FramebufferUpdateRequest::FramebufferUpdateRequest(U8 incremental_, U16 x_,
 }
 
 
-void Rfb::FramebufferUpdateRequest::write(U8*& w, U8* s)
-{
-    if (w + sizeof(FramebufferUpdateRequest) > s)
-    {
-        throw NotEnoughSpaceException(sizeof(FramebufferUpdateRequest));
-    }
-    WRITE8(w, messageType);
-    WRITE8(w, incremental);
-    WRITE16(w, x);
-    WRITE16(w, y);
-    WRITE16(w, width);
-    WRITE16(w, height);
-}
-
-
 Rfb::KeyEvent::KeyEvent(U8 downFlag_, U32 key_)
     : messageType(KEY_EVENT)
     , downFlag(downFlag_)
+    , padding1(0)
+    , padding2(0)
     , key(key_)
 {
-}
-
-
-Rfb::U8* Rfb::KeyEvent::write(U8* w)
-{
-    WRITE8(w, messageType);
-    WRITE8(w, downFlag);
-    PAD(w, padding);
-    WRITE32(w, key);
-    return w;
 }
 
 
 Rfb::ScanKeyEvent::ScanKeyEvent(U8 downFlag_, U32 key_)
     : messageType(SCAN_KEY_EVENT)
     , downFlag(downFlag_)
+    , padding1(0)
+    , padding2(0)
     , key(key_)
 {
-}
-
-
-Rfb::U8* Rfb::ScanKeyEvent::write(U8* w)
-{
-    WRITE8(w, messageType);
-    WRITE8(w, downFlag);
-    PAD(w, padding);
-    WRITE32(w, key);
-    return w;
 }
 
 
@@ -372,16 +332,6 @@ Rfb::PointerEvent::PointerEvent(U8 buttonMask_, U16 x_, U16 y_)
     , x(x_)
     , y(y_)
 {
-}
-
-
-Rfb::U8* Rfb::PointerEvent::write(U8* w)
-{
-    WRITE8(w, messageType);
-    WRITE8(w, buttonMask);
-    WRITE16(w, x);
-    WRITE16(w, y);
-    return w;
 }
 
 
@@ -450,10 +400,10 @@ Rfb::PixelFormat::PixelFormat()
     , rShift(0)
     , gShift(8)
     , bShift(16)
+    , padding1(0)
+    , padding2(0)
+    , padding3(0)
 {
-    padding[0] = 0;
-    padding[1] = 0;
-    padding[2] = 0;
 }
 
 
@@ -469,25 +419,10 @@ const Rfb::U8* Rfb::PixelFormat::read(const U8* r)
     READ8(rShift, r);
     READ8(gShift, r);
     READ8(bShift, r);
-    SKIP(padding, r);
+    SKIP(padding1, r);
+    SKIP(padding2, r);
+    SKIP(padding3, r);
     return r;
-}
-
-
-Rfb::U8* Rfb::PixelFormat::write(U8* w)
-{
-    WRITE8(w, bitsPerPixel);
-    WRITE8(w, depth);
-    WRITE8(w, bigEndian);
-    WRITE8(w, trueColour);
-    WRITE16(w, rMax);
-    WRITE16(w, gMax);
-    WRITE16(w, bMax);
-    WRITE8(w, rShift);
-    WRITE8(w, gShift);
-    WRITE8(w, bShift);
-    PAD(w, padding);
-    return w;
 }
 
 

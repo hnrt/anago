@@ -14,6 +14,7 @@ namespace hnrt
 {
     class Host;
     class PerformanceMonitor;
+    class VirtualMachine;
     class XenObject;
 
     class ControllerImpl
@@ -84,6 +85,8 @@ namespace hnrt
         void disconnectInBackground(RefPtr<Host>);
         void shutdownHostInBackground(RefPtr<Host>);
         void restartHostInBackground(RefPtr<Host>);
+        void controlVm(bool (VirtualMachine::*memfunc)());
+        void controlVm(bool (VirtualMachine::*memfunc)(bool), bool);
 
         bool _quitInProgress;
     };

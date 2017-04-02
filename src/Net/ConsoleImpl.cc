@@ -170,8 +170,8 @@ void ConsoleImpl::run()
             FD_ZERO(&fds);
             FD_SET(_sockHost, &fds);
             struct timeval timeout;
-            timeout.tv_sec = 0;
-            timeout.tv_usec = 1000;
+            timeout.tv_sec = 1;
+            timeout.tv_usec = 0;
             int rc = select(_sockHost + 1, &fds, NULL, NULL, &timeout);
             if (rc < 0)
             {
@@ -189,6 +189,7 @@ void ConsoleImpl::run()
 
             processOutgoingData();
 
+#if 0
             if (_readyCount >= _readyCountThreshold)
             {
                 if (_terminate)
@@ -245,6 +246,7 @@ void ConsoleImpl::run()
             {
                 TRACEPUT("Server not responding.");
             }
+#endif
         }
     }
     catch (ConsoleException ex)
@@ -266,6 +268,7 @@ void ConsoleImpl::run()
 
 void ConsoleImpl::senderMain()
 {
+    TRACE(StringBuffer().format("ConsoleImpl@%zx::senderMain", this));
     try
     {
         Glib::Mutex::Lock lock(_mutexTx);
@@ -278,8 +281,8 @@ void ConsoleImpl::senderMain()
                 FD_ZERO(&fds);
                 FD_SET(_sockHost, &fds);
                 struct timeval timeout;
-                timeout.tv_sec = 0;
-                timeout.tv_usec = 1000;
+                timeout.tv_sec = 1;
+                timeout.tv_usec = 0;
                 int rc = select(_sockHost + 1, NULL, &fds, NULL, &timeout);
                 if (rc < 0)
                 {
@@ -700,7 +703,12 @@ void ConsoleImpl::processOutgoingData()
         {
             Buffer* buf = new Buffer(sizeof(Rfb::FramebufferUpdateRequest));
             Rfb::FramebufferUpdateRequest& fu = *(new(buf->addr) Rfb::FramebufferUpdateRequest(_incremental, 0, 0, _width, _height));
+            TRACEPUT("FramebufferUpdateRequest: messageType=%d", fu.messageType);
             TRACEPUT("FramebufferUpdateRequest: incremental=%d", fu.incremental);
+            TRACEPUT("FramebufferUpdateRequest: x=%d", fu.x);
+            TRACEPUT("FramebufferUpdateRequest: y=%d", fu.y);
+            TRACEPUT("FramebufferUpdateRequest: cx=%d", fu.width);
+            TRACEPUT("FramebufferUpdateRequest: cy=%d", fu.height);
             enqueue(buf);
             _condTx.signal();
             _incremental = 1;
@@ -711,6 +719,19 @@ void ConsoleImpl::processOutgoingData()
 
         case STATE_READY: // in case of server not responding
         {
+#if 0
+            Buffer* buf = new Buffer(sizeof(Rfb::FramebufferUpdateRequest));
+            Rfb::FramebufferUpdateRequest& fu = *(new(buf->addr) Rfb::FramebufferUpdateRequest(0, 0, 0, _width, _height));
+            TRACEPUT("FramebufferUpdateRequest: messageType=%d", fu.messageType);
+            TRACEPUT("FramebufferUpdateRequest: incremental=%d", fu.incremental);
+            TRACEPUT("FramebufferUpdateRequest: x=%d", fu.x);
+            TRACEPUT("FramebufferUpdateRequest: y=%d", fu.y);
+            TRACEPUT("FramebufferUpdateRequest: cx=%d", fu.width);
+            TRACEPUT("FramebufferUpdateRequest: cy=%d", fu.height);
+            enqueue(buf);
+            _condTx.signal();
+            _incremental = 1;
+#endif
             _readyCount++;
             break;
         }

@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
+#include "Logger/Trace.h"
 #include "Exception/ConsoleException.h"
 #include "ConsoleConnector.h"
 
@@ -40,6 +41,8 @@ ConsoleConnector::~ConsoleConnector()
 
 void ConsoleConnector::open(const char* location, const char* authorization)
 {
+    TRACE("ConsoleConnector::open", "location=%s authorization=%s", location, authorization);
+
     clear();
 
     Glib::ustring request = getRequest(location, authorization);
@@ -148,21 +151,25 @@ ssize_t ConsoleConnector::send()
     CURLcode result = curl_easy_send(_curl, _obuf->cur(), _obuf->curLen(), &n);
     if (result == CURLE_OK)
     {
+        Logger::instance().trace("ConsoleConnector::send: CURLE_OK %zu", n);
         _obuf->len += n;
         return n;
     }
     else if (result == CURLE_AGAIN)
     {
+        Logger::instance().trace("ConsoleConnector::send: CURLE_AGAIN");
         // ok to continue
         return 0;
     }
     else if (result == CURLE_UNSUPPORTED_PROTOCOL)
     {
+        Logger::instance().trace("ConsoleConnector::send: CURLE_UNSUPPORTED_PROTOCOL");
         // possibly disconnected by host
         throw CommunicationConsoleException(result, "CURL: Send failed. error=UNSUPPORTED_PROTOCOL");
     }
     else
     {
+        Logger::instance().trace("ConsoleConnector::send: CURLE_%d", result);
         throw CommunicationConsoleException(result, "CURL: Send failed. error=%d", result);
     }
 }
@@ -171,29 +178,35 @@ ssize_t ConsoleConnector::send()
 size_t ConsoleConnector::recv()
 {
     _ibuf->extend(_ibuf->len + 256);
+    Logger::instance().trace("ConsoleConnector::recv: %zx %zu", _ibuf->cur(), _ibuf->curLen());
     size_t n = 0;
     CURLcode result = curl_easy_recv(_curl, _ibuf->cur(), _ibuf->curLen(), &n);
     if (result == CURLE_OK)
     {
+        Logger::instance().trace("ConsoleConnector::recv: CURLE_OK %zu", n);
         _ibuf->len += n;
         return n;
     }
     else if (result == CURLE_AGAIN)
     {
+        Logger::instance().trace("ConsoleConnector::recv: CURLE_AGAIN");
         // ok to continue
         return 0;
     }
     else if (result == CURLE_UNSUPPORTED_PROTOCOL)
     {
+        Logger::instance().trace("ConsoleConnector::recv: CURLE_UNSUPPORTED_PROTOCOL");
         // possibly disconnected by host
         throw CommunicationConsoleException(result, "CURL: Recv failed. error=UNSUPPORTED_PROTOCOL");
     }
     else if (result == CURLE_BAD_FUNCTION_ARGUMENT)
     {
+        Logger::instance().trace("ConsoleConnector::recv: CURLE_BAD_FUNCTION_ARGUMENT");
         throw CommunicationConsoleException(result, "CURL: Recv failed. error=BAD_FUNCTION_ARGUMENT");
     }
     else
     {
+        Logger::instance().trace("ConsoleConnector::recv: CURLE_%d", result);
         throw CommunicationConsoleException(result, "CURL: Recv failed. error=%d", result);
     }
 }
@@ -430,7 +443,7 @@ ConsoleConnector::Buffer::Buffer(size_t fixedSize)
     if (fixedSize)
     {
         fixed = true;
-        char* addr = (char*)malloc(fixedSize);
+        addr = (char*)malloc(fixedSize);
         if (!addr)
         {
             throw std::bad_alloc();
@@ -449,13 +462,14 @@ ConsoleConnector::Buffer::Buffer(const void* p, size_t n)
     if (p && n)
     {
         fixed = true;
-        char* addr = (char*)malloc(n);
+        addr = (char*)malloc(n);
         if (!addr)
         {
             throw std::bad_alloc();
         }
         memcpy(addr, p, n);
-        len = size = n;
+        size = n;
+        //Logger::instance().trace("ConsoleConnector::Buffer::ctor: %zu [%.*s]", n, (int)n, (char*)addr);
     }
 }
 

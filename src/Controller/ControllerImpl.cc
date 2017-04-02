@@ -659,31 +659,65 @@ void ControllerImpl::restartHostInBackground(RefPtr<Host> host)
 
 void ControllerImpl::startVm()
 {
-    //TODO: IMPLEMENT
+    controlVm(&VirtualMachine::start);
 }
 
 
 void ControllerImpl::shutdownVm()
 {
-    //TODO: IMPLEMENT
+    controlVm(&VirtualMachine::shutdown, false);
 }
 
 
 void ControllerImpl::rebootVm()
 {
-    //TODO: IMPLEMENT
+    controlVm(&VirtualMachine::reboot, false);
 }
 
 
 void ControllerImpl::suspendVm()
 {
-    //TODO: IMPLEMENT
+    controlVm(&VirtualMachine::suspend);
 }
 
 
 void ControllerImpl::resumeVm()
 {
-    //TODO: IMPLEMENT
+    controlVm(&VirtualMachine::resume);
+}
+
+
+void ControllerImpl::controlVm(bool (VirtualMachine::*memfunc)())
+{
+    std::list<RefPtr<VirtualMachine> > vmList;
+    if (!Model::instance().getSelected(vmList))
+    {
+        return;
+    }
+    for (std::list<RefPtr<VirtualMachine> >::iterator iter = vmList.begin(); iter != vmList.end(); iter++)
+    {
+        RefPtr<VirtualMachine>& vm = *iter;
+        Session& session = vm->getSession();
+        Session::Lock lock(session);
+        (vm->*memfunc)();
+    }
+}
+
+
+void ControllerImpl::controlVm(bool (VirtualMachine::*memfunc)(bool), bool arg1)
+{
+    std::list<RefPtr<VirtualMachine> > vmList;
+    if (!Model::instance().getSelected(vmList))
+    {
+        return;
+    }
+    for (std::list<RefPtr<VirtualMachine> >::iterator iter = vmList.begin(); iter != vmList.end(); iter++)
+    {
+        RefPtr<VirtualMachine>& vm = *iter;
+        Session& session = vm->getSession();
+        Session::Lock lock(session);
+        (vm->*memfunc)(arg1);
+    }
 }
 
 
