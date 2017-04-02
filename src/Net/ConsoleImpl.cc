@@ -203,27 +203,34 @@ void ConsoleImpl::run()
                 }
                 // CentOS 7 is likely to respond no framebuffer update while it is starting up.
                 // Reconnect is needed to avoid such situation after confirming no send data.
-                Glib::Mutex::Lock lock(_mutexTx);
-                if (_obuf->len == 0) {
-                    try
+                try
+                {
+                    Glib::Mutex::Lock lock(_mutexTx);
+                    for (;;)
                     {
-                        TRACEPUT("Reconnecting...");
-                        close();
-                        _state = STATE_CONNECT_RESPONSE;
-                        _updateCount = 0;
-                        ConsoleConnector::open(_location.c_str(), _authorization.c_str());
-                        _readyCount = 0;
-                        _reconnectCount++;
-                        if (_reconnectCount % 10 == 0)
+                        ssize_t n = send();
+                        if (n < 0)
                         {
-                            _readyCountThreshold = READY_COUNT_THRESHOLD(_reconnectCount);
+                            // no more data
+                            break;
                         }
                     }
-                    catch (Exception ex)
+                    TRACEPUT("Reconnecting...");
+                    close();
+                    _state = STATE_CONNECT_RESPONSE;
+                    _updateCount = 0;
+                    ConsoleConnector::open(_location.c_str(), _authorization.c_str());
+                    _readyCount = 0;
+                    _reconnectCount++;
+                    if (_reconnectCount % 10 == 0)
                     {
-                        _state = STATE_CLOSED;
-                        ConsoleConnector::close();
+                        _readyCountThreshold = READY_COUNT_THRESHOLD(_reconnectCount);
                     }
+                }
+                catch (Exception ex)
+                {
+                    _state = STATE_CLOSED;
+                    ConsoleConnector::close();
                 }
             }
             else if (_readyCount > 0 && _readyCount % 1000 == 0)
