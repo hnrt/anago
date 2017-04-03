@@ -139,7 +139,6 @@ namespace hnrt
             ProtocolVersion(int version);
             int parse();
             void set(int version);
-            void write(U8*& w, U8* s);
 
         } __attribute__((__packed__));
 
@@ -165,7 +164,6 @@ namespace hnrt
             U8 securityType;
 
             Security37Response(int value);
-            void write(U8*& w, U8* s);
 
         } __attribute__((__packed__));
 
@@ -210,7 +208,6 @@ namespace hnrt
             U8 sharedFlag;
 
             ClientInit(U8 value);
-            void write(U8*& w, U8* s);
 
         } __attribute__((__packed__));
 

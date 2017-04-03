@@ -41,6 +41,7 @@ VirtualMachineNotebook::VirtualMachineNotebook(const RefPtr<VirtualMachine>& vm)
     , _consoleDocked(true)
     , _consoleFullscreen(false)
     , _lastPowerState(XEN_VM_POWER_STATE_UNDEFINED)
+    , _updating(false)
 {
     Trace trace(StringBuffer().format("VirtualMachineNotebook@%zx::ctor", this), "name=\"%s\"", vm->getName().c_str());
 
@@ -259,6 +260,13 @@ void VirtualMachineNotebook::onUpdated(RefPtr<XenObject> object, int what)
 
 void VirtualMachineNotebook::update()
 {
+    if (_updating)
+    {
+        return;
+    }
+
+    _updating = true;
+
     XenPtr<xen_vm_record> record = _vm->getRecord();
 
     if (_lastPowerState != record->power_state)
@@ -276,6 +284,8 @@ void VirtualMachineNotebook::update()
     }
 
     _ssv.getTreeView().set(_vm);
+
+    _updating = false;
 }
 
 
@@ -285,10 +295,16 @@ void VirtualMachineNotebook::openConsole()
     {
         _consoleWidth = 0;
         _consoleHeight = 0;
-        Session& session = _vm->getSession();
-        Session::Lock lock(session);
+        Glib::ustring location;
+        Glib::ustring authString;
+        {
+            Session& session = _vm->getSession();
+            Session::Lock lock(session);
+            location = _vm->getConsoleLocation();
+            authString = session.getConnectSpec().getBasicAuthString();
+        }
         _consoleView.show();
-        _consoleView.open(_vm->getConsoleLocation().c_str(), session.getConnectSpec().getBasicAuthString().c_str());
+        _consoleView.open(location.c_str(), authString.c_str());
     }
 }
 

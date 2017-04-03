@@ -127,11 +127,7 @@ void SignalManagerImpl::notify(const ConsoleView& cv, const ConsoleView::Message
 {
     TRACE("SignalManagerImpl::notify", "cv=%zx message.type=%d", &cv, message.type);
     int size = enqueue(cv, message);
-    if (ThreadManager::instance().isMain())
-    {
-        onNotify();
-    }
-    else if (size == 1)
+    if (size == 1)
     {
         _dispatcher();
     }
@@ -183,11 +179,7 @@ void SignalManagerImpl::notify(const RefPtr<XenObject>& object, int notification
 {
     TRACE("SignalManagerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
     int size = enqueue(object, notification);
-    if (ThreadManager::instance().isMain())
-    {
-        onNotify();
-    }
-    else if (size == 1)
+    if (size == 1)
     {
         _dispatcher();
     }

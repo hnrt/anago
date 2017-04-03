@@ -12,11 +12,6 @@
 #define READ32(v,p) do{v=*p++;v<<=8;v|=*p++;v<<=8;v|=*p++;v<<=8;v|=*p++;}while(0)
 #define SKIP(v,p) p+=sizeof(v)
 
-#define WRITE8(p,v) *p++=v
-#define WRITE16(p,v) do{U16 _x=(U16)(v);p+=2;p[-1]=_x&0xFF;_x>>=8;p[-2]=_x&0xFF;}while(0)
-#define WRITE32(p,v) do{U32 _x=(U32)(v);p+=4;p[-1]=_x&0xFF;_x>>=8;p[-2]=_x&0xFF;_x>>=8;p[-3]=_x&0xFF;_x>>=8;p[-4]=_x&0xFF;}while(0)
-#define PAD(p,v) do{size_t _n=sizeof(v);memset(p,0,_n);p+=_n;}while(0)
-
 
 using namespace hnrt;
 
@@ -98,17 +93,6 @@ void Rfb::ProtocolVersion::set(int version)
 }
 
 
-void Rfb::ProtocolVersion::write(U8*& w, U8* s)
-{
-    if (w + sizeof(value) > s)
-    {
-        throw NotEnoughSpaceException(sizeof(value));
-    }
-    memcpy(w, value, sizeof(value));
-    w += sizeof(value);
-}
-
-
 Rfb::Security37Ptr::Security37Ptr(const U8*& r, const U8* s)
     : ptr(NULL)
 {
@@ -142,16 +126,6 @@ Rfb::Security37Ptr::~Security37Ptr()
 Rfb::Security37Response::Security37Response(int value)
     : securityType((U8)value)
 {
-}
-
-
-void Rfb::Security37Response::write(U8*& w, U8* s)
-{
-    if (w + sizeof(Security37Response) > s)
-    {
-        throw NotEnoughSpaceException(sizeof(Security37Response));
-    }
-    WRITE8(w, securityType);
 }
 
 
@@ -221,16 +195,6 @@ Rfb::Security33::Security33(const U8*& r, const U8* s)
 Rfb::ClientInit::ClientInit(U8 value)
     : sharedFlag(value)
 {
-}
-
-
-void Rfb::ClientInit::write(U8*& w, U8* s)
-{
-    if (w + sizeof(ClientInit) > s)
-    {
-        throw NotEnoughSpaceException(sizeof(ClientInit));
-    }
-    WRITE8(w, sharedFlag);
 }
 
 

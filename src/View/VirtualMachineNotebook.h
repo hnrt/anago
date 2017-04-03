@@ -105,6 +105,8 @@ namespace hnrt
 
         sigc::connection _connectionSession;
         sigc::connection _connection;
+
+        bool _updating;
     };
 }
 

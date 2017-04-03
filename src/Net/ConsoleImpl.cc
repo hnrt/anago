@@ -260,6 +260,7 @@ void ConsoleImpl::run()
 
     if (sender)
     {
+        _terminate = true;
         _condTx.signal();
         sender->join();
     }
@@ -670,6 +671,7 @@ void ConsoleImpl::processOutgoingData()
         {
             Buffer* buf = new Buffer(sizeof(Rfb::SetPixelFormat));
             Rfb::SetPixelFormat& pf = *(new(buf->addr) Rfb::SetPixelFormat(_pixelFormat));
+            TRACEPUT("SetPixelFormat: messageType=%d", pf.messageType);
             TRACEPUT("SetPixelFormat: bpp=%d", pf.pixelFormat.bitsPerPixel);
             TRACEPUT("SetPixelFormat: depth=%d", pf.pixelFormat.depth);
             TRACEPUT("SetPixelFormat: big-endian=%d", pf.pixelFormat.bigEndian);
@@ -690,6 +692,7 @@ void ConsoleImpl::processOutgoingData()
         {
             Buffer* buf = new Buffer(sizeof(Rfb::SetEncodings) + 2 * sizeof(Rfb::S32));
             Rfb::SetEncodings& ep = *(new(buf->addr) Rfb::SetEncodings(Rfb::RAW, Rfb::DESKTOP_SIZE_PSEUDO));
+            TRACEPUT("SetEncodings: messageType=%d", ep.messageType);
             TRACEPUT("SetEncodings: number-of-encodings=%d", ep.numerOfEncodings);
             TRACEPUT("SetEncodings: encoding-type[0]=%d", ep.encodingTypes[0]);
             TRACEPUT("SetEncodings: encoding-type[1]=%d", ep.encodingTypes[1]);
@@ -719,19 +722,6 @@ void ConsoleImpl::processOutgoingData()
 
         case STATE_READY: // in case of server not responding
         {
-#if 0
-            Buffer* buf = new Buffer(sizeof(Rfb::FramebufferUpdateRequest));
-            Rfb::FramebufferUpdateRequest& fu = *(new(buf->addr) Rfb::FramebufferUpdateRequest(0, 0, 0, _width, _height));
-            TRACEPUT("FramebufferUpdateRequest: messageType=%d", fu.messageType);
-            TRACEPUT("FramebufferUpdateRequest: incremental=%d", fu.incremental);
-            TRACEPUT("FramebufferUpdateRequest: x=%d", fu.x);
-            TRACEPUT("FramebufferUpdateRequest: y=%d", fu.y);
-            TRACEPUT("FramebufferUpdateRequest: cx=%d", fu.width);
-            TRACEPUT("FramebufferUpdateRequest: cy=%d", fu.height);
-            enqueue(buf);
-            _condTx.signal();
-            _incremental = 1;
-#endif
             _readyCount++;
             break;
         }
