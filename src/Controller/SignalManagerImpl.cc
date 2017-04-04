@@ -191,7 +191,7 @@ void SignalManagerImpl::onNotify()
     TRACE("SignalManagerImpl::onNotify");
 restart:
     {
-        ConsoleView* cv;
+        ConsoleView* cv = NULL;
         ConsoleView::Message message;
         if (dequeue(cv, message))
         {
