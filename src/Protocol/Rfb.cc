@@ -93,6 +93,12 @@ void Rfb::ProtocolVersion::set(int version)
 }
 
 
+void Rfb::ProtocolVersion::write(ByteBuffer& buf)
+{
+    buf.put(value, sizeof(value));
+}
+
+
 Rfb::Security37Ptr::Security37Ptr(const U8*& r, const U8* s)
     : ptr(NULL)
 {
@@ -126,6 +132,12 @@ Rfb::Security37Ptr::~Security37Ptr()
 Rfb::Security37Response::Security37Response(int value)
     : securityType((U8)value)
 {
+}
+
+
+void Rfb::Security37Response::write(ByteBuffer& buf)
+{
+    buf.put(securityType);
 }
 
 
@@ -198,6 +210,12 @@ Rfb::ClientInit::ClientInit(U8 value)
 }
 
 
+void Rfb::ClientInit::write(ByteBuffer& buf)
+{
+    buf.put(sharedFlag);
+}
+
+
 Rfb::ServerInitPtr::ServerInitPtr(const U8*& r, const U8* s)
 {
     if (r + sizeof(ServerInit) > s)
@@ -248,7 +266,17 @@ Rfb::SetPixelFormat::SetPixelFormat(const PixelFormat& value)
 }
 
 
-Rfb::SetEncodings::SetEncodings(S32 encoding1, S32 encoding2)
+void Rfb::SetPixelFormat::write(ByteBuffer& buf)
+{
+    buf.put(messageType);
+    buf.put(padding1);
+    buf.put(padding2);
+    buf.put(padding3);
+    pixelFormat.write(buf);
+}
+
+
+Rfb::SetEncodings2::SetEncodings2(S32 encoding1, S32 encoding2)
     : messageType(SET_ENCODINGS)
     , padding(0)
     , numerOfEncodings(2)
@@ -256,6 +284,16 @@ Rfb::SetEncodings::SetEncodings(S32 encoding1, S32 encoding2)
 {
     encodingTypes[0] = encoding1;
     encodingTypes[1] = encoding2;
+}
+
+
+void Rfb::SetEncodings2::write(ByteBuffer& buf)
+{
+    buf.put(messageType);
+    buf.put(padding);
+    buf.put(numerOfEncodings);
+    buf.put(encodingTypes[0]);
+    buf.put(encodingTypes[1]);
 }
 
 
@@ -270,6 +308,17 @@ Rfb::FramebufferUpdateRequest::FramebufferUpdateRequest(U8 incremental_, U16 x_,
 }
 
 
+void Rfb::FramebufferUpdateRequest::write(ByteBuffer& buf)
+{
+    buf.put(messageType);
+    buf.put(incremental);
+    buf.put(x);
+    buf.put(y);
+    buf.put(width);
+    buf.put(height);
+}
+
+
 Rfb::KeyEvent::KeyEvent(U8 downFlag_, U32 key_)
     : messageType(KEY_EVENT)
     , downFlag(downFlag_)
@@ -277,6 +326,16 @@ Rfb::KeyEvent::KeyEvent(U8 downFlag_, U32 key_)
     , padding2(0)
     , key(key_)
 {
+}
+
+
+void Rfb::KeyEvent::write(ByteBuffer& buf)
+{
+    buf.put(messageType);
+    buf.put(downFlag);
+    buf.put(padding1);
+    buf.put(padding2);
+    buf.put(key);
 }
 
 
@@ -290,12 +349,31 @@ Rfb::ScanKeyEvent::ScanKeyEvent(U8 downFlag_, U32 key_)
 }
 
 
+void Rfb::ScanKeyEvent::write(ByteBuffer& buf)
+{
+    buf.put(messageType);
+    buf.put(downFlag);
+    buf.put(padding1);
+    buf.put(padding2);
+    buf.put(key);
+}
+
+
 Rfb::PointerEvent::PointerEvent(U8 buttonMask_, U16 x_, U16 y_)
     : messageType(POINTER_EVENT)
     , buttonMask(buttonMask_)
     , x(x_)
     , y(y_)
 {
+}
+
+
+void Rfb::PointerEvent::write(ByteBuffer& buf)
+{
+    buf.put(messageType);
+    buf.put(buttonMask);
+    buf.put(x);
+    buf.put(y);
 }
 
 
@@ -387,6 +465,24 @@ const Rfb::U8* Rfb::PixelFormat::read(const U8* r)
     SKIP(padding2, r);
     SKIP(padding3, r);
     return r;
+}
+
+
+void Rfb::PixelFormat::write(ByteBuffer& buf)
+{
+    buf.put(bitsPerPixel);
+    buf.put(depth);
+    buf.put(bigEndian);
+    buf.put(trueColour);
+    buf.put(rMax);
+    buf.put(gMax);
+    buf.put(bMax);
+    buf.put(rShift);
+    buf.put(gShift);
+    buf.put(bShift);
+    buf.put(padding1);
+    buf.put(padding2);
+    buf.put(padding3);
 }
 
 

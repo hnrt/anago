@@ -10,6 +10,7 @@
 #include <curl/curl.h>
 #include <map>
 #include <list>
+#include "Base/ByteBuffer.h"
 
 
 namespace hnrt
@@ -22,25 +23,7 @@ namespace hnrt
 
     protected:
 
-        struct Buffer
-        {
-            char* addr;
-            size_t size;
-            size_t len;
-            bool fixed;
-
-            Buffer(size_t = 0);
-            Buffer(const void*, size_t);
-            ~Buffer();
-            bool extend(size_t = 0);
-            void append(const void*, size_t);
-            void discard(size_t);
-            char* end() const { return addr + size; }
-            char* cur() const { return addr + len; }
-            size_t curLen() const { return size - len; }
-        };
-
-        typedef std::list<Buffer*> SendQueue;
+        typedef std::list<RefPtr<ByteBuffer> > SendQueue;
         typedef std::map<Glib::ustring, Glib::ustring> HeaderMap;
         typedef std::pair<Glib::ustring, Glib::ustring> HeaderEntry;
 
@@ -50,7 +33,7 @@ namespace hnrt
         void open(const char* location, const char* authorization);
         void close();
         void clear();
-        void enqueue(Buffer*);
+        void enqueue(const RefPtr<ByteBuffer>&);
         bool dequeue();
         ssize_t send();
         size_t recv();
@@ -63,8 +46,8 @@ namespace hnrt
 
         CURL* _curl;
         int _sockHost;
-        Buffer* _ibuf;
-        Buffer* _obuf;
+        RefPtr<ByteBuffer> _ibuf;
+        RefPtr<ByteBuffer> _obuf;
         SendQueue _oqueue;
         Glib::Mutex _omutex;
         int _statusCode;

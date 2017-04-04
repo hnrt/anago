@@ -6,6 +6,7 @@
 
 
 #include <stddef.h>
+#include "Base/ByteBuffer.h"
 
 
 namespace hnrt
@@ -83,6 +84,7 @@ namespace hnrt
 
             PixelFormat();
             const U8* read(const U8* r);
+            void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -139,6 +141,7 @@ namespace hnrt
             ProtocolVersion(int version);
             int parse();
             void set(int version);
+            void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -164,6 +167,7 @@ namespace hnrt
             U8 securityType;
 
             Security37Response(int value);
+            void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -208,6 +212,7 @@ namespace hnrt
             U8 sharedFlag;
 
             ClientInit(U8 value);
+            void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -243,17 +248,19 @@ namespace hnrt
             PixelFormat pixelFormat;
 
             SetPixelFormat(const PixelFormat& value);
+            void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
-        struct SetEncodings
+        struct SetEncodings2
         {
             U8 messageType; // 2
             U8 padding;
-            U16 numerOfEncodings;
-            S32 encodingTypes[]; // [numerOfEncodings]
+            U16 numerOfEncodings; // 2
+            S32 encodingTypes[2];
 
-            SetEncodings(S32, S32);
+            SetEncodings2(S32, S32);
+            void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -267,6 +274,7 @@ namespace hnrt
             U16 height;
 
             FramebufferUpdateRequest(U8 incremental_, U16 x_, U16 y_, U16 width_, U16 height_);
+            void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -279,6 +287,7 @@ namespace hnrt
             U32 key;
 
             KeyEvent(U8 downFlag_, U32 key_);
+            void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -292,6 +301,7 @@ namespace hnrt
             U32 key;
 
             ScanKeyEvent(U8 downFlag_, U32 key_);
+            void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -304,6 +314,7 @@ namespace hnrt
             U16 y;
 
             PointerEvent(U8 buttonMask_, U16 x_, U16 y_);
+            void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 

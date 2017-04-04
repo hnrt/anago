@@ -129,6 +129,7 @@ $(OBJDIR)/Base/InterlockedCompareExchange.o \
 $(OBJDIR)/Base/InterlockedExchange.o \
 $(OBJDIR)/Base/InterlockedExchangeAdd.o \
 $(OBJDIR)/Base/RefObj.o \
+$(OBJDIR)/Base/ByteBuffer.o \
 $(OBJDIR)/Base/StringBuffer.o \
 $(OBJDIR)/Controller/Controller.o \
 $(OBJDIR)/Controller/ControllerImpl.o \

@@ -327,8 +327,10 @@ bool ConsoleImpl::processIncomingData()
 {
     TRACE(StringBuffer().format("ConsoleImpl@%zx::processIncomingData", this));
 
-    const Rfb::U8* r = reinterpret_cast<const Rfb::U8*>(_ibuf->addr);
-    const Rfb::U8* s = reinterpret_cast<const Rfb::U8*>(_ibuf->cur());
+    _ibuf->flip();
+
+    const Rfb::U8* r = reinterpret_cast<const Rfb::U8*>(_ibuf->ptr());
+    const Rfb::U8* s = reinterpret_cast<const Rfb::U8*>(_ibuf->ptr() + _ibuf->limit());
 
     try
     {
@@ -560,7 +562,7 @@ bool ConsoleImpl::processIncomingData()
                     {
                         r -= sizeof(Rfb::Rectangle);
                         n += sizeof(Rfb::Rectangle);
-                        if (n > _ibuf->size)
+                        if (_ibuf->limit() + (int)n > _ibuf->capacity())
                         {
                             throw Rfb::NotEnoughSpaceException(n);
                         }
@@ -600,10 +602,10 @@ bool ConsoleImpl::processIncomingData()
     }
     catch (Rfb::NotEnoughSpaceException ex)
     {
-        size_t n = r - reinterpret_cast<const Rfb::U8*>(_ibuf->addr);
-        _ibuf->extend(_ibuf->len + ex.size);
-        r = reinterpret_cast<const Rfb::U8*>(_ibuf->addr + n);
-        s = reinterpret_cast<const Rfb::U8*>(_ibuf->cur());
+        size_t n = r - reinterpret_cast<const Rfb::U8*>(_ibuf->ptr());
+        _ibuf->capacity(_ibuf->limit() + ex.size);
+        r = reinterpret_cast<const Rfb::U8*>(_ibuf->ptr() + n);
+        s = reinterpret_cast<const Rfb::U8*>(_ibuf->ptr() + _ibuf->limit());
     }
     catch (Rfb::ProtocolException ex)
     {
@@ -613,14 +615,8 @@ bool ConsoleImpl::processIncomingData()
 
 done:
 
-    if (r < s)
-    {
-        _ibuf->discard(r - reinterpret_cast<const Rfb::U8*>(_ibuf->addr));
-    }
-    else
-    {
-        _ibuf->len = 0;
-    }
+    _ibuf->position(r - reinterpret_cast<const Rfb::U8*>(_ibuf->ptr()));
+    _ibuf->prepareForRead();
 
     return _state < STATE_COMPLETED ? true : false;
 }
@@ -636,9 +632,11 @@ void ConsoleImpl::processOutgoingData()
         {
         case STATE_START_RESPONSE:
         {
-            Buffer* buf = new Buffer(sizeof(Rfb::ProtocolVersion));
-            new(buf->addr) Rfb::ProtocolVersion(_protocolVersion);
+            Rfb::ProtocolVersion pv(_protocolVersion);
             TRACEPUT("ProtocolVersion: response=%d.%d", _protocolVersion / 1000, _protocolVersion % 1000);
+            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::ProtocolVersion));
+            pv.write(*buf);
+            buf->flip();
             enqueue(buf);
             _condTx.signal();
             InterlockedCompareExchange(&_state, _protocolVersion >= 3007 ? STATE_SECURITY37 : STATE_SECURITY33, STATE_START_RESPONSE);
@@ -647,9 +645,11 @@ void ConsoleImpl::processOutgoingData()
 
         case STATE_SECURITY37_RESPONSE:
         {
-            Buffer* buf = new Buffer(sizeof(Rfb::Security37Response));
-            Rfb::Security37Response& sr = *(new(buf->addr) Rfb::Security37Response(Rfb::NONE));
+            Rfb::Security37Response sr(Rfb::NONE);
             TRACEPUT("Security: response=%d", sr.securityType);
+            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::Security37Response));
+            sr.write(*buf);
+            buf->flip();
             enqueue(buf);
             _condTx.signal();
             InterlockedCompareExchange(&_state, _protocolVersion >= 3008 ? STATE_SECURITY_RESULT : STATE_CLIENTINIT, STATE_SECURITY37_RESPONSE);
@@ -658,9 +658,11 @@ void ConsoleImpl::processOutgoingData()
 
         case STATE_CLIENTINIT:
         {
-            Buffer* buf = new Buffer(sizeof(Rfb::ClientInit));
-            Rfb::ClientInit& ci = *(new(buf->addr) Rfb::ClientInit(0));
+            Rfb::ClientInit ci(0);
             TRACEPUT("ClientInit: shared-flag=%d", ci.sharedFlag);
+            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::ClientInit));
+            ci.write(*buf);
+            buf->flip();
             enqueue(buf);
             _condTx.signal();
             InterlockedCompareExchange(&_state, STATE_SERVERINIT, STATE_CLIENTINIT);
@@ -669,8 +671,7 @@ void ConsoleImpl::processOutgoingData()
 
         case STATE_SETPIXELFORMAT:
         {
-            Buffer* buf = new Buffer(sizeof(Rfb::SetPixelFormat));
-            Rfb::SetPixelFormat& pf = *(new(buf->addr) Rfb::SetPixelFormat(_pixelFormat));
+            Rfb::SetPixelFormat pf(_pixelFormat);
             TRACEPUT("SetPixelFormat: messageType=%d", pf.messageType);
             TRACEPUT("SetPixelFormat: bpp=%d", pf.pixelFormat.bitsPerPixel);
             TRACEPUT("SetPixelFormat: depth=%d", pf.pixelFormat.depth);
@@ -682,6 +683,9 @@ void ConsoleImpl::processOutgoingData()
             TRACEPUT("SetPixelFormat: r-shift=%d", pf.pixelFormat.rShift);
             TRACEPUT("SetPixelFormat: g-shift=%d", pf.pixelFormat.gShift);
             TRACEPUT("SetPixelFormat: b-shift=%d", pf.pixelFormat.bShift);
+            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::SetPixelFormat));
+            pf.write(*buf);
+            buf->flip();
             enqueue(buf);
             _condTx.signal();
             InterlockedCompareExchange(&_state, STATE_SETENCODINGS, STATE_SETPIXELFORMAT);
@@ -690,12 +694,14 @@ void ConsoleImpl::processOutgoingData()
 
         case STATE_SETENCODINGS:
         {
-            Buffer* buf = new Buffer(sizeof(Rfb::SetEncodings) + 2 * sizeof(Rfb::S32));
-            Rfb::SetEncodings& ep = *(new(buf->addr) Rfb::SetEncodings(Rfb::RAW, Rfb::DESKTOP_SIZE_PSEUDO));
-            TRACEPUT("SetEncodings: messageType=%d", ep.messageType);
-            TRACEPUT("SetEncodings: number-of-encodings=%d", ep.numerOfEncodings);
-            TRACEPUT("SetEncodings: encoding-type[0]=%d", ep.encodingTypes[0]);
-            TRACEPUT("SetEncodings: encoding-type[1]=%d", ep.encodingTypes[1]);
+            Rfb::SetEncodings2 se(Rfb::RAW, Rfb::DESKTOP_SIZE_PSEUDO);
+            TRACEPUT("SetEncodings: messageType=%d", se.messageType);
+            TRACEPUT("SetEncodings: number-of-encodings=%d", se.numerOfEncodings);
+            TRACEPUT("SetEncodings: encoding-type[0]=%d", se.encodingTypes[0]);
+            TRACEPUT("SetEncodings: encoding-type[1]=%d", se.encodingTypes[1]);
+            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::SetEncodings2));
+            se.write(*buf);
+            buf->flip();
             enqueue(buf);
             _condTx.signal();
             InterlockedCompareExchange(&_state, STATE_FBUPDATEREQUEST, STATE_SETENCODINGS);
@@ -704,14 +710,16 @@ void ConsoleImpl::processOutgoingData()
 
         case STATE_FBUPDATEREQUEST:
         {
-            Buffer* buf = new Buffer(sizeof(Rfb::FramebufferUpdateRequest));
-            Rfb::FramebufferUpdateRequest& fu = *(new(buf->addr) Rfb::FramebufferUpdateRequest(_incremental, 0, 0, _width, _height));
+            Rfb::FramebufferUpdateRequest fu(_incremental, 0, 0, _width, _height);
             TRACEPUT("FramebufferUpdateRequest: messageType=%d", fu.messageType);
             TRACEPUT("FramebufferUpdateRequest: incremental=%d", fu.incremental);
             TRACEPUT("FramebufferUpdateRequest: x=%d", fu.x);
             TRACEPUT("FramebufferUpdateRequest: y=%d", fu.y);
             TRACEPUT("FramebufferUpdateRequest: cx=%d", fu.width);
             TRACEPUT("FramebufferUpdateRequest: cy=%d", fu.height);
+            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::FramebufferUpdateRequest));
+            fu.write(*buf);
+            buf->flip();
             enqueue(buf);
             _condTx.signal();
             _incremental = 1;
@@ -746,9 +754,11 @@ void ConsoleImpl::sendPointerEvent(unsigned char buttonMask, unsigned short x, u
     {
         try
         {
-            Buffer* buf = new Buffer(sizeof(Rfb::PointerEvent));
-            Rfb::PointerEvent& pe = *(new(buf->addr) Rfb::PointerEvent(buttonMask, x, y));
+            Rfb::PointerEvent pe(buttonMask, x, y);
             TRACEPUT("PointerEvent: %02X %u %u", pe.buttonMask, pe.x, pe.y);
+            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::PointerEvent));
+            pe.write(*buf);
+            buf->flip();
             enqueue(buf);
             _condTx.signal();
         }
@@ -1065,9 +1075,11 @@ void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsi
                 guint scancode = keycodeToScancode[keycode & 0xFF];
                 if (scancode)
                 {
-                    Buffer* buf = new Buffer(sizeof(Rfb::ScanKeyEvent));
-                    Rfb::ScanKeyEvent& ke = *(new(buf->addr) Rfb::ScanKeyEvent(downFlag, scancode));
+                    Rfb::ScanKeyEvent ke(downFlag, scancode);
                     TRACEPUT("ScanKeyEvent: %d %04X", ke.downFlag, ke.key);
+                    RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::ScanKeyEvent));
+                    ke.write(*buf);
+                    buf->flip();
                     enqueue(buf);
                     _condTx.signal();
                     return;
@@ -1075,9 +1087,11 @@ void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsi
             }
             if (keyval)
             {
-                Buffer* buf = new Buffer(sizeof(Rfb::KeyEvent));
-                Rfb::KeyEvent& ke = *(new(buf->addr) Rfb::KeyEvent(downFlag, keyval));
+                Rfb::KeyEvent ke(downFlag, keyval);
                 TRACEPUT("KeyEvent: %d %04X", ke.downFlag, ke.key);
+                RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::KeyEvent));
+                ke.write(*buf);
+                buf->flip();
                 enqueue(buf);
                 _condTx.signal();
             }

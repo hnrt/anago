@@ -25,7 +25,7 @@ using namespace hnrt;
 ConsoleConnector::ConsoleConnector()
     : _curl(NULL)
     , _sockHost(-1)
-    , _ibuf(new Buffer())
+    , _ibuf(ByteBuffer::create(BUFSZ))
     , _obuf(NULL)
     , _statusCode(0)
 {
@@ -35,7 +35,6 @@ ConsoleConnector::ConsoleConnector()
 ConsoleConnector::~ConsoleConnector()
 {
     clear();
-    delete _ibuf;
 }
 
 
@@ -43,14 +42,13 @@ void ConsoleConnector::open(const char* location, const char* authorization)
 {
     TRACE("ConsoleConnector::open", "location=%s authorization=%s", location, authorization);
 
-    clear();
-
     Glib::ustring request = getRequest(location, authorization);
-    enqueue(new Buffer(request.c_str(), request.bytes()));
+
+    clear();
+    _obuf = ByteBuffer::create(request.c_str(), request.bytes());
 
     _sockHost = -1;
-    _ibuf->extend(BUFSZ);
-    _ibuf->len = 0;
+    _ibuf->clear();
     _statusCode = -1;
     _headerMap.clear();
 
@@ -102,18 +100,16 @@ void ConsoleConnector::close()
 void ConsoleConnector::clear()
 {
     Glib::Mutex::Lock lock(_omutex);
-    delete _obuf;
     while (!_oqueue.empty())
     {
         _obuf = _oqueue.front();
         _oqueue.pop_front();
-        delete _obuf;
     }
-    _obuf = NULL;
+    _obuf.reset();
 }
 
 
-void ConsoleConnector::enqueue(Buffer* buf)
+void ConsoleConnector::enqueue(const RefPtr<ByteBuffer>& buf)
 {
     Glib::Mutex::Lock lock(_omutex);
     _oqueue.push_back(buf);
@@ -129,7 +125,6 @@ bool ConsoleConnector::dequeue()
     }
     else
     {
-        delete _obuf;
         _obuf = _oqueue.front();
         _oqueue.pop_front();
         return true;
@@ -139,7 +134,7 @@ bool ConsoleConnector::dequeue()
 
 ssize_t ConsoleConnector::send()
 {
-    if (!_obuf || _obuf->size <= _obuf->len)
+    if (!_obuf || !_obuf->remaining())
     {
         if (!dequeue())
         {
@@ -148,11 +143,11 @@ ssize_t ConsoleConnector::send()
         }
     }
     size_t n = 0;
-    CURLcode result = curl_easy_send(_curl, _obuf->cur(), _obuf->curLen(), &n);
+    CURLcode result = curl_easy_send(_curl, _obuf->cur(), _obuf->remaining(), &n);
     if (result == CURLE_OK)
     {
         Logger::instance().trace("ConsoleConnector::send: CURLE_OK %zu", n);
-        _obuf->len += n;
+        _obuf->position(_obuf->position() + n);
         return n;
     }
     else if (result == CURLE_AGAIN)
@@ -177,14 +172,19 @@ ssize_t ConsoleConnector::send()
 
 size_t ConsoleConnector::recv()
 {
-    _ibuf->extend(_ibuf->len + 256);
-    Logger::instance().trace("ConsoleConnector::recv: %zx %zu", _ibuf->cur(), _ibuf->curLen());
+    const int minSpace = 256;
+    if (_ibuf->remaining() < minSpace)
+    {
+        _ibuf->capacity(_ibuf->limit() + minSpace);
+        _ibuf->limit(_ibuf->capacity());
+    }
+    Logger::instance().trace("ConsoleConnector::recv: %zx %zu", _ibuf->cur(), _ibuf->remaining());
     size_t n = 0;
-    CURLcode result = curl_easy_recv(_curl, _ibuf->cur(), _ibuf->curLen(), &n);
+    CURLcode result = curl_easy_recv(_curl, _ibuf->cur(), _ibuf->remaining(), &n);
     if (result == CURLE_OK)
     {
         Logger::instance().trace("ConsoleConnector::recv: CURLE_OK %zu", n);
-        _ibuf->len += n;
+        _ibuf->position(_ibuf->position() + n);
         return n;
     }
     else if (result == CURLE_AGAIN)
@@ -431,105 +431,4 @@ bool ConsoleConnector::parseHeader(const char* s, size_t n)
         s1 = s8 + 2;
     }
     return false;
-}
-
-
-ConsoleConnector::Buffer::Buffer(size_t fixedSize)
-    : addr(NULL)
-    , size(0)
-    , len(0)
-    , fixed(false)
-{
-    if (fixedSize)
-    {
-        fixed = true;
-        addr = (char*)malloc(fixedSize);
-        if (!addr)
-        {
-            throw std::bad_alloc();
-        }
-        size = fixedSize;
-    }
-}
-
-
-ConsoleConnector::Buffer::Buffer(const void* p, size_t n)
-    : addr(NULL)
-    , size(0)
-    , len(0)
-    , fixed(false)
-{
-    if (p && n)
-    {
-        fixed = true;
-        addr = (char*)malloc(n);
-        if (!addr)
-        {
-            throw std::bad_alloc();
-        }
-        memcpy(addr, p, n);
-        size = n;
-        //Logger::instance().trace("ConsoleConnector::Buffer::ctor: %zu [%.*s]", n, (int)n, (char*)addr);
-    }
-}
-
-
-ConsoleConnector::Buffer::~Buffer()
-{
-    free(addr);
-}
-
-
-bool ConsoleConnector::Buffer::extend(size_t sizeHint)
-{
-    if (fixed)
-    {
-        throw std::runtime_error("ConsoleConnector::Buffer::extend: Fixed buffer.");
-    }
-    if (0 < sizeHint && sizeHint <= size)
-    {
-        return false;
-    }
-    size_t sizeNew = size;
-    do
-    {
-        sizeNew += BUFSZ;
-    }
-    while (sizeNew < sizeHint);
-    char* addrNew = (char*)realloc(addr, sizeNew);
-    if (!addrNew)
-    {
-        throw std::bad_alloc();
-    }
-    addr = addrNew;
-    size = sizeNew;
-    return true;
-}
-
-
-void ConsoleConnector::Buffer::append(const void* p, size_t n)
-{
-    if (p && n)
-    {
-        if (size < len + n)
-        {
-            extend(len + n);
-        }
-        memcpy(addr + len, p, n);
-        len += n;
-    }
-}
-
-
-void ConsoleConnector::Buffer::discard(size_t n)
-{
-    if (len <= n)
-    {
-        len = 0;
-    }
-    else
-    {
-        len -= n;
-        memmove(addr, addr + n, len);
-    }
 }
