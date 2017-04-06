@@ -23,7 +23,6 @@ namespace hnrt
 
     protected:
 
-        typedef std::list<RefPtr<ByteBuffer> > SendQueue;
         typedef std::map<Glib::ustring, Glib::ustring> HeaderMap;
         typedef std::pair<Glib::ustring, Glib::ustring> HeaderEntry;
 
@@ -32,24 +31,19 @@ namespace hnrt
         void operator =(const ConsoleConnector &);
         void open(const char* location, const char* authorization);
         void close();
-        void clear();
-        void enqueue(const RefPtr<ByteBuffer>&);
-        bool dequeue();
         ssize_t send();
         size_t recv();
         Glib::ustring getRequest(const char* location, const char* authorization);
         void parseLocation(const char* location, Glib::ustring& host, Glib::ustring& absPathAndQuery);
-        bool getHeaderLength(const char* s, size_t n, size_t& length);
-        bool parseHeader(const char* s, size_t n);
+        bool getHeaderLength(size_t&);
+        bool parseHeader(size_t);
         bool extendInputBuffer(size_t sizeHint = 0);
         bool extendOutputBuffer(size_t sizeHint = 0);
 
         CURL* _curl;
         int _sockHost;
-        RefPtr<ByteBuffer> _ibuf;
-        RefPtr<ByteBuffer> _obuf;
-        SendQueue _oqueue;
-        Glib::Mutex _omutex;
+        ByteBuffer _ibuf;
+        ByteBuffer _obuf;
         int _statusCode;
         HeaderMap _headerMap;
     };

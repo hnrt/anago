@@ -150,7 +150,6 @@ void ConsoleImpl::close()
     {
         ConsoleConnector::close();
     }
-    clear();
 }
 
 
@@ -327,36 +326,26 @@ bool ConsoleImpl::processIncomingData()
 {
     TRACE(StringBuffer().format("ConsoleImpl@%zx::processIncomingData", this));
 
-    _ibuf->flip();
-
-    const Rfb::U8* r = reinterpret_cast<const Rfb::U8*>(_ibuf->ptr());
-    const Rfb::U8* s = reinterpret_cast<const Rfb::U8*>(_ibuf->ptr() + _ibuf->limit());
-
     try
     {
-        while (r < s)
+        while (_ibuf.remaining())
         {
             switch (_state)
             {
             case STATE_CONNECT_RESPONSE:
             {
                 size_t headerLength = 0;
-                if (!getHeaderLength(reinterpret_cast<const char*>(r), s - r, headerLength))
+                if (!getHeaderLength(headerLength))
                 {
-                    if (s - r > 65536)
-                    {
-                        _state = STATE_ERROR;
-                        throw ConsoleException("Unable to find the end of response. Possibly broken.");
-                    }
                     // not yet received all of the response -- waiting for the rest
                     goto done;
                 }
-                if (!parseHeader(reinterpret_cast<const char*>(r), headerLength))
+                if (!parseHeader(headerLength))
                 {
                     _state = STATE_ERROR;
-                    throw ConsoleException("Malformed response headers: %.*s", static_cast<int>(headerLength), r);
+                    throw ConsoleException("Malformed response headers: %.*s", static_cast<int>(headerLength), _ibuf.cur());
                 }
-                r += headerLength;
+                _ibuf.get(NULL, headerLength);
                 TRACEPUT("CONNECT status code %d", _statusCode);
                 if (_statusCode == 200)
                 {
@@ -378,7 +367,7 @@ bool ConsoleImpl::processIncomingData()
 
             case STATE_START:
             {
-                Rfb::ProtocolVersion pv(r, s);
+                Rfb::ProtocolVersion pv(_ibuf);
                 _protocolVersion = pv.parse();
                 TRACEPUT("ProtocolVersion: %d.%d", _protocolVersion / 1000, _protocolVersion % 1000);
                 if (_protocolVersion > 3008)
@@ -395,17 +384,11 @@ bool ConsoleImpl::processIncomingData()
 
             case STATE_SECURITY37:
             {
-                Rfb::Security37Ptr sp(r, s);
-                if (sp.connectionFailure())
+                Rfb::Security37 s(_ibuf);
+                TRACEPUT("number-of-security-types=%d", s.numberOfSecurityTypes);
+                for (Rfb::U32 i = 0; i < s.numberOfSecurityTypes; i++)
                 {
-                    _state = STATE_CONNECTION_FAILURE;
-                    TRACEPUT("number-of-security-types=0 (connection failure)");
-                    break;
-                }
-                TRACEPUT("number-of-security-types=%d", sp->numberOfSecurityTypes);
-                for (Rfb::U32 i = 0; i < sp->numberOfSecurityTypes; i++)
-                {
-                    TRACEPUT("security-type[%u]=%d", i, sp->securityTypes[i]);
+                    TRACEPUT("security-type[%u]=%d", i, s.securityTypes[i]);
                 }
                 InterlockedCompareExchange(&_state, STATE_SECURITY37_RESPONSE, STATE_SECURITY37);
                 goto done;
@@ -413,14 +396,14 @@ bool ConsoleImpl::processIncomingData()
 
             case STATE_SECURITY33:
             {
-                Rfb::Security33 st(r, s);
-                TRACEPUT("security-type=%d", st.securityType);
-                if (st.securityType == Rfb::INVALID)
+                Rfb::Security33 s(_ibuf);
+                TRACEPUT("security-type=%d", s.securityType);
+                if (s.securityType == Rfb::INVALID)
                 {
                     _state = STATE_CONNECTION_FAILURE;
                     break;
                 }
-                else if (st.securityType == Rfb::NONE)
+                else if (s.securityType == Rfb::NONE)
                 {
                     InterlockedCompareExchange(&_state, STATE_CLIENTINIT, STATE_SECURITY33);
                     goto done;
@@ -435,18 +418,18 @@ bool ConsoleImpl::processIncomingData()
             case STATE_CONNECTION_FAILURE:
             case STATE_SECURITY_FAILURE:
             {
-                Rfb::FailureDescriptionPtr dp(r, s);
+                Rfb::FailureDescription fd(_ibuf);
                 _state = STATE_ERROR;
                 throw ConsoleException(
                     _state == STATE_CONNECTION_FAILURE ? "Connection failure: %s" :
                     _state == STATE_SECURITY_FAILURE ? "Security failure: %s" :
                     "%s",
-                    dp->reasonString);
+                    fd.reasonString);
             }
 
             case STATE_SECURITY_RESULT:
             {
-                Rfb::SecurityResult sr(r, s);
+                Rfb::SecurityResult sr(_ibuf);
                 TRACEPUT("SecurityResult: %u", sr.status);
                 if (sr.status == Rfb::OK)
                 {
@@ -462,8 +445,8 @@ bool ConsoleImpl::processIncomingData()
 
             case STATE_SERVERINIT:
             {
-                Rfb::ServerInitPtr si(r, s);
-                _name.assign((char*)si->nameString, si->nameLength);
+                Rfb::ServerInit si(_ibuf);
+                _name.assign((char*)si.nameString, si.nameLength);
 #if 0
                 if (_name == "QEMU")
                 {
@@ -475,22 +458,22 @@ bool ConsoleImpl::processIncomingData()
                 {
                     _scanCodeEnabled = false;
                 }
-                TRACEPUT("ServerInit: width=%d", si->width);
-                TRACEPUT("ServerInit: height=%d", si->height);
-                TRACEPUT("ServerInit: bpp=%d", si->pixelFormat.bitsPerPixel);
-                TRACEPUT("ServerInit: depth=%d", si->pixelFormat.depth);
-                TRACEPUT("ServerInit: big-endian=%d", si->pixelFormat.bigEndian);
-                TRACEPUT("ServerInit: true-colour=%d", si->pixelFormat.trueColour);
-                TRACEPUT("ServerInit: r-max=%d", si->pixelFormat.rMax);
-                TRACEPUT("ServerInit: g-max=%d", si->pixelFormat.gMax);
-                TRACEPUT("ServerInit: b-max=%d", si->pixelFormat.bMax);
-                TRACEPUT("ServerInit: r-shift=%d", si->pixelFormat.rShift);
-                TRACEPUT("ServerInit: g-shift=%d", si->pixelFormat.gShift);
-                TRACEPUT("ServerInit: b-shift=%d", si->pixelFormat.bShift);
-                TRACEPUT("ServerInit: name=%s", si->nameString);
-                if (si->pixelFormat.bitsPerPixel == 24 || si->pixelFormat.bitsPerPixel == 32)
+                TRACEPUT("ServerInit: width=%d", si.width);
+                TRACEPUT("ServerInit: height=%d", si.height);
+                TRACEPUT("ServerInit: bpp=%d", si.pixelFormat.bitsPerPixel);
+                TRACEPUT("ServerInit: depth=%d", si.pixelFormat.depth);
+                TRACEPUT("ServerInit: big-endian=%d", si.pixelFormat.bigEndian);
+                TRACEPUT("ServerInit: true-colour=%d", si.pixelFormat.trueColour);
+                TRACEPUT("ServerInit: r-max=%d", si.pixelFormat.rMax);
+                TRACEPUT("ServerInit: g-max=%d", si.pixelFormat.gMax);
+                TRACEPUT("ServerInit: b-max=%d", si.pixelFormat.bMax);
+                TRACEPUT("ServerInit: r-shift=%d", si.pixelFormat.rShift);
+                TRACEPUT("ServerInit: g-shift=%d", si.pixelFormat.gShift);
+                TRACEPUT("ServerInit: b-shift=%d", si.pixelFormat.bShift);
+                TRACEPUT("ServerInit: name=%s", si.nameString);
+                if (si.pixelFormat.bitsPerPixel == 24 || si.pixelFormat.bitsPerPixel == 32)
                 {
-                    _pixelFormat.bitsPerPixel = si->pixelFormat.bitsPerPixel;
+                    _pixelFormat.bitsPerPixel = si.pixelFormat.bitsPerPixel;
                 }
                 else if (_protocolVersion == 3003 && _name == "XenServer Virtual Terminal")
                 {
@@ -501,8 +484,8 @@ bool ConsoleImpl::processIncomingData()
                 {
                     _pixelFormat.bitsPerPixel = _view.getDefaultBpp();
                 }
-                _width = si->width;
-                _height = si->height;
+                _width = si.width;
+                _height = si.height;
                 _view.init(_width, _height, _pixelFormat.bitsPerPixel);
                 _incremental = 0;
                 InterlockedCompareExchange(&_state, STATE_SETPIXELFORMAT, STATE_SERVERINIT);
@@ -511,11 +494,11 @@ bool ConsoleImpl::processIncomingData()
 
             case STATE_READY:
             {
-                switch (*r)
+                switch (_ibuf.peekU8(0))
                 {
                 case Rfb::FRAME_BUFFER_UPDATE:
                 {
-                    Rfb::FramebufferUpdate fu(r, s);
+                    Rfb::FramebufferUpdate fu(_ibuf);
                     _numRects = fu.numberOfRectangles;
                     if (_numRects)
                     {
@@ -528,49 +511,38 @@ bool ConsoleImpl::processIncomingData()
                 }
                 case Rfb::SET_COLOR_MAP_ENTRIES:
                 {
-                    Rfb::SetColourMapEntriesPtr cm(r, s);
-                    TRACEPUT("SetColourMapEntries: first-color=0x%04x num-colours=%u", cm->firstColour, cm->numberOfColours);
+                    Rfb::SetColourMapEntries cm(_ibuf);
+                    TRACEPUT("SetColourMapEntries: first-color=0x%04x num-colours=%u", cm.firstColour, cm.numberOfColours);
                     break;
                 }
                 case Rfb::BELL:
                 {
-                    Rfb::Bell b(r);
+                    Rfb::Bell b(_ibuf);
                     TRACEPUT("Bell");
                     _view.bell();
                     break;
                 }
                 case Rfb::SERVER_CUT_TEXT:
                 {
-                    Rfb::ServerCutTextPtr tp(r, s);
-                    TRACEPUT("ServerCutText: %s", tp->text);
+                    Rfb::ServerCutText ct(_ibuf);
+                    TRACEPUT("ServerCutText: %s", ct.text);
                     break;
                 }
                 default:
                     _state = STATE_ERROR;
-                    throw ConsoleException("Unsupported RFB message type: %d", *r);
+                    throw ConsoleException("Unsupported RFB message type: %d", _ibuf.peekU8(0));
                 }
                 break;
             }
 
             case STATE_FBUPDATE:
             {
-                Rfb::Rectangle fu(r, s);
+                Rfb::Rectangle fu(_ibuf, _pixelFormat.bitsPerPixel);
                 if (fu.encodingType == Rfb::RAW)
                 {
-                    size_t n = fu.width * fu.height * _pixelFormat.bitsPerPixel / 8;
-                    if (r + n > s)
-                    {
-                        r -= sizeof(Rfb::Rectangle);
-                        n += sizeof(Rfb::Rectangle);
-                        if (_ibuf->limit() + (int)n > _ibuf->capacity())
-                        {
-                            throw Rfb::NotEnoughSpaceException(n);
-                        }
-                        goto done;
-                    }
                     TRACEPUT("FramebufferUpdate: %u %u %u %u", fu.x, fu.y, fu.width, fu.height);
-                    _view.copy(fu.x, fu.y, fu.width, fu.height, r);
-                    r += n;
+                    _view.copy(fu.x, fu.y, fu.width, fu.height, _ibuf.cur());
+                    _ibuf.get(NULL, fu.dataSize(_pixelFormat.bitsPerPixel));
                 }
                 else if (fu.encodingType == Rfb::DESKTOP_SIZE_PSEUDO)
                 {
@@ -597,15 +569,17 @@ bool ConsoleImpl::processIncomingData()
             }
         }
     }
+    catch (std::bad_alloc)
+    {
+        _state = STATE_ERROR;
+        Logger::instance().error("Out of memory.");
+    }
     catch (Rfb::NeedMoreDataException ex)
     {
-    }
-    catch (Rfb::NotEnoughSpaceException ex)
-    {
-        size_t n = r - reinterpret_cast<const Rfb::U8*>(_ibuf->ptr());
-        _ibuf->capacity(_ibuf->limit() + ex.size);
-        r = reinterpret_cast<const Rfb::U8*>(_ibuf->ptr() + n);
-        s = reinterpret_cast<const Rfb::U8*>(_ibuf->ptr() + _ibuf->limit());
+        if (_ibuf.limit() == _ibuf.capacity())
+        {
+            _ibuf.capacity(_ibuf.capacity() * 2);
+        }
     }
     catch (Rfb::ProtocolException ex)
     {
@@ -614,9 +588,6 @@ bool ConsoleImpl::processIncomingData()
     }
 
 done:
-
-    _ibuf->position(r - reinterpret_cast<const Rfb::U8*>(_ibuf->ptr()));
-    _ibuf->prepareForRead();
 
     return _state < STATE_COMPLETED ? true : false;
 }
@@ -634,10 +605,10 @@ void ConsoleImpl::processOutgoingData()
         {
             Rfb::ProtocolVersion pv(_protocolVersion);
             TRACEPUT("ProtocolVersion: response=%d.%d", _protocolVersion / 1000, _protocolVersion % 1000);
-            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::ProtocolVersion));
-            pv.write(*buf);
-            buf->flip();
-            enqueue(buf);
+            {
+                Glib::Mutex::Lock lock(_mutexTx2);
+                pv.write(_obuf);
+            }
             _condTx.signal();
             InterlockedCompareExchange(&_state, _protocolVersion >= 3007 ? STATE_SECURITY37 : STATE_SECURITY33, STATE_START_RESPONSE);
             break;
@@ -647,10 +618,10 @@ void ConsoleImpl::processOutgoingData()
         {
             Rfb::Security37Response sr(Rfb::NONE);
             TRACEPUT("Security: response=%d", sr.securityType);
-            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::Security37Response));
-            sr.write(*buf);
-            buf->flip();
-            enqueue(buf);
+            {
+                Glib::Mutex::Lock lock(_mutexTx2);
+                sr.write(_obuf);
+            }
             _condTx.signal();
             InterlockedCompareExchange(&_state, _protocolVersion >= 3008 ? STATE_SECURITY_RESULT : STATE_CLIENTINIT, STATE_SECURITY37_RESPONSE);
             break;
@@ -660,10 +631,10 @@ void ConsoleImpl::processOutgoingData()
         {
             Rfb::ClientInit ci(0);
             TRACEPUT("ClientInit: shared-flag=%d", ci.sharedFlag);
-            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::ClientInit));
-            ci.write(*buf);
-            buf->flip();
-            enqueue(buf);
+            {
+                Glib::Mutex::Lock lock(_mutexTx2);
+                ci.write(_obuf);
+            }
             _condTx.signal();
             InterlockedCompareExchange(&_state, STATE_SERVERINIT, STATE_CLIENTINIT);
             break;
@@ -683,10 +654,10 @@ void ConsoleImpl::processOutgoingData()
             TRACEPUT("SetPixelFormat: r-shift=%d", pf.pixelFormat.rShift);
             TRACEPUT("SetPixelFormat: g-shift=%d", pf.pixelFormat.gShift);
             TRACEPUT("SetPixelFormat: b-shift=%d", pf.pixelFormat.bShift);
-            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::SetPixelFormat));
-            pf.write(*buf);
-            buf->flip();
-            enqueue(buf);
+            {
+                Glib::Mutex::Lock lock(_mutexTx2);
+                pf.write(_obuf);
+            }
             _condTx.signal();
             InterlockedCompareExchange(&_state, STATE_SETENCODINGS, STATE_SETPIXELFORMAT);
             // FALLTHROUGH
@@ -699,10 +670,10 @@ void ConsoleImpl::processOutgoingData()
             TRACEPUT("SetEncodings: number-of-encodings=%d", se.numerOfEncodings);
             TRACEPUT("SetEncodings: encoding-type[0]=%d", se.encodingTypes[0]);
             TRACEPUT("SetEncodings: encoding-type[1]=%d", se.encodingTypes[1]);
-            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::SetEncodings2));
-            se.write(*buf);
-            buf->flip();
-            enqueue(buf);
+            {
+                Glib::Mutex::Lock lock(_mutexTx2);
+                se.write(_obuf);
+            }
             _condTx.signal();
             InterlockedCompareExchange(&_state, STATE_FBUPDATEREQUEST, STATE_SETENCODINGS);
             // FALLTHROUGH
@@ -717,10 +688,10 @@ void ConsoleImpl::processOutgoingData()
             TRACEPUT("FramebufferUpdateRequest: y=%d", fu.y);
             TRACEPUT("FramebufferUpdateRequest: cx=%d", fu.width);
             TRACEPUT("FramebufferUpdateRequest: cy=%d", fu.height);
-            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::FramebufferUpdateRequest));
-            fu.write(*buf);
-            buf->flip();
-            enqueue(buf);
+            {
+                Glib::Mutex::Lock lock(_mutexTx2);
+                fu.write(_obuf);
+            }
             _condTx.signal();
             _incremental = 1;
             InterlockedCompareExchange(&_state, STATE_READY, STATE_FBUPDATEREQUEST);
@@ -756,10 +727,10 @@ void ConsoleImpl::sendPointerEvent(unsigned char buttonMask, unsigned short x, u
         {
             Rfb::PointerEvent pe(buttonMask, x, y);
             TRACEPUT("PointerEvent: %02X %u %u", pe.buttonMask, pe.x, pe.y);
-            RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::PointerEvent));
-            pe.write(*buf);
-            buf->flip();
-            enqueue(buf);
+            {
+                Glib::Mutex::Lock lock(_mutexTx2);
+                pe.write(_obuf);
+            }
             _condTx.signal();
         }
         catch (std::bad_alloc)
@@ -1077,10 +1048,10 @@ void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsi
                 {
                     Rfb::ScanKeyEvent ke(downFlag, scancode);
                     TRACEPUT("ScanKeyEvent: %d %04X", ke.downFlag, ke.key);
-                    RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::ScanKeyEvent));
-                    ke.write(*buf);
-                    buf->flip();
-                    enqueue(buf);
+                    {
+                        Glib::Mutex::Lock lock(_mutexTx2);
+                        ke.write(_obuf);
+                    }
                     _condTx.signal();
                     return;
                 }
@@ -1089,10 +1060,10 @@ void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsi
             {
                 Rfb::KeyEvent ke(downFlag, keyval);
                 TRACEPUT("KeyEvent: %d %04X", ke.downFlag, ke.key);
-                RefPtr<ByteBuffer> buf = ByteBuffer::create(sizeof(Rfb::KeyEvent));
-                ke.write(*buf);
-                buf->flip();
-                enqueue(buf);
+                {
+                    Glib::Mutex::Lock lock(_mutexTx2);
+                    ke.write(_obuf);
+                }
                 _condTx.signal();
             }
         }

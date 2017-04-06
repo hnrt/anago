@@ -25,8 +25,8 @@ using namespace hnrt;
 ConsoleConnector::ConsoleConnector()
     : _curl(NULL)
     , _sockHost(-1)
-    , _ibuf(ByteBuffer::create(BUFSZ))
-    , _obuf(NULL)
+    , _ibuf(BUFSZ)
+    , _obuf(BUFSZ)
     , _statusCode(0)
 {
 }
@@ -34,7 +34,6 @@ ConsoleConnector::ConsoleConnector()
 
 ConsoleConnector::~ConsoleConnector()
 {
-    clear();
 }
 
 
@@ -44,11 +43,11 @@ void ConsoleConnector::open(const char* location, const char* authorization)
 
     Glib::ustring request = getRequest(location, authorization);
 
-    clear();
-    _obuf = ByteBuffer::create(request.c_str(), request.bytes());
+    _obuf.clear();
+    _obuf.put(request.c_str(), request.bytes());
 
     _sockHost = -1;
-    _ibuf->clear();
+    _ibuf.clear();
     _statusCode = -1;
     _headerMap.clear();
 
@@ -97,57 +96,19 @@ void ConsoleConnector::close()
 }
 
 
-void ConsoleConnector::clear()
-{
-    Glib::Mutex::Lock lock(_omutex);
-    while (!_oqueue.empty())
-    {
-        _obuf = _oqueue.front();
-        _oqueue.pop_front();
-    }
-    _obuf.reset();
-}
-
-
-void ConsoleConnector::enqueue(const RefPtr<ByteBuffer>& buf)
-{
-    Glib::Mutex::Lock lock(_omutex);
-    _oqueue.push_back(buf);
-}
-
-
-bool ConsoleConnector::dequeue()
-{
-    Glib::Mutex::Lock lock(_omutex);
-    if (_oqueue.empty())
-    {
-        return false;
-    }
-    else
-    {
-        _obuf = _oqueue.front();
-        _oqueue.pop_front();
-        return true;
-    }
-}
-
-
 ssize_t ConsoleConnector::send()
 {
-    if (!_obuf || !_obuf->remaining())
+    if (!_obuf.remaining())
     {
-        if (!dequeue())
-        {
-            // no data
-            return -1;
-        }
+        // no data
+        return -1;
     }
     size_t n = 0;
-    CURLcode result = curl_easy_send(_curl, _obuf->cur(), _obuf->remaining(), &n);
+    CURLcode result = curl_easy_send(_curl, _obuf.cur(), _obuf.remaining(), &n);
     if (result == CURLE_OK)
     {
         Logger::instance().trace("ConsoleConnector::send: CURLE_OK %zu", n);
-        _obuf->position(_obuf->position() + n);
+        _obuf.get(NULL, n);
         return n;
     }
     else if (result == CURLE_AGAIN)
@@ -172,19 +133,18 @@ ssize_t ConsoleConnector::send()
 
 size_t ConsoleConnector::recv()
 {
-    const int minSpace = 256;
-    if (_ibuf->remaining() < minSpace)
+    if (!_ibuf.space())
     {
-        _ibuf->capacity(_ibuf->limit() + minSpace);
-        _ibuf->limit(_ibuf->capacity());
+        return 0;
     }
-    Logger::instance().trace("ConsoleConnector::recv: %zx %zu", _ibuf->cur(), _ibuf->remaining());
+    _ibuf.fixLimit();
+    Logger::instance().trace("ConsoleConnector::recv: %zx %zu", _ibuf.end(), _ibuf.space());
     size_t n = 0;
-    CURLcode result = curl_easy_recv(_curl, _ibuf->cur(), _ibuf->remaining(), &n);
+    CURLcode result = curl_easy_recv(_curl, _ibuf.end(), _ibuf.space(), &n);
+    _ibuf.limit(_ibuf.limit() + n);
     if (result == CURLE_OK)
     {
         Logger::instance().trace("ConsoleConnector::recv: CURLE_OK %zu", n);
-        _ibuf->position(_ibuf->position() + n);
         return n;
     }
     else if (result == CURLE_AGAIN)
@@ -266,13 +226,14 @@ void ConsoleConnector::parseLocation(const char* location, Glib::ustring& host, 
 }
 
 
-bool ConsoleConnector::getHeaderLength(const char* s, size_t n, size_t& length)
+bool ConsoleConnector::getHeaderLength(size_t& length)
 {
-    const char* s1 = s;
-    const char* s9 = s + n;
+    char* s0 = (char*)_ibuf.cur();
+    char* s1 = s0;
+    char* s9 = (char*)_ibuf.end();
     while (1)
     {
-        s1 = (const char *)memchr(s1, '\r', s9 - s1);
+        s1 = (char *)memchr(s1, '\r', s9 - s1);
         if (s1)
         {
             s1++;
@@ -288,17 +249,17 @@ bool ConsoleConnector::getHeaderLength(const char* s, size_t n, size_t& length)
         else if (!memcmp(s1, "\n\r\n", 3))
         {
             s1 += 3;
-            length = s1 - s;
+            length = s1 - s0;
             return true;
         }
     }
 }
 
 
-bool ConsoleConnector::parseHeader(const char* s, size_t n)
+bool ConsoleConnector::parseHeader(size_t length)
 {
-    const char* s1 = s;
-    const char* s9 = s + n;
+    char* s1 = (char*)_ibuf.cur();
+    char* s9 = s1 + length;
     if (s1 + 5 <= s9 && !strncasecmp(s1, "HTTP/", 5))
     {
         s1 += 5;
@@ -307,7 +268,7 @@ bool ConsoleConnector::parseHeader(const char* s, size_t n)
     {
         return false;
     }
-    const char* s2 = s1;
+    char* s2 = s1;
     if (s2 < s9 && isdigit(*s2))
     {
         s2++;
@@ -328,7 +289,7 @@ bool ConsoleConnector::parseHeader(const char* s, size_t n)
     {
         return false;
     }
-    const char* s3 = s2;
+    char* s3 = s2;
     if (s3 < s9 && isdigit(*s3))
     {
         s3++;
@@ -375,7 +336,7 @@ bool ConsoleConnector::parseHeader(const char* s, size_t n)
         return false;
     }
     _statusCode = (int)strtoul(s1, NULL, 10);
-    s1 = (const char*)memchr(s2, '\r', s9 - s2);
+    s1 = (char*)memchr(s2, '\r', s9 - s2);
     if (s1)
     {
         s1++;
@@ -406,7 +367,7 @@ bool ConsoleConnector::parseHeader(const char* s, size_t n)
                 return false;
             }
         }
-        const char* s8 = (const char*)memchr(s1, '\r', s9 - s1);
+        char* s8 = (char*)memchr(s1, '\r', s9 - s1);
         if (s8 && s8 + 1 < s9 && *(s8 + 1) == '\n')
         {
             // ok
@@ -415,7 +376,7 @@ bool ConsoleConnector::parseHeader(const char* s, size_t n)
         {
             return false;
         }
-        s2 = (const char*)memchr(s1, ':', s8 - s1);
+        s2 = (char*)memchr(s1, ':', s8 - s1);
         if (!s2)
         {
             return false;

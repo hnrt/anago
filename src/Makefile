@@ -259,6 +259,7 @@ clean::
 ######################################################################
 
 $(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Base/RefPtr.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Net/PingAgent.h Thread/ThreadManager.h View/View.h XenServer/Api.h 
+$(OBJDIR)/Base/ByteBuffer.o: Base/ByteBuffer.cc Base/Atomic.h Base/ByteBuffer.h 
 $(OBJDIR)/Base/RefObj.o: Base/RefObj.cc Base/Atomic.h Base/RefObj.h Logger/LogLevel.h Logger/Logger.h 
 $(OBJDIR)/Base/StringBuffer.o: Base/StringBuffer.cc Base/StringBuffer.h 
 $(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Base/RefPtr.h Controller/Controller.h Controller/ControllerImpl.h Controller/SignalManager.h View/ConsoleView.h 
@@ -288,9 +289,9 @@ $(OBJDIR)/Model/ModelImpl_load.o: Model/ModelImpl_load.cc Base/RefObj.h Base/Ref
 $(OBJDIR)/Model/ModelImpl_save.o: Model/ModelImpl_save.cc Base/RefObj.h Base/RefPtr.h File/Json.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Model/ModelImpl.h Net/MacAddress.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/Model/PatchBase.o: Model/PatchBase.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Model/PatchBase.h Model/PatchRecord.h Model/PatchState.h 
 $(OBJDIR)/Net/AddressResolution.o: Net/AddressResolution.cc Net/AddressResolution.h 
-$(OBJDIR)/Net/Console.o: Net/Console.cc Base/RefObj.h Base/RefPtr.h Net/Console.h Net/ConsoleConnector.h Net/ConsoleImpl.h Protocol/Rfb.h 
-$(OBJDIR)/Net/ConsoleConnector.o: Net/ConsoleConnector.cc Base/Atomic.h Base/StringBuffer.h Exception/ConsoleException.h Exception/Exception.h Net/ConsoleConnector.h 
-$(OBJDIR)/Net/ConsoleImpl.o: Net/ConsoleImpl.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Exception/ConsoleException.h Exception/Exception.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Net/Console.h Net/ConsoleConnector.h Net/ConsoleImpl.h Protocol/Rfb.h Thread/ThreadManager.h View/ConsoleView.h 
+$(OBJDIR)/Net/Console.o: Net/Console.cc Base/ByteBuffer.h Base/RefObj.h Base/RefPtr.h Net/Console.h Net/ConsoleConnector.h Net/ConsoleImpl.h Protocol/Rfb.h 
+$(OBJDIR)/Net/ConsoleConnector.o: Net/ConsoleConnector.cc Base/Atomic.h Base/ByteBuffer.h Base/StringBuffer.h Exception/ConsoleException.h Exception/Exception.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Net/ConsoleConnector.h 
+$(OBJDIR)/Net/ConsoleImpl.o: Net/ConsoleImpl.cc Base/Atomic.h Base/ByteBuffer.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Exception/ConsoleException.h Exception/Exception.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Net/Console.h Net/ConsoleConnector.h Net/ConsoleImpl.h Protocol/Rfb.h Thread/ThreadManager.h View/ConsoleView.h 
 $(OBJDIR)/Net/HostEntry.o: Net/HostEntry.cc Net/HostEntry.h 
 $(OBJDIR)/Net/MacAddress.o: Net/MacAddress.cc Net/AddressResolution.h Net/HostEntry.h Net/MacAddress.h 
 $(OBJDIR)/Net/NetRoute.o: Net/NetRoute.cc Net/NetRoute.h 
@@ -298,7 +299,7 @@ $(OBJDIR)/Net/PingAgent.o: Net/PingAgent.cc Net/PingAgent.h Net/PingAgentImpl.h
 $(OBJDIR)/Net/PingAgentImpl.o: Net/PingAgentImpl.cc Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Net/PingAgent.h Net/PingAgentImpl.h Thread/ThreadManager.h 
 $(OBJDIR)/Net/UdpSocket.o: Net/UdpSocket.cc Net/UdpSocket.h 
 $(OBJDIR)/Net/WakeOnLan.o: Net/WakeOnLan.cc Net/HostEntry.h Net/MacAddress.h Net/NetRoute.h Net/UdpSocket.h Net/WakeOnLan.h 
-$(OBJDIR)/Protocol/Rfb.o: Protocol/Rfb.cc Protocol/Rfb.h 
+$(OBJDIR)/Protocol/Rfb.o: Protocol/Rfb.cc Base/ByteBuffer.h Protocol/Rfb.h 
 $(OBJDIR)/Thread/ThreadManager.o: Thread/ThreadManager.cc Thread/ThreadManager.h Thread/ThreadManagerImpl.h 
 $(OBJDIR)/Thread/ThreadManagerImpl.o: Thread/ThreadManagerImpl.cc Base/StringBuffer.h Thread/ThreadManager.h Thread/ThreadManagerImpl.h 
 $(OBJDIR)/Util/Base64Decoder.o: Util/Base64Decoder.cc Util/Base64.h Util/ByteString.h 

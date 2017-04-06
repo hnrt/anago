@@ -41,6 +41,7 @@ namespace hnrt
         ConsoleView& _view;
         Glib::Mutex _mutexTx;
         Glib::Cond _condTx;
+        Glib::Mutex _mutexTx2;
         Glib::ustring _location;
         Glib::ustring _authorization;
         volatile bool _terminate;

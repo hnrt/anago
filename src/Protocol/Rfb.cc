@@ -7,23 +7,16 @@
 #include "Rfb.h"
 
 
-#define READ8(v,p) v=*p++
-#define READ16(v,p) do{v=*p++;v<<=8;v|=*p++;}while(0)
-#define READ32(v,p) do{v=*p++;v<<=8;v|=*p++;v<<=8;v|=*p++;v<<=8;v|=*p++;}while(0)
-#define SKIP(v,p) p+=sizeof(v)
-
-
 using namespace hnrt;
 
 
-Rfb::ProtocolVersion::ProtocolVersion(const U8*& r, const U8* s)
+Rfb::ProtocolVersion::ProtocolVersion(ByteBuffer& buf)
 {
-    if (r + sizeof(value) > s)
+    if (buf.remaining() < static_cast<int>(sizeof(value)))
     {
         throw NeedMoreDataException(sizeof(value));
     }
-    memcpy(value, r, sizeof(value));
-    r += sizeof(value);
+    buf.get(value, sizeof(value));
 }
 
 
@@ -99,33 +92,32 @@ void Rfb::ProtocolVersion::write(ByteBuffer& buf)
 }
 
 
-Rfb::Security37Ptr::Security37Ptr(const U8*& r, const U8* s)
-    : ptr(NULL)
+Rfb::Security37::Security37(ByteBuffer& buf)
+    : securityTypes(NULL)
 {
-    U8 n = *r++;
-    if (n == 0)
+    if (!buf.remaining())
     {
-        return;
+        throw NeedMoreDataException(1);
     }
-    if (r + n > s)
+    numberOfSecurityTypes = buf.peekU8(0);
+    int size = 1 + numberOfSecurityTypes;
+    if (buf.remaining() < size)
     {
-        r--;
-        throw NeedMoreDataException(sizeof(Security37) + n);
+        throw NeedMoreDataException(size);
     }
-    ptr = (Security37*)malloc(sizeof(Security37) + n);
-    if (!ptr)
+    securityTypes = (U8*)malloc(sizeof(U8) * numberOfSecurityTypes);
+    if (!securityTypes)
     {
         throw std::bad_alloc();
     }
-    ptr->numberOfSecurityTypes = n;
-    memcpy(ptr->securityTypes, r, n);
-    r += n;
+    numberOfSecurityTypes = buf.getU8();
+    buf.get(securityTypes, numberOfSecurityTypes);
 }
 
 
-Rfb::Security37Ptr::~Security37Ptr()
+Rfb::Security37::~Security37()
 {
-    free(ptr);
+    free(securityTypes);
 }
 
 
@@ -141,13 +133,13 @@ void Rfb::Security37Response::write(ByteBuffer& buf)
 }
 
 
-Rfb::SecurityResult::SecurityResult(const U8*& r, const U8* s)
+Rfb::SecurityResult::SecurityResult(ByteBuffer& buf)
 {
-    if (r + sizeof(SecurityResult) > s)
+    if (buf.remaining() < static_cast<int>(sizeof(SecurityResult)))
     {
         throw NeedMoreDataException(sizeof(SecurityResult));
     }
-    READ32(status, r);
+    status = buf.getU32();
     if (status != OK && status != FAILED)
     {
         throw ProtocolException("Bad seurity result.");
@@ -155,52 +147,44 @@ Rfb::SecurityResult::SecurityResult(const U8*& r, const U8* s)
 }
 
 
-Rfb::FailureDescriptionPtr::FailureDescriptionPtr(const U8*& r, const U8* s)
-    : ptr(NULL)
+Rfb::FailureDescription::FailureDescription(ByteBuffer& buf)
+    : reasonString(NULL)
 {
-    U32 n;
-    if (r + sizeof(n) > s)
+    const int sizeHeader = 4;
+    if (buf.remaining() < sizeHeader)
     {
-        throw NeedMoreDataException(sizeof(n));
+        throw NeedMoreDataException(sizeHeader);
     }
-    READ32(n, r);
-    if (r + n > s)
+    reasonLength = buf.peekU32(0);
+    int size = sizeHeader + reasonLength;
+    if (buf.remaining() < size)
     {
-        r -= sizeof(n);
-        if (n > PRIVATE_REASON_MAX)
-        {
-            throw ProtocolException("ReasonLength too big.");
-        }
-        else
-        {
-            throw NeedMoreDataException(sizeof(n) + n);
-        }
+        throw NeedMoreDataException(size);
     }
-    ptr = (FailureDescription*)malloc(sizeof(FailureDescription) + n + 1);
-    if (!ptr)
+    reasonString = (U8*)malloc(sizeof(U8) * (reasonLength + 1));
+    if (!reasonString)
     {
         throw std::bad_alloc();
     }
-    ptr->reasonLength = n;
-    memcpy(ptr->reasonString, r, n);
-    r += n;
-    ptr->reasonString[n] = '\0';
+    reasonLength = buf.getU32();
+    buf.get(reasonString, reasonLength);
+    reasonString[reasonLength] = 0;
 }
 
 
-Rfb::FailureDescriptionPtr::~FailureDescriptionPtr()
+Rfb::FailureDescription::~FailureDescription()
 {
-    free(ptr);
+    free(reasonString);
 }
 
 
-Rfb::Security33::Security33(const U8*& r, const U8* s)
+Rfb::Security33::Security33(ByteBuffer& buf)
 {
-    if (r + sizeof(Security33) > s)
+    if (buf.remaining() < static_cast<int>(sizeof(Security33)))
     {
         throw NeedMoreDataException(sizeof(Security33));
     }
-    READ32(securityType, r);
+    securityType = buf.getU32();
 }
 
 
@@ -216,43 +200,38 @@ void Rfb::ClientInit::write(ByteBuffer& buf)
 }
 
 
-Rfb::ServerInitPtr::ServerInitPtr(const U8*& r, const U8* s)
+Rfb::ServerInit::ServerInit(ByteBuffer& buf)
+    : nameString(NULL)
 {
-    if (r + sizeof(ServerInit) > s)
+    const int offsetNameLength = 2 + 2 + static_cast<int>(sizeof(pixelFormat));
+    const int sizeHeader = 2 + 2 + static_cast<int>(sizeof(pixelFormat)) + 4;
+    if (buf.remaining() < sizeHeader)
     {
-        throw NeedMoreDataException(sizeof(ServerInit));
+        throw NeedMoreDataException(sizeHeader);
     }
-    ServerInit t;
-    READ16(t.width, r);
-    READ16(t.height, r);
-    r = t.pixelFormat.read(r);
-    READ32(t.nameLength, r);
-    if (r + t.nameLength > s)
+    nameLength = buf.peekU32(offsetNameLength);
+    int size = sizeHeader + nameLength;
+    if (buf.remaining() < size)
     {
-        if (t.nameLength > PRIVATE_NAME_MAX)
-        {
-            throw ProtocolException("NameLength too big.");
-        }
-        else
-        {
-            throw NeedMoreDataException(sizeof(ServerInit) + t.nameLength);
-        }
+        throw NeedMoreDataException(size);
     }
-    ptr = (ServerInit*)malloc(sizeof(ServerInit) + t.nameLength + 1);
-    if (!ptr)
+    nameString = (U8*)malloc(sizeof(U8) * (nameLength + 1));
+    if (!nameString)
     {
         throw std::bad_alloc();
     }
-    *ptr = t;
-    memcpy(ptr->nameString, r, ptr->nameLength);
-    r += ptr->nameLength;
-    ptr->nameString[ptr->nameLength] = '\0';
+    width = buf.getU16();
+    height = buf.getU16();
+    pixelFormat.read(buf);
+    nameLength = buf.getU32();
+    buf.get(nameString, nameLength);
+    nameString[nameLength] = 0;
 }
 
 
-Rfb::ServerInitPtr::~ServerInitPtr()
+Rfb::ServerInit::~ServerInit()
 {
-    free(ptr);
+    free(nameString);
 }
 
 
@@ -377,57 +356,65 @@ void Rfb::PointerEvent::write(ByteBuffer& buf)
 }
 
 
-Rfb::FramebufferUpdate::FramebufferUpdate(const U8*& r, const U8* s)
+Rfb::FramebufferUpdate::FramebufferUpdate(ByteBuffer& buf)
 {
-    if (r + sizeof(FramebufferUpdate) > s)
+    if (buf.remaining() < static_cast<int>(sizeof(FramebufferUpdate)))
     {
         throw NeedMoreDataException(sizeof(FramebufferUpdate));
     }
-    READ8(messageType, r);
-    SKIP(padding, r);
-    READ16(numberOfRectangles, r);
+    messageType = buf.getU8();
+    padding = buf.getU8();
+    numberOfRectangles = buf.getU16();
 }
 
 
-Rfb::SetColourMapEntriesPtr::SetColourMapEntriesPtr(const U8*& r, const U8* s)
-    : ptr(NULL)
+Rfb::SetColourMapEntries::SetColourMapEntries(ByteBuffer& buf)
+    : colours(NULL)
 {
-    if (r + sizeof(SetColourMapEntries) > s)
+    const int offsetNumberOfColours = 1 + 1 + 2;
+    const int sizeHeader = 1 + 1 + 2 + 2;
+    if (buf.remaining() < sizeHeader)
     {
-        throw NeedMoreDataException(sizeof(SetColourMapEntries));
+        throw NeedMoreDataException(sizeHeader);
     }
-    SetColourMapEntries t;
-    READ8(t.messageType, r);
-    SKIP(t.padding, r);
-    READ16(t.firstColour, r);
-    READ16(t.numberOfColours, r);
-    if (r + t.numberOfColours * sizeof(Colour) > s)
+    numberOfColours = buf.peekU16(offsetNumberOfColours);
+    int size = sizeHeader + sizeof(Colour) * numberOfColours;
+    if (buf.remaining() < size)
     {
-        r -= sizeof(SetColourMapEntries);
-        throw NeedMoreDataException(sizeof(SetColourMapEntries));
+        throw NeedMoreDataException(size);
     }
-    ptr = (SetColourMapEntries*)malloc(sizeof(SetColourMapEntries) + t.numberOfColours * sizeof(Colour));
-    if (!ptr)
+    if (numberOfColours)
     {
-        throw std::bad_alloc();
+        colours = (Colour*)malloc(sizeof(Colour) * numberOfColours);
+        if (!colours)
+        {
+            throw std::bad_alloc();
+        }
     }
-    *ptr = t;
-    for (U16 i = 0; i < ptr->numberOfColours; i++)
+    messageType = buf.getU8();
+    padding = buf.getU8();
+    firstColour = buf.getU16();
+    numberOfColours = buf.getU16();
+    for (U16 i = 0; i < numberOfColours; i++)
     {
-        new(ptr->colours + i) Colour(r);
+        new(colours + i) Colour(buf);
     }
 }
 
 
-Rfb::SetColourMapEntriesPtr::~SetColourMapEntriesPtr()
+Rfb::SetColourMapEntries::~SetColourMapEntries()
 {
-    free(ptr);
+    free(colours);
 }
 
 
-Rfb::Bell::Bell(const U8*& r)
+Rfb::Bell::Bell(ByteBuffer& buf)
 {
-    READ8(messageType, r);
+    if (!buf.remaining())
+    {
+        throw NeedMoreDataException(1);
+    }
+    messageType = buf.getU8();
 }
 
 
@@ -449,22 +436,25 @@ Rfb::PixelFormat::PixelFormat()
 }
 
 
-const Rfb::U8* Rfb::PixelFormat::read(const U8* r)
+void Rfb::PixelFormat::read(ByteBuffer& buf)
 {
-    READ8(bitsPerPixel, r);
-    READ8(depth, r);
-    READ8(bigEndian, r);
-    READ8(trueColour, r);
-    READ16(rMax, r);
-    READ16(gMax, r);
-    READ16(bMax, r);
-    READ8(rShift, r);
-    READ8(gShift, r);
-    READ8(bShift, r);
-    SKIP(padding1, r);
-    SKIP(padding2, r);
-    SKIP(padding3, r);
-    return r;
+    if (buf.remaining() < static_cast<int>(sizeof(PixelFormat)))
+    {
+        throw NeedMoreDataException(sizeof(PixelFormat));
+    }
+    bitsPerPixel = buf.getU8();
+    depth = buf.getU8();
+    bigEndian = buf.getU8();
+    trueColour = buf.getU8();
+    rMax = buf.getU16();
+    gMax = buf.getU16();
+    bMax = buf.getU16();
+    rShift = buf.getU8();
+    gShift = buf.getU8();
+    bShift = buf.getU8();
+    padding1 = buf.getU8();
+    padding2 = buf.getU8();
+    padding3 = buf.getU8();
 }
 
 
@@ -486,76 +476,84 @@ void Rfb::PixelFormat::write(ByteBuffer& buf)
 }
 
 
-Rfb::Rectangle::Rectangle(const U8*& r, const U8* s)
+Rfb::Rectangle::Rectangle(ByteBuffer& buf, int bitsPerPixel)
 {
-    if (r + sizeof(Rectangle) > s)
+    const int offsetWidth = 2 + 2;
+    const int offsetHeight = 2 + 2 + 2;
+    const int offsetEncodingType = 2 + 2 + 2 + 2;
+    const int sizeHeader = 2 + 2 + 2 + 2 + 4;
+    if (buf.remaining() < sizeHeader)
     {
-        throw NeedMoreDataException(sizeof(Rectangle));
+        throw NeedMoreDataException(sizeHeader);
     }
-    READ16(x, r);
-    READ16(y, r);
-    READ16(width, r);
-    READ16(height, r);
-    READ32(encodingType, r);
+    encodingType = buf.peekU32(offsetEncodingType);
+    if (encodingType == RAW)
+    {
+        width = buf.peekU16(offsetWidth);
+        height = buf.peekU16(offsetHeight);
+        int size = sizeHeader + dataSize(bitsPerPixel);
+        if (buf.remaining() < size)
+        {
+            throw NeedMoreDataException(size);
+        }
+    }
+    x = buf.getU16();
+    y = buf.getU16();
+    width = buf.getU16();
+    height = buf.getU16();
+    encodingType = buf.getU32();
 }
 
 
-Rfb::Colour::Colour(const U8*& r)
+Rfb::Colour::Colour(ByteBuffer& buf)
 {
-    READ16(red, r);
-    READ16(green, r);
-    READ16(blue, r);
+    if (buf.remaining() < static_cast<int>(sizeof(Colour)))
+    {
+        throw NeedMoreDataException(sizeof(Colour));
+    }
+    red = buf.getU16();
+    green = buf.getU16();
+    blue = buf.getU16();
 }
 
 
-Rfb::CutTextPtr::CutTextPtr(const U8*& r, const U8* s)
-    : ptr(NULL)
+Rfb::CutText::CutText(ByteBuffer& buf)
+    : text(NULL)
 {
-    if (r + sizeof(CutText) > s)
+    const int offsetLength = 1 + 1 + 1 + 1;
+    const int sizeHeader = 1 + 1 + 1 + 1 + 4;
+    if (buf.remaining() < sizeHeader)
     {
-        throw NeedMoreDataException(sizeof(CutText));
+        throw NeedMoreDataException(sizeHeader);
     }
-    CutText t;
-    READ8(t.messageType, r);
-    SKIP(t.padding, r);
-    READ32(t.length, r);
-    if (r + t.length > s)
+    length = buf.peekU32(offsetLength);
+    int size = sizeHeader + sizeof(U8) * length;
+    if (buf.remaining() < size)
     {
-        r -= sizeof(CutText);
-        if (t.length > PRIVATE_TEXT_MAX)
-        {
-            throw ProtocolException("TextLength too big.");
-        }
-        else
-        {
-            throw NeedMoreDataException(sizeof(CutText) + t.length);
-        }
+        throw NeedMoreDataException(size);
     }
-    ptr = (CutText*)malloc(sizeof(CutText) + t.length + 1);
-    if (!ptr)
+    text = (U8*)malloc(sizeof(U8) * (length + 1));
+    if (!text)
     {
         throw std::bad_alloc();
     }
-    *ptr = t;
-    memcpy(ptr->text, r, ptr->length);
-    r += ptr->length;
-    ptr->text[ptr->length] = '\0';
+    messageType = buf.getU8();
+    padding1 = buf.getU8();
+    padding2 = buf.getU8();
+    padding3 = buf.getU8();
+    length = buf.getU32();
+    buf.get(text, length);
+    text[length] = 0;
 }
 
 
-Rfb::CutTextPtr::~CutTextPtr()
+Rfb::CutText::~CutText()
 {
-    free(ptr);
+    free(text);
 }
 
 
 Rfb::NeedMoreDataException::NeedMoreDataException(size_t size_)
-    : size(size_)
-{
-}
-
-
-Rfb::NotEnoughSpaceException::NotEnoughSpaceException(size_t size_)
     : size(size_)
 {
 }

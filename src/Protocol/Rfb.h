@@ -83,7 +83,7 @@ namespace hnrt
             U8 padding3;
 
             PixelFormat();
-            const U8* read(const U8* r);
+            void read(ByteBuffer&);
             void write(ByteBuffer&);
 
         } __attribute__((__packed__));
@@ -97,7 +97,8 @@ namespace hnrt
             S32 encodingType;
             // followed by pixel data in the encoding given by encodingType
 
-            Rectangle(const U8*& r, const U8* s);
+            Rectangle(ByteBuffer&, int bitsPerPixel);
+            int dataSize(int bitsPerPixel) const { return width * height * bitsPerPixel / 8; }
 
         } __attribute__((__packed__));
 
@@ -107,27 +108,23 @@ namespace hnrt
             U16 green;
             U16 blue;
 
-            Colour(const U8*& r);
+            Colour(ByteBuffer&);
 
         } __attribute__((__packed__));
 
         struct CutText
         {
             U8 messageType; // 6
-            U8 padding[3];
+            U8 padding1;
+            U8 padding2;
+            U8 padding3;
             U32 length;
-            U8 text[]; // [length]
+            U8* text; //[length]
+
+            CutText(ByteBuffer&);
+            ~CutText();
 
         } __attribute__((__packed__));
-
-        struct CutTextPtr
-        {
-            CutText* ptr;
-
-            CutTextPtr(const U8*& r, const U8* s);
-            ~CutTextPtr();
-            CutText* operator ->() { return ptr; }
-        };
 
         //
         // Handshaking phase packets
@@ -137,7 +134,7 @@ namespace hnrt
         {
             U8 value[12];
 
-            ProtocolVersion(const U8*& r, const U8* s);
+            ProtocolVersion(ByteBuffer&);
             ProtocolVersion(int version);
             int parse();
             void set(int version);
@@ -148,19 +145,12 @@ namespace hnrt
         struct Security37
         {
             U8 numberOfSecurityTypes;
-            U8 securityTypes[]; // [numberOfSecurityTypes]
+            U8* securityTypes; // [numberOfSecurityTypes]
+
+            Security37(ByteBuffer&);
+            ~Security37();
 
         } __attribute__((__packed__));
-
-        struct Security37Ptr
-        {
-            Security37* ptr;
-
-            Security37Ptr(const U8*& r, const U8* s);
-            ~Security37Ptr();
-            bool connectionFailure() const { return ptr ? false : true; }
-            Security37* operator ->() { return ptr; }
-        };
 
         struct Security37Response
         {
@@ -175,31 +165,25 @@ namespace hnrt
         {
             U32 status;
 
-            SecurityResult(const U8*& r, const U8* s);
+            SecurityResult(ByteBuffer&);
 
         } __attribute__((__packed__));
 
         struct FailureDescription
         {
             U32 reasonLength;
-            U8 reasonString[]; // [reasonLength]
+            U8* reasonString; // [reasonLength]
+
+            FailureDescription(ByteBuffer&);
+            ~FailureDescription();
 
         } __attribute__((__packed__));
-
-        struct FailureDescriptionPtr
-        {
-            FailureDescription* ptr;
-
-            FailureDescriptionPtr(const U8*& r, const U8* s);
-            ~FailureDescriptionPtr();
-            FailureDescription* operator ->() { return ptr; }
-        };
 
         struct Security33
         {
             U32 securityType;
 
-            Security33(const U8*& r, const U8* s);
+            Security33(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -222,18 +206,12 @@ namespace hnrt
             U16 height;
             PixelFormat pixelFormat;
             U32 nameLength;
-            U8 nameString[]; // [nameLength]
+            U8* nameString; //[nameLength]
+
+            ServerInit(ByteBuffer&);
+            ~ServerInit();
 
         } __attribute__((__packed__));
-
-        struct ServerInitPtr
-        {
-            ServerInit* ptr;
-
-            ServerInitPtr(const U8*& r, const U8* s);
-            ~ServerInitPtr();
-            ServerInit* operator ->() { return ptr; }
-        };
 
         //
         // Normal interaction phase packets
@@ -319,7 +297,6 @@ namespace hnrt
         } __attribute__((__packed__));
 
         typedef CutText ClientCutText;
-        typedef CutTextPtr ClientCutTextPtr;
 
         struct FramebufferUpdate
         {
@@ -328,7 +305,7 @@ namespace hnrt
             U16 numberOfRectangles;
             // followed by Rectangle rectangles[numberOfRectangles]
 
-            FramebufferUpdate(const U8*& r, const U8* s);
+            FramebufferUpdate(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -338,29 +315,22 @@ namespace hnrt
             U8 padding;
             U16 firstColour;
             U16 numberOfColours;
-            Colour colours[]; // [numberOfColors]
+            Colour* colours; // [numberOfColors]
+
+            SetColourMapEntries(ByteBuffer&);
+            ~SetColourMapEntries();
 
         } __attribute__((__packed__));
-
-        struct SetColourMapEntriesPtr
-        {
-            SetColourMapEntries* ptr;
-
-            SetColourMapEntriesPtr(const U8*& r, const U8* s);
-            ~SetColourMapEntriesPtr();
-            SetColourMapEntries* operator ->() { return ptr; }
-        };
 
         struct Bell
         {
             U8 messageType; // 2
 
-            Bell(const U8*& r);
+            Bell(ByteBuffer&);
 
         } __attribute__((__packed__));
 
         typedef CutText ServerCutText;
-        typedef CutTextPtr ServerCutTextPtr;
 
         //
         // Exceptions
@@ -371,13 +341,6 @@ namespace hnrt
             size_t size;
 
             NeedMoreDataException(size_t size_);
-        };
-
-        struct NotEnoughSpaceException
-        {
-            size_t size;
-
-            NotEnoughSpaceException(size_t size_);
         };
 
         struct ProtocolException
