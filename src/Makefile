@@ -167,7 +167,6 @@ $(OBJDIR)/Net/PingAgent.o \
 $(OBJDIR)/Net/PingAgentImpl.o \
 $(OBJDIR)/Net/UdpSocket.o \
 $(OBJDIR)/Net/WakeOnLan.o \
-$(OBJDIR)/Protocol/Rfb.o \
 $(OBJDIR)/Thread/ThreadManager.o \
 $(OBJDIR)/Thread/ThreadManagerImpl.o \
 $(OBJDIR)/Util/Base64Decoder.o \
@@ -297,7 +296,6 @@ $(OBJDIR)/Net/PingAgent.o: Net/PingAgent.cc Net/PingAgent.h Net/PingAgentImpl.h
 $(OBJDIR)/Net/PingAgentImpl.o: Net/PingAgentImpl.cc Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Net/PingAgent.h Net/PingAgentImpl.h Thread/ThreadManager.h 
 $(OBJDIR)/Net/UdpSocket.o: Net/UdpSocket.cc Net/UdpSocket.h 
 $(OBJDIR)/Net/WakeOnLan.o: Net/WakeOnLan.cc Net/HostEntry.h Net/MacAddress.h Net/NetRoute.h Net/UdpSocket.h Net/WakeOnLan.h 
-$(OBJDIR)/Protocol/Rfb.o: Protocol/Rfb.cc Base/ByteBuffer.h Protocol/Rfb.h 
 $(OBJDIR)/Thread/ThreadManager.o: Thread/ThreadManager.cc Thread/ThreadManager.h Thread/ThreadManagerImpl.h 
 $(OBJDIR)/Thread/ThreadManagerImpl.o: Thread/ThreadManagerImpl.cc Base/StringBuffer.h Thread/ThreadManager.h Thread/ThreadManagerImpl.h 
 $(OBJDIR)/Util/Base64Decoder.o: Util/Base64Decoder.cc Util/Base64.h Util/ByteString.h 

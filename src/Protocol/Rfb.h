@@ -6,6 +6,7 @@
 
 
 #include <stddef.h>
+#include <stdlib.h>
 #include "Base/ByteBuffer.h"
 
 
@@ -82,9 +83,9 @@ namespace hnrt
             U8 padding2;
             U8 padding3;
 
-            PixelFormat();
-            void read(ByteBuffer&);
-            void write(ByteBuffer&);
+            inline PixelFormat();
+            inline void read(ByteBuffer&);
+            inline void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -97,8 +98,8 @@ namespace hnrt
             S32 encodingType;
             // followed by pixel data in the encoding given by encodingType
 
-            Rectangle(ByteBuffer&, int bitsPerPixel);
-            int dataSize(int bitsPerPixel) const { return width * height * bitsPerPixel / 8; }
+            inline Rectangle(ByteBuffer&, int bitsPerPixel);
+            inline int dataSize(int bitsPerPixel) const { return width * height * bitsPerPixel / 8; }
 
         } __attribute__((__packed__));
 
@@ -108,7 +109,7 @@ namespace hnrt
             U16 green;
             U16 blue;
 
-            Colour(ByteBuffer&);
+            inline Colour(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -121,8 +122,8 @@ namespace hnrt
             U32 length;
             U8* text; //[length]
 
-            CutText(ByteBuffer&);
-            ~CutText();
+            inline CutText(ByteBuffer&);
+            inline ~CutText();
 
         } __attribute__((__packed__));
 
@@ -134,11 +135,11 @@ namespace hnrt
         {
             U8 value[12];
 
-            ProtocolVersion(ByteBuffer&);
-            ProtocolVersion(int version);
-            int parse();
-            void set(int version);
-            void write(ByteBuffer&);
+            inline ProtocolVersion(ByteBuffer&);
+            inline ProtocolVersion(int version);
+            inline int parse();
+            inline void set(int version);
+            inline void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -147,8 +148,8 @@ namespace hnrt
             U8 numberOfSecurityTypes;
             U8* securityTypes; // [numberOfSecurityTypes]
 
-            Security37(ByteBuffer&);
-            ~Security37();
+            inline Security37(ByteBuffer&);
+            inline ~Security37();
 
         } __attribute__((__packed__));
 
@@ -156,8 +157,8 @@ namespace hnrt
         {
             U8 securityType;
 
-            Security37Response(int value);
-            void write(ByteBuffer&);
+            inline Security37Response(int value);
+            inline void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -165,7 +166,7 @@ namespace hnrt
         {
             U32 status;
 
-            SecurityResult(ByteBuffer&);
+            inline SecurityResult(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -174,8 +175,8 @@ namespace hnrt
             U32 reasonLength;
             U8* reasonString; // [reasonLength]
 
-            FailureDescription(ByteBuffer&);
-            ~FailureDescription();
+            inline FailureDescription(ByteBuffer&);
+            inline ~FailureDescription();
 
         } __attribute__((__packed__));
 
@@ -183,7 +184,7 @@ namespace hnrt
         {
             U32 securityType;
 
-            Security33(ByteBuffer&);
+            inline Security33(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -195,8 +196,8 @@ namespace hnrt
         {
             U8 sharedFlag;
 
-            ClientInit(U8 value);
-            void write(ByteBuffer&);
+            inline ClientInit(U8 value);
+            inline void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -208,8 +209,8 @@ namespace hnrt
             U32 nameLength;
             U8* nameString; //[nameLength]
 
-            ServerInit(ByteBuffer&);
-            ~ServerInit();
+            inline ServerInit(ByteBuffer&);
+            inline ~ServerInit();
 
         } __attribute__((__packed__));
 
@@ -225,8 +226,8 @@ namespace hnrt
             U8 padding3;
             PixelFormat pixelFormat;
 
-            SetPixelFormat(const PixelFormat& value);
-            void write(ByteBuffer&);
+            inline SetPixelFormat(const PixelFormat& value);
+            inline void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -237,8 +238,8 @@ namespace hnrt
             U16 numerOfEncodings; // 2
             S32 encodingTypes[2];
 
-            SetEncodings2(S32, S32);
-            void write(ByteBuffer&);
+            inline SetEncodings2(S32, S32);
+            inline void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -251,8 +252,8 @@ namespace hnrt
             U16 width;
             U16 height;
 
-            FramebufferUpdateRequest(U8 incremental_, U16 x_, U16 y_, U16 width_, U16 height_);
-            void write(ByteBuffer&);
+            inline FramebufferUpdateRequest(U8 incremental_, U16 x_, U16 y_, U16 width_, U16 height_);
+            inline void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -264,8 +265,8 @@ namespace hnrt
             U8 padding2;
             U32 key;
 
-            KeyEvent(U8 downFlag_, U32 key_);
-            void write(ByteBuffer&);
+            inline KeyEvent(U8 downFlag_, U32 key_);
+            inline void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -278,8 +279,8 @@ namespace hnrt
             U8 padding2;
             U32 key;
 
-            ScanKeyEvent(U8 downFlag_, U32 key_);
-            void write(ByteBuffer&);
+            inline ScanKeyEvent(U8 downFlag_, U32 key_);
+            inline void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -291,8 +292,8 @@ namespace hnrt
             U16 x;
             U16 y;
 
-            PointerEvent(U8 buttonMask_, U16 x_, U16 y_);
-            void write(ByteBuffer&);
+            inline PointerEvent(U8 buttonMask_, U16 x_, U16 y_);
+            inline void write(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -305,7 +306,7 @@ namespace hnrt
             U16 numberOfRectangles;
             // followed by Rectangle rectangles[numberOfRectangles]
 
-            FramebufferUpdate(ByteBuffer&);
+            inline FramebufferUpdate(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -317,8 +318,8 @@ namespace hnrt
             U16 numberOfColours;
             Colour* colours; // [numberOfColors]
 
-            SetColourMapEntries(ByteBuffer&);
-            ~SetColourMapEntries();
+            inline SetColourMapEntries(ByteBuffer&);
+            inline ~SetColourMapEntries();
 
         } __attribute__((__packed__));
 
@@ -326,7 +327,7 @@ namespace hnrt
         {
             U8 messageType; // 2
 
-            Bell(ByteBuffer&);
+            inline Bell(ByteBuffer&);
 
         } __attribute__((__packed__));
 
@@ -340,32 +341,573 @@ namespace hnrt
         {
             size_t size;
 
-            NeedMoreDataException(size_t size_);
+            inline NeedMoreDataException(size_t size_);
         };
 
         struct NeedMoreSpaceException
         {
             size_t size;
 
-            NeedMoreSpaceException(size_t size_);
+            inline NeedMoreSpaceException(size_t size_);
         };
 
         struct ProtocolException
         {
             const char* message;
 
-            ProtocolException(const char* message_);
-        };
-
-    private:
-
-        enum PrivateConstants
-        {
-            PRIVATE_REASON_MAX = 1023,
-            PRIVATE_NAME_MAX = 1023,
-            PRIVATE_TEXT_MAX = 65535,
+            inline ProtocolException(const char* message_);
         };
     };
+
+    inline Rfb::ProtocolVersion::ProtocolVersion(ByteBuffer& buf)
+    {
+        if (buf.remaining() < static_cast<int>(sizeof(value)))
+        {
+            throw NeedMoreDataException(sizeof(value));
+        }
+        buf.get(value, sizeof(value));
+    }
+
+    inline Rfb::ProtocolVersion::ProtocolVersion(int version)
+    {
+        set(version);
+    }
+
+    inline int Rfb::ProtocolVersion::parse()
+    {
+        if (value[0] == 'R' &&
+            value[1] == 'F' &&
+            value[2] == 'B' &&
+            value[3] == ' ' &&
+            value[4] - '0' <= '9' - '0' &&
+            value[5] - '0' <= '9' - '0' &&
+            value[6] - '0' <= '9' - '0' &&
+            value[7] == '.' &&
+            value[8] - '0' <= '9' - '0' &&
+            value[9] - '0' <= '9' - '0' &&
+            value[10] - '0' <= '9' - '0' &&
+            value[11] == '\n')
+        {
+            int version
+                = (value[4] - '0') * 100000
+                + (value[5] - '0') * 10000
+                + (value[6] - '0') * 1000
+                + (value[8] - '0') * 100
+                + (value[9] - '0') * 10
+                + (value[10] - '0') * 1;
+            if (version >= 3003)
+            {
+                return version;
+            }
+            else
+            {
+                throw ProtocolException("Bad protocol version (less than 3.3).");
+            }
+        }
+        else
+        {
+            throw ProtocolException("Malformed protocol version.");
+        }
+    }
+
+    inline void Rfb::ProtocolVersion::set(int version)
+    {
+        value[0] = 'R';
+        value[1] = 'F';
+        value[2] = 'B';
+        value[3] = ' ';
+        value[7] = '.';
+        value[11] = '\n';
+        value[10] = version % 10 + '0';
+        version /= 10;
+        value[9] = version % 10 + '0';
+        version /= 10;
+        value[8] = version % 10 + '0';
+        version /= 10;
+        value[6] = version % 10 + '0';
+        version /= 10;
+        value[5] = version % 10 + '0';
+        version /= 10;
+        value[4] = version % 10 + '0';
+    }
+
+    inline void Rfb::ProtocolVersion::write(ByteBuffer& buf)
+    {
+        if (buf.space() < static_cast<int64_t>(sizeof(value)))
+        {
+            throw NeedMoreSpaceException(sizeof(value));
+        }
+        buf.put(value, sizeof(value));
+    }
+
+    inline Rfb::Security37::Security37(ByteBuffer& buf)
+        : securityTypes(NULL)
+    {
+        if (buf.remaining() < 1)
+        {
+            throw NeedMoreDataException(1);
+        }
+        numberOfSecurityTypes = buf.peekU8(0);
+        int size = 1 + numberOfSecurityTypes;
+        if (buf.remaining() < size)
+        {
+            throw NeedMoreDataException(size);
+        }
+        securityTypes = (U8*)malloc(sizeof(U8) * numberOfSecurityTypes);
+        if (!securityTypes)
+        {
+            throw std::bad_alloc();
+        }
+        numberOfSecurityTypes = buf.getU8();
+        buf.get(securityTypes, numberOfSecurityTypes);
+    }
+
+    inline Rfb::Security37::~Security37()
+    {
+        free(securityTypes);
+    }
+
+    inline Rfb::Security37Response::Security37Response(int value)
+        : securityType((U8)value)
+    {
+    }
+
+    inline void Rfb::Security37Response::write(ByteBuffer& buf)
+    {
+        if (buf.space() < static_cast<int64_t>(sizeof(securityType)))
+        {
+            throw NeedMoreSpaceException(sizeof(securityType));
+        }
+        buf.put(securityType);
+    }
+
+    inline Rfb::SecurityResult::SecurityResult(ByteBuffer& buf)
+    {
+        if (buf.remaining() < static_cast<int64_t>(sizeof(SecurityResult)))
+        {
+            throw NeedMoreDataException(sizeof(SecurityResult));
+        }
+        status = buf.getU32();
+        if (status != OK && status != FAILED)
+        {
+            throw ProtocolException("Bad seurity result.");
+        }
+    }
+
+    inline Rfb::FailureDescription::FailureDescription(ByteBuffer& buf)
+        : reasonString(NULL)
+    {
+        const int sizeHeader = 4;
+        if (buf.remaining() < sizeHeader)
+        {
+            throw NeedMoreDataException(sizeHeader);
+        }
+        reasonLength = buf.peekU32(0);
+        int size = sizeHeader + reasonLength;
+        if (buf.remaining() < size)
+        {
+            throw NeedMoreDataException(size);
+        }
+        reasonString = (U8*)malloc(sizeof(U8) * (reasonLength + 1));
+        if (!reasonString)
+        {
+            throw std::bad_alloc();
+        }
+        reasonLength = buf.getU32();
+        buf.get(reasonString, reasonLength);
+        reasonString[reasonLength] = 0;
+    }
+
+    inline Rfb::FailureDescription::~FailureDescription()
+    {
+        free(reasonString);
+    }
+
+    inline Rfb::Security33::Security33(ByteBuffer& buf)
+    {
+        if (buf.remaining() < static_cast<int64_t>(sizeof(Security33)))
+        {
+            throw NeedMoreDataException(sizeof(Security33));
+        }
+        securityType = buf.getU32();
+    }
+
+    inline Rfb::ClientInit::ClientInit(U8 value)
+        : sharedFlag(value)
+    {
+    }
+
+    inline void Rfb::ClientInit::write(ByteBuffer& buf)
+    {
+        if (buf.space() < static_cast<int64_t>(sizeof(sharedFlag)))
+        {
+            throw NeedMoreSpaceException(sizeof(sharedFlag));
+        }
+        buf.put(sharedFlag);
+    }
+
+    inline Rfb::ServerInit::ServerInit(ByteBuffer& buf)
+        : nameString(NULL)
+    {
+        const int offsetNameLength = 2 + 2 + static_cast<int>(sizeof(pixelFormat));
+        const int sizeHeader = 2 + 2 + static_cast<int>(sizeof(pixelFormat)) + 4;
+        if (buf.remaining() < sizeHeader)
+        {
+            throw NeedMoreDataException(sizeHeader);
+        }
+        nameLength = buf.peekU32(offsetNameLength);
+        int size = sizeHeader + nameLength;
+        if (buf.remaining() < size)
+        {
+            throw NeedMoreDataException(size);
+        }
+        nameString = (U8*)malloc(sizeof(U8) * (nameLength + 1));
+        if (!nameString)
+        {
+            throw std::bad_alloc();
+        }
+        width = buf.getU16();
+        height = buf.getU16();
+        pixelFormat.read(buf);
+        nameLength = buf.getU32();
+        buf.get(nameString, nameLength);
+        nameString[nameLength] = 0;
+    }
+
+    inline Rfb::ServerInit::~ServerInit()
+    {
+        free(nameString);
+    }
+
+    inline Rfb::SetPixelFormat::SetPixelFormat(const PixelFormat& value)
+        : messageType(SET_PIXEL_FORMAT)
+        , padding1(0)
+        , padding2(0)
+        , padding3(0)
+        , pixelFormat(value)
+    {
+    }
+
+    inline void Rfb::SetPixelFormat::write(ByteBuffer& buf)
+    {
+        if (buf.space() < static_cast<int64_t>(sizeof(SetPixelFormat)))
+        {
+            throw NeedMoreSpaceException(sizeof(SetPixelFormat));
+        }
+        buf.put(messageType);
+        buf.put(padding1);
+        buf.put(padding2);
+        buf.put(padding3);
+        pixelFormat.write(buf);
+    }
+
+    inline Rfb::SetEncodings2::SetEncodings2(S32 encoding1, S32 encoding2)
+        : messageType(SET_ENCODINGS)
+        , padding(0)
+        , numerOfEncodings(2)
+
+    {
+        encodingTypes[0] = encoding1;
+        encodingTypes[1] = encoding2;
+    }
+
+    inline void Rfb::SetEncodings2::write(ByteBuffer& buf)
+    {
+        if (buf.space() < static_cast<int64_t>(sizeof(SetEncodings2)))
+        {
+            throw NeedMoreSpaceException(sizeof(SetEncodings2));
+        }
+        buf.put(messageType);
+        buf.put(padding);
+        buf.put(numerOfEncodings);
+        buf.put(encodingTypes[0]);
+        buf.put(encodingTypes[1]);
+    }
+
+    inline Rfb::FramebufferUpdateRequest::FramebufferUpdateRequest(U8 incremental_, U16 x_, U16 y_, U16 width_, U16 height_)
+        : messageType(FRAME_BUFFER_UPDATE_REQUEST)
+        , incremental(incremental_)
+        , x(x_)
+        , y(y_)
+        , width(width_)
+        , height(height_)
+    {
+    }
+
+    inline void Rfb::FramebufferUpdateRequest::write(ByteBuffer& buf)
+    {
+        if (buf.space() < static_cast<int64_t>(sizeof(FramebufferUpdateRequest)))
+        {
+            throw NeedMoreSpaceException(sizeof(FramebufferUpdateRequest));
+        }
+        buf.put(messageType);
+        buf.put(incremental);
+        buf.put(x);
+        buf.put(y);
+        buf.put(width);
+        buf.put(height);
+    }
+
+    inline Rfb::KeyEvent::KeyEvent(U8 downFlag_, U32 key_)
+        : messageType(KEY_EVENT)
+        , downFlag(downFlag_)
+        , padding1(0)
+        , padding2(0)
+        , key(key_)
+    {
+    }
+
+    inline void Rfb::KeyEvent::write(ByteBuffer& buf)
+    {
+        if (buf.space() < static_cast<int64_t>(sizeof(KeyEvent)))
+        {
+            throw NeedMoreSpaceException(sizeof(KeyEvent));
+        }
+        buf.put(messageType);
+        buf.put(downFlag);
+        buf.put(padding1);
+        buf.put(padding2);
+        buf.put(key);
+    }
+
+    inline Rfb::ScanKeyEvent::ScanKeyEvent(U8 downFlag_, U32 key_)
+        : messageType(SCAN_KEY_EVENT)
+        , downFlag(downFlag_)
+        , padding1(0)
+        , padding2(0)
+        , key(key_)
+    {
+    }
+
+    inline void Rfb::ScanKeyEvent::write(ByteBuffer& buf)
+    {
+        if (buf.space() < static_cast<int64_t>(sizeof(ScanKeyEvent)))
+        {
+            throw NeedMoreSpaceException(sizeof(ScanKeyEvent));
+        }
+        buf.put(messageType);
+        buf.put(downFlag);
+        buf.put(padding1);
+        buf.put(padding2);
+        buf.put(key);
+    }
+
+    inline Rfb::PointerEvent::PointerEvent(U8 buttonMask_, U16 x_, U16 y_)
+        : messageType(POINTER_EVENT)
+        , buttonMask(buttonMask_)
+        , x(x_)
+        , y(y_)
+    {
+    }
+
+    inline void Rfb::PointerEvent::write(ByteBuffer& buf)
+    {
+        if (buf.space() < static_cast<int64_t>(sizeof(PointerEvent)))
+        {
+            throw NeedMoreSpaceException(sizeof(PointerEvent));
+        }
+        buf.put(messageType);
+        buf.put(buttonMask);
+        buf.put(x);
+        buf.put(y);
+    }
+
+    inline Rfb::FramebufferUpdate::FramebufferUpdate(ByteBuffer& buf)
+    {
+        if (buf.remaining() < static_cast<int64_t>(sizeof(FramebufferUpdate)))
+        {
+            throw NeedMoreDataException(sizeof(FramebufferUpdate));
+        }
+        messageType = buf.getU8();
+        padding = buf.getU8();
+        numberOfRectangles = buf.getU16();
+    }
+
+    inline Rfb::SetColourMapEntries::SetColourMapEntries(ByteBuffer& buf)
+        : colours(NULL)
+    {
+        const int offsetNumberOfColours = 1 + 1 + 2;
+        const int sizeHeader = 1 + 1 + 2 + 2;
+        if (buf.remaining() < sizeHeader)
+        {
+            throw NeedMoreDataException(sizeHeader);
+        }
+        numberOfColours = buf.peekU16(offsetNumberOfColours);
+        int size = sizeHeader + sizeof(Colour) * numberOfColours;
+        if (buf.remaining() < size)
+        {
+            throw NeedMoreDataException(size);
+        }
+        if (numberOfColours)
+        {
+            colours = (Colour*)malloc(sizeof(Colour) * numberOfColours);
+            if (!colours)
+            {
+                throw std::bad_alloc();
+            }
+        }
+        messageType = buf.getU8();
+        padding = buf.getU8();
+        firstColour = buf.getU16();
+        numberOfColours = buf.getU16();
+        for (U16 i = 0; i < numberOfColours; i++)
+        {
+            new(colours + i) Colour(buf);
+        }
+    }
+
+    inline Rfb::SetColourMapEntries::~SetColourMapEntries()
+    {
+        free(colours);
+    }
+
+    inline Rfb::Bell::Bell(ByteBuffer& buf)
+    {
+        if (buf.remaining() < 1)
+        {
+            throw NeedMoreDataException(1);
+        }
+        messageType = buf.getU8();
+    }
+
+    inline Rfb::PixelFormat::PixelFormat()
+        : bitsPerPixel(0) // to be determined at SERVERINIT time
+        , depth(24)
+        , bigEndian(0)
+        , trueColour(1)
+        , rMax(0xFF)
+        , gMax(0xFF)
+        , bMax(0xFF)
+        , rShift(0)
+        , gShift(8)
+        , bShift(16)
+        , padding1(0)
+        , padding2(0)
+        , padding3(0)
+    {
+    }
+
+    inline void Rfb::PixelFormat::read(ByteBuffer& buf)
+    {
+        if (buf.remaining() < static_cast<int64_t>(sizeof(PixelFormat)))
+        {
+            throw NeedMoreDataException(sizeof(PixelFormat));
+        }
+        bitsPerPixel = buf.getU8();
+        depth = buf.getU8();
+        bigEndian = buf.getU8();
+        trueColour = buf.getU8();
+        rMax = buf.getU16();
+        gMax = buf.getU16();
+        bMax = buf.getU16();
+        rShift = buf.getU8();
+        gShift = buf.getU8();
+        bShift = buf.getU8();
+        padding1 = buf.getU8();
+        padding2 = buf.getU8();
+        padding3 = buf.getU8();
+    }
+
+    inline void Rfb::PixelFormat::write(ByteBuffer& buf)
+    {
+        buf.put(bitsPerPixel);
+        buf.put(depth);
+        buf.put(bigEndian);
+        buf.put(trueColour);
+        buf.put(rMax);
+        buf.put(gMax);
+        buf.put(bMax);
+        buf.put(rShift);
+        buf.put(gShift);
+        buf.put(bShift);
+        buf.put(padding1);
+        buf.put(padding2);
+        buf.put(padding3);
+    }
+
+    inline Rfb::Rectangle::Rectangle(ByteBuffer& buf, int bitsPerPixel)
+    {
+        const int offsetWidth = 2 + 2;
+        const int offsetHeight = 2 + 2 + 2;
+        const int offsetEncodingType = 2 + 2 + 2 + 2;
+        const int sizeHeader = 2 + 2 + 2 + 2 + 4;
+        if (buf.remaining() < sizeHeader)
+        {
+            throw NeedMoreDataException(sizeHeader);
+        }
+        encodingType = buf.peekU32(offsetEncodingType);
+        if (encodingType == RAW)
+        {
+            width = buf.peekU16(offsetWidth);
+            height = buf.peekU16(offsetHeight);
+            int size = sizeHeader + dataSize(bitsPerPixel);
+            if (buf.remaining() < size)
+            {
+                throw NeedMoreDataException(size);
+            }
+        }
+        x = buf.getU16();
+        y = buf.getU16();
+        width = buf.getU16();
+        height = buf.getU16();
+        encodingType = buf.getU32();
+    }
+
+    inline Rfb::Colour::Colour(ByteBuffer& buf)
+    {
+        red = buf.getU16();
+        green = buf.getU16();
+        blue = buf.getU16();
+    }
+
+    inline Rfb::CutText::CutText(ByteBuffer& buf)
+        : text(NULL)
+    {
+        const int offsetLength = 1 + 1 + 1 + 1;
+        const int sizeHeader = 1 + 1 + 1 + 1 + 4;
+        if (buf.remaining() < sizeHeader)
+        {
+            throw NeedMoreDataException(sizeHeader);
+        }
+        length = buf.peekU32(offsetLength);
+        int size = sizeHeader + sizeof(U8) * length;
+        if (buf.remaining() < size)
+        {
+            throw NeedMoreDataException(size);
+        }
+        text = (U8*)malloc(sizeof(U8) * (length + 1));
+        if (!text)
+        {
+            throw std::bad_alloc();
+        }
+        messageType = buf.getU8();
+        padding1 = buf.getU8();
+        padding2 = buf.getU8();
+        padding3 = buf.getU8();
+        length = buf.getU32();
+        buf.get(text, length);
+        text[length] = 0;
+    }
+
+    inline Rfb::CutText::~CutText()
+    {
+        free(text);
+    }
+
+    inline Rfb::NeedMoreDataException::NeedMoreDataException(size_t size_)
+        : size(size_)
+    {
+    }
+
+    inline Rfb::NeedMoreSpaceException::NeedMoreSpaceException(size_t size_)
+        : size(size_)
+    {
+    }
+
+    inline Rfb::ProtocolException::ProtocolException(const char* message_)
+        : message(message_)
+    {
+    }
 }
 
 
