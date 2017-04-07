@@ -149,6 +149,8 @@ VirtualMachineNotebook::VirtualMachineNotebook(const RefPtr<VirtualMachine>& vm)
 
     set_current_page(0);
 
+    update();
+
     SignalManager& sm = SignalManager::instance();
     _connectionSession = sm.xenObjectSignal(_vm->getSession()).connect(sigc::mem_fun(*this, &VirtualMachineNotebook::onSessionUpdated));
     _connection = sm.xenObjectSignal(*_vm).connect(sigc::mem_fun(*this, &VirtualMachineNotebook::onUpdated));

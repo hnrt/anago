@@ -52,7 +52,6 @@ namespace hnrt
         inline void put(unsigned int);
         inline void put(signed int);
         inline void put(const void*, size_t);
-        inline void tryRewind();
 
     private:
 
@@ -345,8 +344,8 @@ namespace hnrt
 
     inline void ByteBuffer::put(unsigned short value)
     {
-        _ptr[_wPos] = (value >> (8 * 1)) & 0xff;
-        _ptr[_wPos] = (value >> (8 * 0)) & 0xff;
+        _ptr[_wPos + 0] = (value >> (8 * 1)) & 0xff;
+        _ptr[_wPos + 1] = (value >> (8 * 0)) & 0xff;
         _wPos += 2;
     }
 
@@ -372,14 +371,6 @@ namespace hnrt
     {
         memcpy(&_ptr[_wPos], value, length);
         _wPos += static_cast<int64_t>(length);
-    }
-
-    inline void ByteBuffer::tryRewind()
-    {
-        if (InterlockedCompareExchange(&_wPos, 0, _rPos) == _rPos)
-        {
-            _rPos = 0;
-        }
     }
 }
 

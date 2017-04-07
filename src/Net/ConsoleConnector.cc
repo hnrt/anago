@@ -19,14 +19,15 @@
 using namespace hnrt;
 
 
-#define BUFSZ 32768
+#define IBUFSZ 33554432
+#define OBUFSZ 65536
 
 
 ConsoleConnector::ConsoleConnector()
     : _curl(NULL)
     , _sockHost(-1)
-    , _ibuf(BUFSZ)
-    , _obuf(BUFSZ)
+    , _ibuf(IBUFSZ)
+    , _obuf(OBUFSZ)
     , _statusCode(0)
 {
 }

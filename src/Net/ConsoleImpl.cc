@@ -281,6 +281,8 @@ void ConsoleImpl::rxMain()
         {
             if (_ibuf.space() <= 0)
             {
+                TRACEPUT("BUFFER FULL!");
+                _condPx.signal();
                 Glib::TimeVal timeout;
                 timeout.assign_current_time();
                 timeout.add_milliseconds(1000);
@@ -306,6 +308,11 @@ void ConsoleImpl::rxMain()
                 }
             }
         }
+    }
+    catch (ConsoleException ex)
+    {
+        Logger::instance().error("ConsoleImpl::rxMain: %s", ex.what().c_str());
+        _state = STATE_ERROR;
     }
     catch (...)
     {
@@ -346,6 +353,11 @@ void ConsoleImpl::txMain()
                 }
             }
         }
+    }
+    catch (ConsoleException ex)
+    {
+        Logger::instance().error("ConsoleImpl::txMain: %s", ex.what().c_str());
+        _state = STATE_ERROR;
     }
     catch (...)
     {
@@ -617,6 +629,7 @@ void ConsoleImpl::processIncomingData()
     {
         if (_ibuf.space() <= 0)
         {
+            TRACEPUT("BUFFER FULL!");
             Glib::Mutex::Lock lock(_mutexRx);
             if (_ibuf.remaining() < _ibuf.capacity())
             {
@@ -626,6 +639,7 @@ void ConsoleImpl::processIncomingData()
             {
                 _ibuf.capacity(_ibuf.capacity() * 2);
             }
+            TRACEPUT("position=%zd length=%zd capacity=%zd", _ibuf.rPos(), _ibuf.remaining());
         }
     }
     catch (Rfb::ProtocolException ex)
@@ -737,6 +751,7 @@ bool ConsoleImpl::processOutgoingData()
             TRACEPUT("FramebufferUpdateRequest: cy=%d", fu.height);
             {
                 Glib::Mutex::Lock lock(_mutexTxBuf);
+                while (_obuf.remaining() > 0);
                 fu.write(_obuf);
             }
             _condTx.signal();
