@@ -47,9 +47,11 @@ namespace hnrt
         inline bool dequeue(ConsoleView*&, ConsoleView::Message&);
         inline int enqueue(const RefPtr<XenObject>&, int);
         inline bool dequeue(RefPtr<XenObject>&, int&);
-        void onNotify();
+        void onNotify1();
+        void onNotify2();
 
-        Glib::Dispatcher _dispatcher;
+        Glib::Dispatcher _dispatcher1;
+        Glib::Dispatcher _dispatcher2;
 
         // Priority 1
         Glib::Mutex _virtualMachineMessageMutex;

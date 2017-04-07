@@ -14,7 +14,8 @@ using namespace hnrt;
 SignalManagerImpl::SignalManagerImpl()
 {
     TRACE("SignalManagerImpl::ctor");
-    _dispatcher.connect(sigc::mem_fun(*this, &SignalManagerImpl::onNotify));
+    _dispatcher1.connect(sigc::mem_fun(*this, &SignalManagerImpl::onNotify1));
+    _dispatcher2.connect(sigc::mem_fun(*this, &SignalManagerImpl::onNotify2));
 }
 
 
@@ -126,11 +127,8 @@ SignalManagerImpl::ConsoleViewSignal SignalManagerImpl::consoleViewSignal(const 
 void SignalManagerImpl::notify(const ConsoleView& cv, const ConsoleView::Message& message)
 {
     TRACE("SignalManagerImpl::notify", "cv=%zx message.type=%d", &cv, message.type);
-    int size = enqueue(cv, message);
-    if (size == 1)
-    {
-        _dispatcher();
-    }
+    enqueue(cv, message);
+    _dispatcher1();
 }
 
 
@@ -178,58 +176,53 @@ SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(const XenObjec
 void SignalManagerImpl::notify(const RefPtr<XenObject>& object, int notification)
 {
     TRACE("SignalManagerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
-    int size = enqueue(object, notification);
-    if (size == 1)
+    enqueue(object, notification);
+    _dispatcher2();
+}
+
+
+void SignalManagerImpl::onNotify1()
+{
+    TRACE("SignalManagerImpl::onNotify1");
+    ConsoleView* cv = NULL;
+    ConsoleView::Message message;
+    if (dequeue(cv, message))
     {
-        _dispatcher();
+        TRACEPUT("cv=%zx message.type=%d", cv, message.type);
+        ConsoleViewSignalMap::iterator iter = _consoleViewSignalMap.find(cv);
+        if (iter != _consoleViewSignalMap.end())
+        {
+            iter->second.emit(message);
+        }
     }
 }
 
 
-void SignalManagerImpl::onNotify()
+void SignalManagerImpl::onNotify2()
 {
-    TRACE("SignalManagerImpl::onNotify");
-restart:
+    TRACE("SignalManagerImpl::onNotify2");
+    RefPtr<XenObject> object;
+    int notification;
+    if (dequeue(object, notification))
     {
-        ConsoleView* cv = NULL;
-        ConsoleView::Message message;
-        if (dequeue(cv, message))
+        TRACEPUT("object=%zx notification=%d", object.ptr(), notification);
         {
-            TRACEPUT("cv=%zx message.type=%d", cv, message.type);
-            ConsoleViewSignalMap::iterator iter = _consoleViewSignalMap.find(cv);
-            if (iter != _consoleViewSignalMap.end())
+            NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
+            if (iter != _notificationXenObjectSignalMap.end())
             {
-                iter->second.emit(message);
+                iter->second.emit(object, notification);
             }
-            goto restart;
         }
-    }
-    {
-        RefPtr<XenObject> object;
-        int notification;
-        if (dequeue(object, notification))
         {
-            TRACEPUT("object=%zx notification=%d", object.ptr(), notification);
+            XenObjectSignalMap::iterator iter = _xenObjectSignalMap.find(object.ptr());
+            if (iter != _xenObjectSignalMap.end())
             {
-                NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
-                if (iter != _notificationXenObjectSignalMap.end())
+                iter->second.emit(object, notification);
+                if (notification == XenObject::DESTROYED)
                 {
-                    iter->second.emit(object, notification);
-                    goto restart;
+                    _xenObjectSignalMap.erase(iter);
                 }
             }
-            {
-                XenObjectSignalMap::iterator iter = _xenObjectSignalMap.find(object.ptr());
-                if (iter != _xenObjectSignalMap.end())
-                {
-                    iter->second.emit(object, notification);
-                    if (notification == XenObject::DESTROYED)
-                    {
-                        _xenObjectSignalMap.erase(iter);
-                    }
-                }
-            }
-            goto restart;
         }
     }
 }
