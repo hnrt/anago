@@ -98,17 +98,17 @@ void ConsoleConnector::close()
 
 ssize_t ConsoleConnector::send()
 {
-    if (!_obuf.remaining())
+    if (_obuf.remaining() <= 0)
     {
-        // no data
+        // no data to send
         return -1;
     }
     size_t n = 0;
-    CURLcode result = curl_easy_send(_curl, _obuf.cur(), _obuf.remaining(), &n);
+    CURLcode result = curl_easy_send(_curl, _obuf.rPtr(), _obuf.remaining(), &n);
     if (result == CURLE_OK)
     {
         Logger::instance().trace("ConsoleConnector::send: CURLE_OK %zu", n);
-        _obuf.get(NULL, n);
+        _obuf.rPos(_obuf.rPos() + n);
         return n;
     }
     else if (result == CURLE_AGAIN)
@@ -131,17 +131,17 @@ ssize_t ConsoleConnector::send()
 }
 
 
-size_t ConsoleConnector::recv()
+ssize_t ConsoleConnector::recv()
 {
-    if (!_ibuf.space())
+    if (_ibuf.space() <= 0)
     {
-        return 0;
+        // no space to receive
+        return -1;
     }
-    _ibuf.fixLimit();
-    Logger::instance().trace("ConsoleConnector::recv: %zx %zu", _ibuf.end(), _ibuf.space());
+    Logger::instance().trace("ConsoleConnector::recv: %zx %zu", _ibuf.wPtr(), _ibuf.space());
     size_t n = 0;
-    CURLcode result = curl_easy_recv(_curl, _ibuf.end(), _ibuf.space(), &n);
-    _ibuf.limit(_ibuf.limit() + n);
+    CURLcode result = curl_easy_recv(_curl, _ibuf.wPtr(), _ibuf.space(), &n);
+    _ibuf.wPos(_ibuf.wPos() + n);
     if (result == CURLE_OK)
     {
         Logger::instance().trace("ConsoleConnector::recv: CURLE_OK %zu", n);
@@ -228,9 +228,9 @@ void ConsoleConnector::parseLocation(const char* location, Glib::ustring& host, 
 
 bool ConsoleConnector::getHeaderLength(size_t& length)
 {
-    char* s0 = (char*)_ibuf.cur();
+    char* s0 = (char*)_ibuf.rPtr();
     char* s1 = s0;
-    char* s9 = (char*)_ibuf.end();
+    char* s9 = s0 + _ibuf.remaining();
     while (1)
     {
         s1 = (char *)memchr(s1, '\r', s9 - s1);
@@ -258,7 +258,7 @@ bool ConsoleConnector::getHeaderLength(size_t& length)
 
 bool ConsoleConnector::parseHeader(size_t length)
 {
-    char* s1 = (char*)_ibuf.cur();
+    char* s1 = (char*)_ibuf.rPtr();
     char* s9 = s1 + length;
     if (s1 + 5 <= s9 && !strncasecmp(s1, "HTTP/", 5))
     {

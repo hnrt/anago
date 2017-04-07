@@ -343,6 +343,13 @@ namespace hnrt
             NeedMoreDataException(size_t size_);
         };
 
+        struct NeedMoreSpaceException
+        {
+            size_t size;
+
+            NeedMoreSpaceException(size_t size_);
+        };
+
         struct ProtocolException
         {
             const char* message;

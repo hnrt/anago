@@ -32,7 +32,7 @@ namespace hnrt
         void open(const char* location, const char* authorization);
         void close();
         ssize_t send();
-        size_t recv();
+        ssize_t recv();
         Glib::ustring getRequest(const char* location, const char* authorization);
         void parseLocation(const char* location, Glib::ustring& host, Glib::ustring& absPathAndQuery);
         bool getHeaderLength(size_t&);

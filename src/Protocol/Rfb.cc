@@ -88,6 +88,10 @@ void Rfb::ProtocolVersion::set(int version)
 
 void Rfb::ProtocolVersion::write(ByteBuffer& buf)
 {
+    if (buf.space() < static_cast<int64_t>(sizeof(value)))
+    {
+        throw NeedMoreSpaceException(sizeof(value));
+    }
     buf.put(value, sizeof(value));
 }
 
@@ -95,7 +99,7 @@ void Rfb::ProtocolVersion::write(ByteBuffer& buf)
 Rfb::Security37::Security37(ByteBuffer& buf)
     : securityTypes(NULL)
 {
-    if (!buf.remaining())
+    if (buf.remaining() < 1)
     {
         throw NeedMoreDataException(1);
     }
@@ -129,13 +133,17 @@ Rfb::Security37Response::Security37Response(int value)
 
 void Rfb::Security37Response::write(ByteBuffer& buf)
 {
+    if (buf.space() < static_cast<int64_t>(sizeof(securityType)))
+    {
+        throw NeedMoreSpaceException(sizeof(securityType));
+    }
     buf.put(securityType);
 }
 
 
 Rfb::SecurityResult::SecurityResult(ByteBuffer& buf)
 {
-    if (buf.remaining() < static_cast<int>(sizeof(SecurityResult)))
+    if (buf.remaining() < static_cast<int64_t>(sizeof(SecurityResult)))
     {
         throw NeedMoreDataException(sizeof(SecurityResult));
     }
@@ -180,7 +188,7 @@ Rfb::FailureDescription::~FailureDescription()
 
 Rfb::Security33::Security33(ByteBuffer& buf)
 {
-    if (buf.remaining() < static_cast<int>(sizeof(Security33)))
+    if (buf.remaining() < static_cast<int64_t>(sizeof(Security33)))
     {
         throw NeedMoreDataException(sizeof(Security33));
     }
@@ -196,6 +204,10 @@ Rfb::ClientInit::ClientInit(U8 value)
 
 void Rfb::ClientInit::write(ByteBuffer& buf)
 {
+    if (buf.space() < static_cast<int64_t>(sizeof(sharedFlag)))
+    {
+        throw NeedMoreSpaceException(sizeof(sharedFlag));
+    }
     buf.put(sharedFlag);
 }
 
@@ -247,6 +259,10 @@ Rfb::SetPixelFormat::SetPixelFormat(const PixelFormat& value)
 
 void Rfb::SetPixelFormat::write(ByteBuffer& buf)
 {
+    if (buf.space() < static_cast<int64_t>(sizeof(SetPixelFormat)))
+    {
+        throw NeedMoreSpaceException(sizeof(SetPixelFormat));
+    }
     buf.put(messageType);
     buf.put(padding1);
     buf.put(padding2);
@@ -268,6 +284,10 @@ Rfb::SetEncodings2::SetEncodings2(S32 encoding1, S32 encoding2)
 
 void Rfb::SetEncodings2::write(ByteBuffer& buf)
 {
+    if (buf.space() < static_cast<int64_t>(sizeof(SetEncodings2)))
+    {
+        throw NeedMoreSpaceException(sizeof(SetEncodings2));
+    }
     buf.put(messageType);
     buf.put(padding);
     buf.put(numerOfEncodings);
@@ -289,6 +309,10 @@ Rfb::FramebufferUpdateRequest::FramebufferUpdateRequest(U8 incremental_, U16 x_,
 
 void Rfb::FramebufferUpdateRequest::write(ByteBuffer& buf)
 {
+    if (buf.space() < static_cast<int64_t>(sizeof(FramebufferUpdateRequest)))
+    {
+        throw NeedMoreSpaceException(sizeof(FramebufferUpdateRequest));
+    }
     buf.put(messageType);
     buf.put(incremental);
     buf.put(x);
@@ -310,6 +334,10 @@ Rfb::KeyEvent::KeyEvent(U8 downFlag_, U32 key_)
 
 void Rfb::KeyEvent::write(ByteBuffer& buf)
 {
+    if (buf.space() < static_cast<int64_t>(sizeof(KeyEvent)))
+    {
+        throw NeedMoreSpaceException(sizeof(KeyEvent));
+    }
     buf.put(messageType);
     buf.put(downFlag);
     buf.put(padding1);
@@ -330,6 +358,10 @@ Rfb::ScanKeyEvent::ScanKeyEvent(U8 downFlag_, U32 key_)
 
 void Rfb::ScanKeyEvent::write(ByteBuffer& buf)
 {
+    if (buf.space() < static_cast<int64_t>(sizeof(ScanKeyEvent)))
+    {
+        throw NeedMoreSpaceException(sizeof(ScanKeyEvent));
+    }
     buf.put(messageType);
     buf.put(downFlag);
     buf.put(padding1);
@@ -349,6 +381,10 @@ Rfb::PointerEvent::PointerEvent(U8 buttonMask_, U16 x_, U16 y_)
 
 void Rfb::PointerEvent::write(ByteBuffer& buf)
 {
+    if (buf.space() < static_cast<int64_t>(sizeof(PointerEvent)))
+    {
+        throw NeedMoreSpaceException(sizeof(PointerEvent));
+    }
     buf.put(messageType);
     buf.put(buttonMask);
     buf.put(x);
@@ -358,7 +394,7 @@ void Rfb::PointerEvent::write(ByteBuffer& buf)
 
 Rfb::FramebufferUpdate::FramebufferUpdate(ByteBuffer& buf)
 {
-    if (buf.remaining() < static_cast<int>(sizeof(FramebufferUpdate)))
+    if (buf.remaining() < static_cast<int64_t>(sizeof(FramebufferUpdate)))
     {
         throw NeedMoreDataException(sizeof(FramebufferUpdate));
     }
@@ -410,7 +446,7 @@ Rfb::SetColourMapEntries::~SetColourMapEntries()
 
 Rfb::Bell::Bell(ByteBuffer& buf)
 {
-    if (!buf.remaining())
+    if (buf.remaining() < 1)
     {
         throw NeedMoreDataException(1);
     }
@@ -438,7 +474,7 @@ Rfb::PixelFormat::PixelFormat()
 
 void Rfb::PixelFormat::read(ByteBuffer& buf)
 {
-    if (buf.remaining() < static_cast<int>(sizeof(PixelFormat)))
+    if (buf.remaining() < static_cast<int64_t>(sizeof(PixelFormat)))
     {
         throw NeedMoreDataException(sizeof(PixelFormat));
     }
@@ -507,10 +543,6 @@ Rfb::Rectangle::Rectangle(ByteBuffer& buf, int bitsPerPixel)
 
 Rfb::Colour::Colour(ByteBuffer& buf)
 {
-    if (buf.remaining() < static_cast<int>(sizeof(Colour)))
-    {
-        throw NeedMoreDataException(sizeof(Colour));
-    }
     red = buf.getU16();
     green = buf.getU16();
     blue = buf.getU16();
@@ -554,6 +586,12 @@ Rfb::CutText::~CutText()
 
 
 Rfb::NeedMoreDataException::NeedMoreDataException(size_t size_)
+    : size(size_)
+{
+}
+
+
+Rfb::NeedMoreSpaceException::NeedMoreSpaceException(size_t size_)
     : size(size_)
 {
 }

@@ -157,36 +157,29 @@ void ConsoleImpl::run()
 {
     TRACE(StringBuffer().format("ConsoleImpl@%zx::run", this));
 
-    Glib::Thread* sender = NULL;
+    Glib::Thread* rx = NULL;
+    Glib::Thread* tx = NULL;
 
     try
     {
-        sender = ThreadManager::instance().create(sigc::mem_fun(*this, &ConsoleImpl::senderMain), true, "ConsoleSender");
+        rx = ThreadManager::instance().create(sigc::mem_fun(*this, &ConsoleImpl::rxMain), true, "ConsoleRx");
+        tx = ThreadManager::instance().create(sigc::mem_fun(*this, &ConsoleImpl::txMain), true, "ConsoleTx");
 
+        Glib::Mutex::Lock lock(_mutexPx);
         while (!_terminate && _state < STATE_COMPLETED)
         {
-            fd_set fds;
-            FD_ZERO(&fds);
-            FD_SET(_sockHost, &fds);
-            struct timeval timeout;
-            timeout.tv_sec = 1;
-            timeout.tv_usec = 0;
-            int rc = select(_sockHost + 1, &fds, NULL, NULL, &timeout);
-            if (rc < 0)
-            {
-                throw ConsoleException("select failed: %s", strerror(errno));
-            }
-            else
-            {
-                recv();
-            }
+            processIncomingData();
 
-            if (!processIncomingData())
+            if (_state < STATE_COMPLETED)
             {
-                break;
+                if (processOutgoingData())
+                {
+                    Glib::TimeVal timeout;
+                    timeout.assign_current_time();
+                    timeout.add_milliseconds(100);
+                    _condPx.timed_wait(_mutexPx, timeout);
+                }
             }
-
-            processOutgoingData();
 
 #if 0
             if (_readyCount >= _readyCountThreshold)
@@ -248,34 +241,96 @@ void ConsoleImpl::run()
 #endif
         }
     }
+    catch (std::bad_alloc)
+    {
+        Logger::instance().error("ConsoleImpl::run: Out of memory.");
+    }
     catch (ConsoleException ex)
     {
-        Logger::instance().error("%s", ex.what().c_str());
+        Logger::instance().error("ConsoleImpl::run: %s", ex.what().c_str());
     }
     catch (...)
     {
         Logger::instance().error("ConsoleImpl::run: Unhandled exception caught.");
     }
 
-    if (sender)
+    _terminate = true;
+
+    _condRx.signal();
+    _condTx.signal();
+
+    if (rx)
     {
-        _terminate = true;
-        _condTx.signal();
-        sender->join();
+        rx->join();
+    }
+
+    if (tx)
+    {
+        tx->join();
     }
 }
 
 
-void ConsoleImpl::senderMain()
+void ConsoleImpl::rxMain()
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::senderMain", this));
+    TRACE(StringBuffer().format("ConsoleImpl@%zx::rxMain", this));
+    try
+    {
+        Glib::Mutex::Lock lock(_mutexRx);
+        while (!_terminate && _state < STATE_COMPLETED)
+        {
+            if (_ibuf.space() <= 0)
+            {
+                Glib::TimeVal timeout;
+                timeout.assign_current_time();
+                timeout.add_milliseconds(1000);
+                _condRx.timed_wait(_mutexRx, timeout);
+            }
+            else
+            {
+                fd_set fds;
+                FD_ZERO(&fds);
+                FD_SET(_sockHost, &fds);
+                struct timeval timeout;
+                timeout.tv_sec = 1;
+                timeout.tv_usec = 0;
+                int rc = select(_sockHost + 1, &fds, NULL, NULL, &timeout);
+                if (rc < 0)
+                {
+                    Logger::instance().error("ConsoleImpl::rxMain: select failed: %s", strerror(errno));
+                    _state = STATE_ERROR;
+                }
+                else if (recv() > 0)
+                {
+                    _condPx.signal();
+                }
+            }
+        }
+    }
+    catch (...)
+    {
+        Logger::instance().error("ConsoleImpl::rxMain: Unhandled exception caught.");
+        _state = STATE_ERROR;
+    }
+}
+
+
+void ConsoleImpl::txMain()
+{
+    TRACE(StringBuffer().format("ConsoleImpl@%zx::txMain", this));
     try
     {
         Glib::Mutex::Lock lock(_mutexTx);
         while (!_terminate && _state < STATE_COMPLETED)
         {
-            ssize_t n = send();
-            if (n == 0)
+            if (_obuf.remaining() <= 0)
+            {
+                Glib::TimeVal timeout;
+                timeout.assign_current_time();
+                timeout.add_milliseconds(1000);
+                _condTx.timed_wait(_mutexTx, timeout);
+            }
+            else if (send() == 0)
             {
                 fd_set fds;
                 FD_ZERO(&fds);
@@ -286,32 +341,16 @@ void ConsoleImpl::senderMain()
                 int rc = select(_sockHost + 1, NULL, &fds, NULL, &timeout);
                 if (rc < 0)
                 {
-                    throw ConsoleException("select failed: %s", strerror(errno));
+                    Logger::instance().error("ConsoleImpl::txMain: select failed: %s", strerror(errno));
+                    _state = STATE_ERROR;
                 }
-            }
-            else if (n < 0)
-            {
-                Glib::TimeVal timeout;
-                timeout.assign_current_time();
-                timeout.add_milliseconds(1000);
-                _condTx.timed_wait(_mutexTx, timeout);
             }
         }
     }
-    catch (std::bad_alloc)
-    {
-        _state = STATE_ERROR;
-        Logger::instance().error("Out of memory.");
-    }
-    catch (ConsoleException ex)
-    {
-        _state = STATE_ERROR;
-        Logger::instance().error("%s", ex.what().c_str());
-    }
     catch (...)
     {
+        Logger::instance().error("ConsoleImpl::txMain: Unhandled exception caught.");
         _state = STATE_ERROR;
-        Logger::instance().error("ConsoleImpl::run: Unhandled exception caught.");
     }
 }
 
@@ -322,13 +361,13 @@ void ConsoleImpl::terminate()
 }
 
 
-bool ConsoleImpl::processIncomingData()
+void ConsoleImpl::processIncomingData()
 {
     TRACE(StringBuffer().format("ConsoleImpl@%zx::processIncomingData", this));
 
     try
     {
-        while (_ibuf.remaining())
+        while (_ibuf.remaining() > 0)
         {
             switch (_state)
             {
@@ -343,9 +382,9 @@ bool ConsoleImpl::processIncomingData()
                 if (!parseHeader(headerLength))
                 {
                     _state = STATE_ERROR;
-                    throw ConsoleException("Malformed response headers: %.*s", static_cast<int>(headerLength), _ibuf.cur());
+                    throw ConsoleException("Malformed response headers: %.*s", static_cast<int>(headerLength), _ibuf.rPtr());
                 }
-                _ibuf.get(NULL, headerLength);
+                _ibuf.rPos(_ibuf.rPos() + headerLength);
                 TRACEPUT("CONNECT status code %d", _statusCode);
                 if (_statusCode == 200)
                 {
@@ -541,8 +580,8 @@ bool ConsoleImpl::processIncomingData()
                 if (fu.encodingType == Rfb::RAW)
                 {
                     TRACEPUT("FramebufferUpdate: %u %u %u %u", fu.x, fu.y, fu.width, fu.height);
-                    _view.copy(fu.x, fu.y, fu.width, fu.height, _ibuf.cur());
-                    _ibuf.get(NULL, fu.dataSize(_pixelFormat.bitsPerPixel));
+                    _view.copy(fu.x, fu.y, fu.width, fu.height, _ibuf.rPtr());
+                    _ibuf.rPos(_ibuf.rPos() + fu.dataSize(_pixelFormat.bitsPerPixel));
                 }
                 else if (fu.encodingType == Rfb::DESKTOP_SIZE_PSEUDO)
                 {
@@ -571,29 +610,37 @@ bool ConsoleImpl::processIncomingData()
     }
     catch (std::bad_alloc)
     {
-        _state = STATE_ERROR;
         Logger::instance().error("Out of memory.");
+        _state = STATE_ERROR;
     }
     catch (Rfb::NeedMoreDataException ex)
     {
-        if (_ibuf.limit() == _ibuf.capacity())
+        if (_ibuf.space() <= 0)
         {
-            _ibuf.capacity(_ibuf.capacity() * 2);
+            Glib::Mutex::Lock lock(_mutexRx);
+            if (_ibuf.remaining() < _ibuf.capacity())
+            {
+                _ibuf.push();
+            }
+            else
+            {
+                _ibuf.capacity(_ibuf.capacity() * 2);
+            }
         }
     }
     catch (Rfb::ProtocolException ex)
     {
-        _state = STATE_ERROR;
         throw ConsoleException("RFB Protocol failure: %s", ex.message);
+        _state = STATE_ERROR;
     }
 
 done:
 
-    return _state < STATE_COMPLETED ? true : false;
+    (void)0;
 }
 
 
-void ConsoleImpl::processOutgoingData()
+bool ConsoleImpl::processOutgoingData()
 {
     TRACE(StringBuffer().format("ConsoleImpl@%zx::processOutgoingData", this));
 
@@ -606,7 +653,7 @@ void ConsoleImpl::processOutgoingData()
             Rfb::ProtocolVersion pv(_protocolVersion);
             TRACEPUT("ProtocolVersion: response=%d.%d", _protocolVersion / 1000, _protocolVersion % 1000);
             {
-                Glib::Mutex::Lock lock(_mutexTx2);
+                Glib::Mutex::Lock lock(_mutexTxBuf);
                 pv.write(_obuf);
             }
             _condTx.signal();
@@ -619,7 +666,7 @@ void ConsoleImpl::processOutgoingData()
             Rfb::Security37Response sr(Rfb::NONE);
             TRACEPUT("Security: response=%d", sr.securityType);
             {
-                Glib::Mutex::Lock lock(_mutexTx2);
+                Glib::Mutex::Lock lock(_mutexTxBuf);
                 sr.write(_obuf);
             }
             _condTx.signal();
@@ -632,7 +679,7 @@ void ConsoleImpl::processOutgoingData()
             Rfb::ClientInit ci(0);
             TRACEPUT("ClientInit: shared-flag=%d", ci.sharedFlag);
             {
-                Glib::Mutex::Lock lock(_mutexTx2);
+                Glib::Mutex::Lock lock(_mutexTxBuf);
                 ci.write(_obuf);
             }
             _condTx.signal();
@@ -655,7 +702,7 @@ void ConsoleImpl::processOutgoingData()
             TRACEPUT("SetPixelFormat: g-shift=%d", pf.pixelFormat.gShift);
             TRACEPUT("SetPixelFormat: b-shift=%d", pf.pixelFormat.bShift);
             {
-                Glib::Mutex::Lock lock(_mutexTx2);
+                Glib::Mutex::Lock lock(_mutexTxBuf);
                 pf.write(_obuf);
             }
             _condTx.signal();
@@ -671,7 +718,7 @@ void ConsoleImpl::processOutgoingData()
             TRACEPUT("SetEncodings: encoding-type[0]=%d", se.encodingTypes[0]);
             TRACEPUT("SetEncodings: encoding-type[1]=%d", se.encodingTypes[1]);
             {
-                Glib::Mutex::Lock lock(_mutexTx2);
+                Glib::Mutex::Lock lock(_mutexTxBuf);
                 se.write(_obuf);
             }
             _condTx.signal();
@@ -689,7 +736,7 @@ void ConsoleImpl::processOutgoingData()
             TRACEPUT("FramebufferUpdateRequest: cx=%d", fu.width);
             TRACEPUT("FramebufferUpdateRequest: cy=%d", fu.height);
             {
-                Glib::Mutex::Lock lock(_mutexTx2);
+                Glib::Mutex::Lock lock(_mutexTxBuf);
                 fu.write(_obuf);
             }
             _condTx.signal();
@@ -711,9 +758,18 @@ void ConsoleImpl::processOutgoingData()
     }
     catch (std::bad_alloc)
     {
-        _state = STATE_ERROR;
         Logger::instance().error("Out of memory.");
+        _state = STATE_ERROR;
     }
+    catch (Rfb::NeedMoreSpaceException e)
+    {
+        TRACEPUT("NeedMoreSpaceException caught.");
+        Glib::Mutex::Lock lock(_mutexTx);
+        _obuf.push();
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -728,7 +784,7 @@ void ConsoleImpl::sendPointerEvent(unsigned char buttonMask, unsigned short x, u
             Rfb::PointerEvent pe(buttonMask, x, y);
             TRACEPUT("PointerEvent: %02X %u %u", pe.buttonMask, pe.x, pe.y);
             {
-                Glib::Mutex::Lock lock(_mutexTx2);
+                Glib::Mutex::Lock lock(_mutexTxBuf);
                 pe.write(_obuf);
             }
             _condTx.signal();
@@ -1049,7 +1105,7 @@ void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsi
                     Rfb::ScanKeyEvent ke(downFlag, scancode);
                     TRACEPUT("ScanKeyEvent: %d %04X", ke.downFlag, ke.key);
                     {
-                        Glib::Mutex::Lock lock(_mutexTx2);
+                        Glib::Mutex::Lock lock(_mutexTxBuf);
                         ke.write(_obuf);
                     }
                     _condTx.signal();
@@ -1061,7 +1117,7 @@ void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsi
                 Rfb::KeyEvent ke(downFlag, keyval);
                 TRACEPUT("KeyEvent: %d %04X", ke.downFlag, ke.key);
                 {
-                    Glib::Mutex::Lock lock(_mutexTx2);
+                    Glib::Mutex::Lock lock(_mutexTxBuf);
                     ke.write(_obuf);
                 }
                 _condTx.signal();

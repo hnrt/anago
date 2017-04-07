@@ -129,7 +129,6 @@ $(OBJDIR)/Base/InterlockedCompareExchange.o \
 $(OBJDIR)/Base/InterlockedExchange.o \
 $(OBJDIR)/Base/InterlockedExchangeAdd.o \
 $(OBJDIR)/Base/RefObj.o \
-$(OBJDIR)/Base/ByteBuffer.o \
 $(OBJDIR)/Base/StringBuffer.o \
 $(OBJDIR)/Controller/Controller.o \
 $(OBJDIR)/Controller/ControllerImpl.o \
@@ -259,7 +258,6 @@ clean::
 ######################################################################
 
 $(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Base/RefPtr.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Net/PingAgent.h Thread/ThreadManager.h View/View.h XenServer/Api.h 
-$(OBJDIR)/Base/ByteBuffer.o: Base/ByteBuffer.cc Base/Atomic.h Base/ByteBuffer.h 
 $(OBJDIR)/Base/RefObj.o: Base/RefObj.cc Base/Atomic.h Base/RefObj.h Logger/LogLevel.h Logger/Logger.h 
 $(OBJDIR)/Base/StringBuffer.o: Base/StringBuffer.cc Base/StringBuffer.h 
 $(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Base/RefPtr.h Controller/Controller.h Controller/ControllerImpl.h Controller/SignalManager.h View/ConsoleView.h 

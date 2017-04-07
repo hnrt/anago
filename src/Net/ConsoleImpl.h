@@ -34,14 +34,19 @@ namespace hnrt
 
         ConsoleImpl(const ConsoleImpl&);
         void operator =(const ConsoleImpl&);
-        void senderMain();
-        bool processIncomingData();
-        void processOutgoingData();
+        void rxMain();
+        void txMain();
+        void processIncomingData();
+        bool processOutgoingData();
 
         ConsoleView& _view;
+        Glib::Mutex _mutexPx;
+        Glib::Cond _condPx;
+        Glib::Mutex _mutexRx;
+        Glib::Cond _condRx;
         Glib::Mutex _mutexTx;
         Glib::Cond _condTx;
-        Glib::Mutex _mutexTx2;
+        Glib::Mutex _mutexTxBuf;
         Glib::ustring _location;
         Glib::ustring _authorization;
         volatile bool _terminate;
