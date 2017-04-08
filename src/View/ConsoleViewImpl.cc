@@ -16,6 +16,7 @@
 #include "Thread/ThreadManager.h"
 #include "ConsoleViewImpl.h"
 #include "FrameBuffer.h"
+#include "View.h"
 
 
 using namespace hnrt;
@@ -59,8 +60,7 @@ ConsoleViewImpl::ConsoleViewImpl()
 
     memset(keyvals, 0, sizeof(keyvals));
 
-    _connection = SignalManager::instance().consoleViewSignal(*this).connect(sigc::mem_fun(*this, &ConsoleViewImpl::onUpdated));
-
+    _connection = _dispatcher.connect(sigc::mem_fun(*this, &ConsoleViewImpl::onDispatched));
 }
 
 
@@ -88,6 +88,7 @@ ConsoleViewImpl::~ConsoleViewImpl()
 
 void ConsoleViewImpl::open(const char* location, const char* authorization)
 {
+    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::open", this));
     close();
     _consoleThread = ThreadManager::instance().create(sigc::bind<Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ConsoleViewImpl::run), Glib::ustring(location), Glib::ustring(authorization)), true, "Console");
     _consoleThread->set_priority(Glib::THREAD_PRIORITY_HIGH);
@@ -96,6 +97,7 @@ void ConsoleViewImpl::open(const char* location, const char* authorization)
 
 void ConsoleViewImpl::close()
 {
+    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::close", this));
     int width = 0;
     int height = 0;
     Glib::Thread* thread = InterlockedExchangePointer(&_consoleThread, (Glib::Thread*)NULL);
@@ -113,13 +115,14 @@ void ConsoleViewImpl::close()
     }
     if (width > 0 && height > 0)
     {
-        SignalManager::instance().notify(*this, Message(Message::UPDATE_DESKTOP, 0, 0, width, height));
+        dispatchUpdateDesktop(0, 0, width, height);
     }
 }
 
 
 void ConsoleViewImpl::run(Glib::ustring location, Glib::ustring authorization)
 {
+    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::run", this));
     try
     {
         _console->open(location.c_str(), authorization.c_str());
@@ -128,7 +131,7 @@ void ConsoleViewImpl::run(Glib::ustring location, Glib::ustring authorization)
     }
     catch (...)
     {
-        Logger::instance().warn("ConsoleViewImpl::run: Unhandled exception caught.");
+        Logger::instance().warn("ConsoleViewImpl@%zx::run: Unhandled exception caught.", this);
     }
 }
 
@@ -374,8 +377,109 @@ bool ConsoleViewImpl::on_key_release_event(GdkEventKey* event)
 }
 
 
-void ConsoleViewImpl::onUpdated(Message message)
+inline void ConsoleViewImpl::dispatchResizeDesktop(int width, int height)
 {
+    {
+        Glib::Mutex::Lock lock(_mutexMsg);
+        if (_msgCount < MSG_MAX)
+        {
+            int index = (_msgIndex + _msgCount++) % MSG_MAX;
+            Message& message = _msg[index];
+            message.type = Message::RESIZE_DESKTOP;
+            message.rect.x = 0;
+            message.rect.y = 0;
+            message.rect.width = width;
+            message.rect.height = height;
+        }
+        else
+        {
+            Logger::instance().trace("ConsoleViewImpl: Message queue is FULL!");
+            _msgIndex = (_msgIndex + 1) % MSG_MAX;
+            Message& message = _msg[_msgIndex];
+            message.type = Message::RESIZE_DESKTOP;
+            message.rect.x = 0;
+            message.rect.y = 0;
+            message.rect.width = width;
+            message.rect.height = height;
+        }
+    }
+    _dispatcher();
+}
+
+
+inline void ConsoleViewImpl::dispatchUpdateDesktop(int x, int y, int width, int height)
+{
+    {
+        Glib::Mutex::Lock lock(_mutexMsg);
+        if (_msgCount < MSG_MAX)
+        {
+            int index = (_msgIndex + _msgCount++) % MSG_MAX;
+            Message& message = _msg[index];
+            message.type = Message::UPDATE_DESKTOP;
+            message.rect.x = x;
+            message.rect.y = y;
+            message.rect.width = width;
+            message.rect.height = height;
+        }
+        else
+        {
+            Logger::instance().trace("ConsoleViewImpl::enableScale: Message queue is FULL!");
+            _msgIndex = (_msgIndex + 1) % MSG_MAX;
+            Message& message = _msg[_msgIndex];
+            message.type = Message::UPDATE_DESKTOP;
+            message.rect.x = x;
+            message.rect.y = y;
+            message.rect.width = width;
+            message.rect.height = height;
+        }
+    }
+    _dispatcher();
+}
+
+
+inline void ConsoleViewImpl::dispatchBeep()
+{
+    {
+        Glib::Mutex::Lock lock(_mutexMsg);
+        if (_msgCount < MSG_MAX)
+        {
+            int index = (_msgIndex + _msgCount++) % MSG_MAX;
+            Message& message = _msg[index];
+            message.type = Message::BEEP;
+            message.rect.x = 0;
+            message.rect.y = 0;
+            message.rect.width = 0;
+            message.rect.height = 0;
+        }
+        else
+        {
+            Logger::instance().trace("ConsoleViewImpl::enableScale: Message queue is FULL!");
+            _msgIndex = (_msgIndex + 1) % MSG_MAX;
+            Message& message = _msg[_msgIndex];
+            message.type = Message::BEEP;
+            message.rect.x = 0;
+            message.rect.y = 0;
+            message.rect.width = 0;
+            message.rect.height = 0;
+        }
+    }
+    _dispatcher();
+}
+
+
+void ConsoleViewImpl::onDispatched()
+{
+    Message message;
+    {
+        Glib::Mutex::Lock lock(_mutexMsg);
+        if (!_msgCount)
+        {
+            return;
+        }
+        message = _msg[_msgIndex];
+        _msgIndex = (_msgIndex + 1) % MSG_MAX;
+        _msgCount--;
+    }
     update(message);
 }
 
@@ -488,7 +592,7 @@ void ConsoleViewImpl::enableScale(bool value)
             width = _frameBuffer->getWidth();
             height = _frameBuffer->getHeight();
         }
-        SignalManager::instance().notify(*this, Message(Message::UPDATE_DESKTOP, 0, 0, width, height));
+        dispatchUpdateDesktop(0, 0, width, height);
     }
 }
 
@@ -838,7 +942,7 @@ void ConsoleViewImpl::init(int width, int height, int bpp)
             _frameBuffer = FrameBuffer::create(width, height);
         }
     }
-    SignalManager::instance().notify(*this, Message(Message::RESIZE_DESKTOP, 0, 0, width, height));
+    dispatchResizeDesktop(width, height);
 }
 
 
@@ -851,7 +955,7 @@ void ConsoleViewImpl::resize(int width, int height)
             _frameBuffer = FrameBuffer::create(width, height);
         }
     }
-    SignalManager::instance().notify(*this, Message(Message::RESIZE_DESKTOP, 0, 0, width, height));
+    dispatchResizeDesktop(width, height);
 }
 
 
@@ -861,13 +965,13 @@ void ConsoleViewImpl::copy(int x, int y, int width, int height, const unsigned c
         Glib::Mutex::Lock lock(_mutexFb);
         _frameBuffer->copy(x, y, width, height, data, _bpp, width * _bpp / 8);
     }
-    SignalManager::instance().notify(*this, Message(Message::UPDATE_DESKTOP, x, y, width, height));
+    dispatchUpdateDesktop(x, y, width, height);
 }
 
 
 void ConsoleViewImpl::bell()
 {
-    SignalManager::instance().notify(*this, Message(Message::BEEP));
+    dispatchBeep();
 }
 
 

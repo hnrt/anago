@@ -639,8 +639,9 @@ void ConsoleImpl::processIncomingData()
             {
                 _ibuf.capacity(_ibuf.capacity() * 2);
             }
-            TRACEPUT("position=%zd length=%zd capacity=%zd", _ibuf.rPos(), _ibuf.remaining());
+            TRACEPUT("position=%zd length=%zd capacity=%zd", _ibuf.rPos(), _ibuf.remaining(), _ibuf.capacity());
         }
+        _condRx.signal();
     }
     catch (Rfb::ProtocolException ex)
     {

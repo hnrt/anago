@@ -7,7 +7,6 @@
 
 #include <sigc++/sigc++.h>
 #include "Base/RefPtr.h"
-#include "View/ConsoleView.h"
 
 
 namespace hnrt
@@ -18,7 +17,6 @@ namespace hnrt
     {
     public:
 
-        typedef sigc::signal<void, ConsoleView::Message> ConsoleViewSignal;
         typedef sigc::signal<void, RefPtr<XenObject>, int> XenObjectSignal;
 
         static void init();
@@ -26,8 +24,6 @@ namespace hnrt
         static SignalManager& instance();
 
         virtual void clear() = 0;
-        virtual ConsoleViewSignal consoleViewSignal(const ConsoleView&) = 0;
-        virtual void notify(const ConsoleView&, const ConsoleView::Message&) = 0;
         virtual XenObjectSignal xenObjectSignal(int) = 0;
         virtual XenObjectSignal xenObjectSignal(const XenObject&) = 0;
         virtual void notify(const RefPtr<XenObject>&, int) = 0;

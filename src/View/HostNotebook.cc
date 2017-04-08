@@ -93,7 +93,7 @@ void HostNotebook::onAutoConnectChanged()
 
 void HostNotebook::onSessionUpdated(RefPtr<XenObject> object, int what)
 {
-    Trace trace(StringBuffer().format("HostNotebook@%zx::onSessionUpdated(%zx,%d)", this, object.ptr(), what));
+    TRACE(StringBuffer().format("HostNotebook@%zx::onSessionUpdated(%zx,%d)", this, object.ptr(), what));
 
     switch (what)
     {
@@ -112,7 +112,7 @@ void HostNotebook::onSessionUpdated(RefPtr<XenObject> object, int what)
 
 void HostNotebook::onHostUpdated(RefPtr<XenObject> object, int what)
 {
-    Trace trace(StringBuffer().format("HostNotebook@%zx::onHostUpdated(%zx,%d)", this, object.ptr(), what));
+    TRACE(StringBuffer().format("HostNotebook@%zx::onHostUpdated(%zx,%d)", this, object.ptr(), what));
 
     switch (what)
     {
@@ -133,7 +133,7 @@ void HostNotebook::onHostUpdated(RefPtr<XenObject> object, int what)
 
 void HostNotebook::update()
 {
-    Trace trace(StringBuffer().format("HostNotebook@%zx::update", this));
+    TRACE(StringBuffer().format("HostNotebook@%zx::update", this));
 
     bool tabs = page_num(_optBox) > 0;
 

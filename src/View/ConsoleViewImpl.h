@@ -44,6 +44,11 @@ namespace hnrt
 
     protected:
 
+        enum ProtectedConstants
+        {
+            MSG_MAX = 8192,
+        };
+
         ConsoleViewImpl(const ConsoleViewImpl&);
         void operator =(const ConsoleViewImpl&);
         void run(Glib::ustring location, Glib::ustring authorization);
@@ -59,7 +64,10 @@ namespace hnrt
         virtual bool on_focus_out_event(GdkEventFocus*);
         virtual bool on_key_press_event(GdkEventKey*);
         virtual bool on_key_release_event(GdkEventKey*);
-        void onUpdated(Message);
+        inline void dispatchResizeDesktop(int, int);
+        inline void dispatchUpdateDesktop(int, int, int, int);
+        inline void dispatchBeep();
+        void onDispatched();
         void sendPointerEvent(unsigned char buttonMask, int x, int y);
         void sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsigned int state, unsigned int keycode);
         guint convertKey(guint keycode, guint modstate, guint keyval);
@@ -96,6 +104,11 @@ namespace hnrt
         void (ConsoleViewImpl::*_pScale)(GdkRectangle&);
         RefPtr<ConsoleViewKeyboardInputFilter> _keyboardInputFilter;
         unsigned char keyvals[256];
+        Glib::Mutex _mutexMsg;
+        volatile int _msgIndex;
+        volatile int _msgCount;
+        Message _msg[MSG_MAX];
+        Glib::Dispatcher _dispatcher;
     };
 }
 

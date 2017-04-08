@@ -14,40 +14,13 @@ using namespace hnrt;
 SignalManagerImpl::SignalManagerImpl()
 {
     TRACE("SignalManagerImpl::ctor");
-    _dispatcher1.connect(sigc::mem_fun(*this, &SignalManagerImpl::onNotify1));
-    _dispatcher2.connect(sigc::mem_fun(*this, &SignalManagerImpl::onNotify2));
+    _dispatcher.connect(sigc::mem_fun(*this, &SignalManagerImpl::onNotify));
 }
 
 
 SignalManagerImpl::~SignalManagerImpl()
 {
     TRACE("SignalManagerImpl::dtor");
-}
-
-
-inline int SignalManagerImpl::enqueue(const ConsoleView& cv, const ConsoleView::Message& message)
-{
-    Glib::Mutex::Lock lock(_virtualMachineMessageMutex);
-    _virtualMachineMessageList.push_back(VirtualMachineMessagePair(const_cast<ConsoleView*>(&cv), message));
-    return static_cast<int>(_virtualMachineMessageList.size());
-}
-
-
-inline bool SignalManagerImpl::dequeue(ConsoleView*& cv, ConsoleView::Message& message)
-{
-    Glib::Mutex::Lock lock(_virtualMachineMessageMutex);
-    if (_virtualMachineMessageList.size())
-    {
-        VirtualMachineMessagePair entry = _virtualMachineMessageList.front();
-        _virtualMachineMessageList.pop_front();
-        cv = entry.first;
-        message = entry.second;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
 }
 
 
@@ -83,7 +56,6 @@ void SignalManagerImpl::clear()
     TRACE("SignalManagerImpl::clear");
     if (ThreadManager::instance().isMain())
     {
-        _consoleViewSignalMap.clear();
         _notificationXenObjectSignalMap.clear();
         _xenObjectSignalMap.clear();
     }
@@ -93,42 +65,9 @@ void SignalManagerImpl::clear()
         throw std::runtime_error("SignalManagerImpl::clear invoked from a background thread.");
     }
     {
-        Glib::Mutex::Lock lock(_virtualMachineMessageMutex);
-        _virtualMachineMessageList.clear();
-    }
-    {
         Glib::Mutex::Lock lock(_xenObjectNotificationMutex);
         _xenObjectNotificationList.clear();
     }
-}
-
-
-SignalManagerImpl::ConsoleViewSignal SignalManagerImpl::consoleViewSignal(const ConsoleView& cv)
-{
-    if (ThreadManager::instance().isMain())
-    {
-        void* key = const_cast<ConsoleView*>(&cv);
-        ConsoleViewSignalMap::iterator iter = _consoleViewSignalMap.find(key);
-        if (iter == _consoleViewSignalMap.end())
-        {
-            _consoleViewSignalMap.insert(ConsoleViewSignalEntry(key, ConsoleViewSignal()));
-            iter = _consoleViewSignalMap.find(key);
-        }
-        return iter->second;
-    }
-    else
-    {
-        Logger::instance().error("signal cv=%zx requested in thread %s.", &cv, ThreadManager::instance().getName());
-        throw std::runtime_error("SignalManagerImpl::consoleViewSignal invoked from a background thread.");
-    }
-}
-
-
-void SignalManagerImpl::notify(const ConsoleView& cv, const ConsoleView::Message& message)
-{
-    TRACE("SignalManagerImpl::notify", "cv=%zx message.type=%d", &cv, message.type);
-    enqueue(cv, message);
-    _dispatcher1();
 }
 
 
@@ -177,30 +116,13 @@ void SignalManagerImpl::notify(const RefPtr<XenObject>& object, int notification
 {
     TRACE("SignalManagerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
     enqueue(object, notification);
-    _dispatcher2();
+    _dispatcher();
 }
 
 
-void SignalManagerImpl::onNotify1()
+void SignalManagerImpl::onNotify()
 {
-    TRACE("SignalManagerImpl::onNotify1");
-    ConsoleView* cv = NULL;
-    ConsoleView::Message message;
-    if (dequeue(cv, message))
-    {
-        TRACEPUT("cv=%zx message.type=%d", cv, message.type);
-        ConsoleViewSignalMap::iterator iter = _consoleViewSignalMap.find(cv);
-        if (iter != _consoleViewSignalMap.end())
-        {
-            iter->second.emit(message);
-        }
-    }
-}
-
-
-void SignalManagerImpl::onNotify2()
-{
-    TRACE("SignalManagerImpl::onNotify2");
+    TRACE("SignalManagerImpl::onNotify");
     RefPtr<XenObject> object;
     int notification;
     if (dequeue(object, notification))

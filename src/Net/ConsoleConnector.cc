@@ -40,7 +40,7 @@ ConsoleConnector::~ConsoleConnector()
 
 void ConsoleConnector::open(const char* location, const char* authorization)
 {
-    TRACE("ConsoleConnector::open", "location=%s authorization=%s", location, authorization);
+    TRACE(StringBuffer().format("ConsoleConnector@%zx::open", this), "location=%s authorization=%s", location, authorization);
 
     Glib::ustring request = getRequest(location, authorization);
 
@@ -89,6 +89,8 @@ void ConsoleConnector::open(const char* location, const char* authorization)
 
 void ConsoleConnector::close()
 {
+    TRACE(StringBuffer().format("ConsoleConnector@%zx::close", this));
+
     CURL* curl = InterlockedExchangePointer(&_curl, reinterpret_cast<CURL*>(NULL));
     if (curl)
     {
@@ -99,34 +101,31 @@ void ConsoleConnector::close()
 
 ssize_t ConsoleConnector::send()
 {
+    TRACE("ConsoleConnector::send", "pos=%zd len=%zd", _obuf.rPos(), _obuf.remaining());
     if (_obuf.remaining() <= 0)
     {
-        // no data to send
+        TRACEPUT("No data to send.");
         return -1;
     }
     size_t n = 0;
     CURLcode result = curl_easy_send(_curl, _obuf.rPtr(), _obuf.remaining(), &n);
     if (result == CURLE_OK)
     {
-        Logger::instance().trace("ConsoleConnector::send: CURLE_OK %zu", n);
+        TRACEPUT("CURLE_OK %zu", n);
         _obuf.rPos(_obuf.rPos() + n);
         return n;
     }
     else if (result == CURLE_AGAIN)
     {
-        Logger::instance().trace("ConsoleConnector::send: CURLE_AGAIN");
-        // ok to continue
+        TRACEPUT("CURLE_AGAIN (busy)");
         return 0;
     }
     else if (result == CURLE_UNSUPPORTED_PROTOCOL)
     {
-        Logger::instance().trace("ConsoleConnector::send: CURLE_UNSUPPORTED_PROTOCOL");
-        // possibly disconnected by host
-        throw CommunicationConsoleException(result, "CURL: Send failed. error=UNSUPPORTED_PROTOCOL");
+        throw CommunicationConsoleException(result, "CURL: Send failed. error=UNSUPPORTED_PROTOCOL (possibly disconnected by host)");
     }
     else
     {
-        Logger::instance().trace("ConsoleConnector::send: CURLE_%d", result);
         throw CommunicationConsoleException(result, "CURL: Send failed. error=%d", result);
     }
 }
@@ -134,40 +133,35 @@ ssize_t ConsoleConnector::send()
 
 ssize_t ConsoleConnector::recv()
 {
+    TRACE("ConsoleConnector::recv", "pos=%zd len=%zd", _ibuf.wPos(), _ibuf.space());
     if (_ibuf.space() <= 0)
     {
-        // no space to receive
+        TRACEPUT("No space to receive.");
         return -1;
     }
-    Logger::instance().trace("ConsoleConnector::recv: %zx %zu", _ibuf.wPtr(), _ibuf.space());
     size_t n = 0;
     CURLcode result = curl_easy_recv(_curl, _ibuf.wPtr(), _ibuf.space(), &n);
     _ibuf.wPos(_ibuf.wPos() + n);
     if (result == CURLE_OK)
     {
-        Logger::instance().trace("ConsoleConnector::recv: CURLE_OK %zu", n);
+        TRACEPUT("CURLE_OK %zu", n);
         return n;
     }
     else if (result == CURLE_AGAIN)
     {
-        Logger::instance().trace("ConsoleConnector::recv: CURLE_AGAIN");
-        // ok to continue
+        TRACEPUT("CURLE_AGAIN (no data to receive)");
         return 0;
     }
     else if (result == CURLE_UNSUPPORTED_PROTOCOL)
     {
-        Logger::instance().trace("ConsoleConnector::recv: CURLE_UNSUPPORTED_PROTOCOL");
-        // possibly disconnected by host
-        throw CommunicationConsoleException(result, "CURL: Recv failed. error=UNSUPPORTED_PROTOCOL");
+        throw CommunicationConsoleException(result, "CURL: Recv failed. error=UNSUPPORTED_PROTOCOL (possibly disconnected by host)");
     }
     else if (result == CURLE_BAD_FUNCTION_ARGUMENT)
     {
-        Logger::instance().trace("ConsoleConnector::recv: CURLE_BAD_FUNCTION_ARGUMENT");
         throw CommunicationConsoleException(result, "CURL: Recv failed. error=BAD_FUNCTION_ARGUMENT");
     }
     else
     {
-        Logger::instance().trace("ConsoleConnector::recv: CURLE_%d", result);
         throw CommunicationConsoleException(result, "CURL: Recv failed. error=%d", result);
     }
 }
