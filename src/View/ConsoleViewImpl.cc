@@ -16,7 +16,6 @@
 #include "Thread/ThreadManager.h"
 #include "ConsoleViewImpl.h"
 #include "FrameBuffer.h"
-#include "View.h"
 
 
 using namespace hnrt;
@@ -403,6 +402,7 @@ inline void ConsoleViewImpl::dispatchResizeDesktop(int width, int height)
             message.rect.height = height;
         }
     }
+    incRef();
     _dispatcher();
 }
 
@@ -433,6 +433,7 @@ inline void ConsoleViewImpl::dispatchUpdateDesktop(int x, int y, int width, int 
             message.rect.height = height;
         }
     }
+    incRef();
     _dispatcher();
 }
 
@@ -463,6 +464,7 @@ inline void ConsoleViewImpl::dispatchBeep()
             message.rect.height = 0;
         }
     }
+    incRef();
     _dispatcher();
 }
 
@@ -481,6 +483,7 @@ void ConsoleViewImpl::onDispatched()
         _msgCount--;
     }
     update(message);
+    decRef();
 }
 
 

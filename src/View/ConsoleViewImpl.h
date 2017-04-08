@@ -6,6 +6,7 @@
 
 
 #include <gtkmm.h>
+#include "Base/RefObj.h"
 #include "Base/RefPtr.h"
 #include "ConsoleView.h"
 #include "ConsoleViewKeyboardInputFilter.h"
@@ -19,10 +20,12 @@ namespace hnrt
     class ConsoleViewImpl
         : public Gtk::DrawingArea
         , public ConsoleView
+        , public RefObj
     {
     public:
 
-        ConsoleViewImpl();
+        static RefPtr<ConsoleViewImpl> create() { return RefPtr<ConsoleViewImpl>(new ConsoleViewImpl()); }
+
         virtual ~ConsoleViewImpl();
         const RefPtr<Console>& getConsole() const { return _console; }
         void open(const char* location, const char* authorization);
@@ -49,6 +52,7 @@ namespace hnrt
             MSG_MAX = 8192,
         };
 
+        ConsoleViewImpl();
         ConsoleViewImpl(const ConsoleViewImpl&);
         void operator =(const ConsoleViewImpl&);
         void run(Glib::ustring location, Glib::ustring authorization);

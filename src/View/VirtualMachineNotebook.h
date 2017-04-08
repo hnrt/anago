@@ -59,7 +59,7 @@ namespace hnrt
 
         VirtualMachinePropertyView _propertyView;
 
-        ConsoleViewImpl& _consoleView;
+        RefPtr<ConsoleViewImpl> _consoleView;
 
         RefPtr<ConsoleViewKeyboardInputFilterImpl> _keyboardInputFilter;
 
