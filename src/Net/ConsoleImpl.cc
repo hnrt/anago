@@ -245,6 +245,18 @@ void ConsoleImpl::rxMain()
             }
         }
     }
+    catch (CommunicationConsoleException ex)
+    {
+        if (ex.error() == CURLE_UNSUPPORTED_PROTOCOL)
+        {
+            Logger::instance().warn("ConsoleImpl::rxMain: %s", ex.what().c_str());
+        }
+        else
+        {
+            Logger::instance().error("ConsoleImpl::rxMain: %s", ex.what().c_str());
+        }
+        _state = STATE_ERROR;
+    }
     catch (ConsoleException ex)
     {
         Logger::instance().error("ConsoleImpl::rxMain: %s", ex.what().c_str());
@@ -333,21 +345,17 @@ void ConsoleImpl::processIncomingData()
                     throw ConsoleException("Malformed response headers: %.*s", static_cast<int>(headerLength), _ibuf.rPtr());
                 }
                 _ibuf.rPos(_ibuf.rPos() + headerLength);
-                TRACEPUT("CONNECT status code %d", _statusCode);
                 if (_statusCode == 200)
                 {
+                    TRACEPUT("CONNECT status code %d", _statusCode);
                     InterlockedCompareExchange(&_state, STATE_START, STATE_CONNECT_RESPONSE);
-                }
-                else if (_statusCode == 404)
-                {
-                    // server side console object cannot be found probably because of shutdown
-                    InterlockedCompareExchange(&_state, STATE_COMPLETED, STATE_CONNECT_RESPONSE);
-                    goto done;
                 }
                 else
                 {
-                    _state = STATE_ERROR;
-                    throw ConsoleException("CONNECT response status: %d", _statusCode);
+                    // 404: server side console object cannot be found probably because of shutdown
+                    Logger::instance().warn("CONNECT response status: %d", _statusCode);
+                    InterlockedCompareExchange(&_state, STATE_COMPLETED, STATE_CONNECT_RESPONSE);
+                    goto done;
                 }
                 //FALLTHROUGH
             }
