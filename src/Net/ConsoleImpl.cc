@@ -75,9 +75,6 @@ using namespace hnrt;
 #define STATE_CLOSED               199
 
 
-#define READY_COUNT_THRESHOLD(x)   ((unsigned long)(3000 * pow(2, (x) / 10)))
-
-
 ConsoleImpl::ConsoleImpl(ConsoleView& view)
     : _view(view)
     , _terminate(false)
@@ -89,9 +86,9 @@ ConsoleImpl::ConsoleImpl(ConsoleView& view)
     , _incremental(0)
     , _numRects(0)
     , _rectIndex(0)
-    , _updateCount(0)
-    , _readyCount(0)
-    , _readyCountThreshold(READY_COUNT_THRESHOLD(0))
+    , _fbupdateAt(0)
+    , _fbupdateLimit(15)
+    , _fbupdateCount(0)
     , _reconnectCount(0)
     , _scanCodeEnabled(true)
 {
@@ -119,13 +116,11 @@ void ConsoleImpl::open(const char* location, const char* authorization)
     {
         _terminate = false;
         _state = STATE_CONNECT_RESPONSE;
-        _updateCount = 0;
+        _fbupdateCount = 0;
         ConsoleConnector::open(location, authorization);
         _location = location;
         _authorization = authorization;
         _reconnectCount = 0;
-        _readyCount = 0;
-        _readyCountThreshold = READY_COUNT_THRESHOLD(_reconnectCount);
     }
     catch (LocationConsoleException ex)
     {
@@ -180,65 +175,6 @@ void ConsoleImpl::run()
                     _condPx.timed_wait(_mutexPx, timeout);
                 }
             }
-
-#if 0
-            if (_readyCount >= _readyCountThreshold)
-            {
-                if (_terminate)
-                {
-                    break;
-                }
-                // CentOS 7 is likely to respond no framebuffer update while it is starting up.
-                // Reconnect is needed to avoid such situation after confirming no send data.
-                try
-                {
-                    Glib::Mutex::Lock lock(_mutexTx);
-                    for (;;)
-                    {
-                        ssize_t n = send();
-                        if (n == 0)
-                        {
-                            fd_set fds;
-                            FD_ZERO(&fds);
-                            FD_SET(_sockHost, &fds);
-                            struct timeval timeout;
-                            timeout.tv_sec = 0;
-                            timeout.tv_usec = 1000;
-                            int rc = select(_sockHost + 1, NULL, &fds, NULL, &timeout);
-                            if (rc < 0)
-                            {
-                                throw ConsoleException("select failed: %s", strerror(errno));
-                            }
-                        }
-                        else if (n < 0)
-                        {
-                            // no more data
-                            break;
-                        }
-                    }
-                    TRACEPUT("Reconnecting...");
-                    close();
-                    _state = STATE_CONNECT_RESPONSE;
-                    _updateCount = 0;
-                    ConsoleConnector::open(_location.c_str(), _authorization.c_str());
-                    _readyCount = 0;
-                    _reconnectCount++;
-                    if (_reconnectCount % 10 == 0)
-                    {
-                        _readyCountThreshold = READY_COUNT_THRESHOLD(_reconnectCount);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _state = STATE_CLOSED;
-                    ConsoleConnector::close();
-                }
-            }
-            else if (_readyCount > 0 && _readyCount % 1000 == 0)
-            {
-                TRACEPUT("Server not responding.");
-            }
-#endif
         }
     }
     catch (std::bad_alloc)
@@ -555,7 +491,7 @@ void ConsoleImpl::processIncomingData()
                     {
                         TRACEPUT("FramebufferUpdate: number-of-rectangles=%d", _numRects);
                         _rectIndex = 0;
-                        _updateCount++;
+                        _fbupdateCount++;
                         InterlockedCompareExchange(&_state, STATE_FBUPDATE, STATE_READY);
                     }
                     break;
@@ -592,7 +528,7 @@ void ConsoleImpl::processIncomingData()
                 if (fu.encodingType == Rfb::RAW)
                 {
                     TRACEPUT("FramebufferUpdate: %u %u %u %u", fu.x, fu.y, fu.width, fu.height);
-                    _view.copy(fu.x, fu.y, fu.width, fu.height, _ibuf.rPtr());
+                    _view.copy(fu.x, fu.y, fu.width, fu.height, _ibuf.rPtr(), _numRects - (_rectIndex + 1));
                     _ibuf.rPos(_ibuf.rPos() + fu.dataSize(_pixelFormat.bitsPerPixel));
                 }
                 else if (fu.encodingType == Rfb::DESKTOP_SIZE_PSEUDO)
@@ -758,13 +694,32 @@ bool ConsoleImpl::processOutgoingData()
             _condTx.signal();
             _incremental = 1;
             InterlockedCompareExchange(&_state, STATE_READY, STATE_FBUPDATEREQUEST);
-            _readyCount = 0;
+            _fbupdateAt = time(NULL);
             break;
         }
 
-        case STATE_READY: // in case of server not responding
+        case STATE_READY:
         {
-            _readyCount++;
+            if (_fbupdateAt + _fbupdateLimit < time(NULL) && _obuf.remaining() <= 0)
+            {
+                // in case of server not responding
+                try
+                {
+                    // CentOS 7 is likely to respond no framebuffer update while it is starting up.
+                    // Reconnect is needed to avoid such situation after confirming no send data.
+                    TRACEPUT("Reconnecting...");
+                    close();
+                    _state = STATE_CONNECT_RESPONSE;
+                    _fbupdateCount = 0;
+                    ConsoleConnector::open(_location.c_str(), _authorization.c_str());
+                    _reconnectCount++;
+                }
+                catch (Exception ex)
+                {
+                    _state = STATE_CLOSED;
+                    ConsoleConnector::close();
+                }
+            }
             break;
         }
 
@@ -799,21 +754,32 @@ void ConsoleImpl::sendPointerEvent(unsigned char buttonMask, unsigned short x, u
         {
             Rfb::PointerEvent pe(buttonMask, x, y);
             TRACEPUT("PointerEvent: %02X %u %u", pe.buttonMask, pe.x, pe.y);
+            for (;;)
             {
-                Glib::Mutex::Lock lock(_mutexTxBuf);
-                pe.write(_obuf);
+                try
+                {
+                    Glib::Mutex::Lock lock(_mutexTxBuf);
+                    pe.write(_obuf);
+                    break;
+                }
+                catch (Rfb::NeedMoreSpaceException e)
+                {
+                    TRACEPUT("NeedMoreSpaceException caught.");
+                    Glib::Mutex::Lock lock(_mutexTx);
+                    _obuf.push();
+                }
             }
             _condTx.signal();
         }
         catch (std::bad_alloc)
         {
-            _state = STATE_ERROR;
             Logger::instance().error("Out of memory.");
+            _state = STATE_ERROR;
         }
         catch (...)
         {
+            Logger::instance().error("ConsoleImpl::sendPointerEvent: Unexpected exception caught.");
             _state = STATE_ERROR;
-            Logger::instance().error("Unexpected exception caught in ConsoleImpl::sendPointerEvent.");
         }
     }
 }
@@ -1120,9 +1086,20 @@ void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsi
                 {
                     Rfb::ScanKeyEvent ke(downFlag, scancode);
                     TRACEPUT("ScanKeyEvent: %d %04X", ke.downFlag, ke.key);
+                    for (;;)
                     {
-                        Glib::Mutex::Lock lock(_mutexTxBuf);
-                        ke.write(_obuf);
+                        try
+                        {
+                            Glib::Mutex::Lock lock(_mutexTxBuf);
+                            ke.write(_obuf);
+                            break;
+                        }
+                        catch (Rfb::NeedMoreSpaceException e)
+                        {
+                            TRACEPUT("NeedMoreSpaceException caught.");
+                            Glib::Mutex::Lock lock(_mutexTx);
+                            _obuf.push();
+                        }
                     }
                     _condTx.signal();
                     return;
@@ -1132,11 +1109,23 @@ void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsi
             {
                 Rfb::KeyEvent ke(downFlag, keyval);
                 TRACEPUT("KeyEvent: %d %04X", ke.downFlag, ke.key);
+                for (;;)
                 {
-                    Glib::Mutex::Lock lock(_mutexTxBuf);
-                    ke.write(_obuf);
+                    try
+                    {
+                        Glib::Mutex::Lock lock(_mutexTxBuf);
+                        ke.write(_obuf);
+                        break;
+                    }
+                    catch (Rfb::NeedMoreSpaceException e)
+                    {
+                        TRACEPUT("NeedMoreSpaceException caught.");
+                        Glib::Mutex::Lock lock(_mutexTx);
+                        _obuf.push();
+                    }
                 }
                 _condTx.signal();
+                return;
             }
         }
         catch (std::bad_alloc)

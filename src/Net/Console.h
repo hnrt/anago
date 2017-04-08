@@ -29,6 +29,7 @@ namespace hnrt
         virtual void sendPointerEvent(unsigned char buttonMask, unsigned short x, unsigned short y) = 0;
         virtual void sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsigned int keycode) = 0;
         virtual void sendCtrlAltDelete() = 0;
+        virtual int statusCode() const = 0;
 
     protected:
 

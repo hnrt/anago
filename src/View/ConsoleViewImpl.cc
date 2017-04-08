@@ -57,7 +57,8 @@ ConsoleViewImpl::ConsoleViewImpl()
         _scaleThreads[i] = ThreadManager::instance().create(sigc::mem_fun(*this, &ConsoleViewImpl::scaleWorker), true, "CV-Scaler");
     }
 
-    memset(keyvals, 0, sizeof(keyvals));
+    memset(_keyvals, 0, sizeof(_keyvals));
+    memset(&_updatedRectangle, 0, sizeof(_updatedRectangle));
 
     _connection = _dispatcher.connect(sigc::mem_fun(*this, &ConsoleViewImpl::onDispatched));
 }
@@ -104,12 +105,15 @@ void ConsoleViewImpl::close()
     {
         _console->terminate();
         thread->join();
-        Glib::Mutex::Lock lock(_mutexFb);
-        width = _frameBuffer->getWidth();
-        height = _frameBuffer->getHeight();
-        if (width > 0 && height > 0)
+        if (_console->statusCode() == 200)
         {
-            _frameBuffer->changeColor(0.5);
+            Glib::Mutex::Lock lock(_mutexFb);
+            width = _frameBuffer->getWidth();
+            height = _frameBuffer->getHeight();
+            if (width > 0 && height > 0)
+            {
+                _frameBuffer->changeColor(0.5);
+            }
         }
     }
     if (width > 0 && height > 0)
@@ -352,10 +356,10 @@ bool ConsoleViewImpl::on_focus_out_event(GdkEventFocus* event)
     _hasFocus = false;
     for (unsigned int keycode = 0; keycode < 256; keycode++)
     {
-        if (keyvals[keycode])
+        if (_keyvals[keycode])
         {
-            TRACEPUT("sendKeyEvent(0,%u,%u)", keyvals[keycode], keycode);
-            _console->sendKeyEvent(0, keyvals[keycode], keycode);
+            TRACEPUT("sendKeyEvent(0,%u,%u)", _keyvals[keycode], keycode);
+            _console->sendKeyEvent(0, _keyvals[keycode], keycode);
         }
     }
     return true;
@@ -524,11 +528,11 @@ void ConsoleViewImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, 
     {
         if (downFlag)
         {
-            keyvals[keycode] = keyval;
+            _keyvals[keycode] = keyval;
         }
         else
         {
-            keyvals[keycode] = 0;
+            _keyvals[keycode] = 0;
         }
     }
     _console->sendKeyEvent(downFlag, keyval, keycode);
@@ -946,6 +950,7 @@ void ConsoleViewImpl::init(int width, int height, int bpp)
         }
     }
     dispatchResizeDesktop(width, height);
+    memset(&_updatedRectangle, 0, sizeof(_updatedRectangle));
 }
 
 
@@ -959,16 +964,59 @@ void ConsoleViewImpl::resize(int width, int height)
         }
     }
     dispatchResizeDesktop(width, height);
+    memset(&_updatedRectangle, 0, sizeof(_updatedRectangle));
 }
 
 
-void ConsoleViewImpl::copy(int x, int y, int width, int height, const unsigned char* data)
+void ConsoleViewImpl::copy(int x, int y, int width, int height, const unsigned char* data, int remaining)
 {
     {
         Glib::Mutex::Lock lock(_mutexFb);
         _frameBuffer->copy(x, y, width, height, data, _bpp, width * _bpp / 8);
     }
-    dispatchUpdateDesktop(x, y, width, height);
+    if (!_updatedRectangle.width)
+    {
+        _updatedRectangle.x = x;
+        _updatedRectangle.width = width;
+    }
+    else
+    {
+        int xendCur = _updatedRectangle.x + _updatedRectangle.width;
+        int xendNew = x + width;
+        if (_updatedRectangle.x > x)
+        {
+            _updatedRectangle.x = x;
+        }
+        if (xendCur < xendNew)
+        {
+            xendCur = xendNew;
+        }
+        _updatedRectangle.width = xendCur - _updatedRectangle.x;
+    }
+    if (!_updatedRectangle.height)
+    {
+        _updatedRectangle.y = y;
+        _updatedRectangle.height = height;
+    }
+    else
+    {
+        int yendCur = _updatedRectangle.y + _updatedRectangle.height;
+        int yendNew = y + height;
+        if (_updatedRectangle.y > y)
+        {
+            _updatedRectangle.y = y;
+        }
+        if (yendCur < yendNew)
+        {
+            yendCur = yendNew;
+        }
+        _updatedRectangle.height = yendCur - _updatedRectangle.y;
+    }
+    if (remaining <= 0)
+    {
+        dispatchUpdateDesktop(_updatedRectangle.x, _updatedRectangle.y, _updatedRectangle.width, _updatedRectangle.height);
+        memset(&_updatedRectangle, 0, sizeof(_updatedRectangle));
+    }
 }
 
 

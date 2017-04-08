@@ -29,6 +29,7 @@ namespace hnrt
         virtual void sendPointerEvent(unsigned char buttonMask, unsigned short x, unsigned short y);
         virtual void sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsigned int keycode);
         virtual void sendCtrlAltDelete();
+        virtual int statusCode() const { return _statusCode; }
 
     protected:
 
@@ -59,9 +60,9 @@ namespace hnrt
         unsigned char _incremental;
         int _numRects;
         int _rectIndex;
-        unsigned long _updateCount;
-        unsigned long _readyCount;
-        unsigned long _readyCountThreshold;
+        time_t _fbupdateAt;
+        time_t _fbupdateLimit;
+        unsigned long _fbupdateCount;
         unsigned long _reconnectCount;
         bool _scanCodeEnabled;
     };

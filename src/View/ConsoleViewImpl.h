@@ -41,7 +41,7 @@ namespace hnrt
         // implements ConsoleView
         virtual void init(int width, int height, int bpp);
         virtual void resize(int width, int height);
-        virtual void copy(int x, int y, int width, int height, const unsigned char* data);
+        virtual void copy(int x, int y, int width, int height, const unsigned char* data, int remaining);
         virtual void bell();
         virtual int getDefaultBpp();
 
@@ -107,12 +107,13 @@ namespace hnrt
         int _remaining;
         void (ConsoleViewImpl::*_pScale)(GdkRectangle&);
         RefPtr<ConsoleViewKeyboardInputFilter> _keyboardInputFilter;
-        unsigned char keyvals[256];
+        unsigned char _keyvals[256];
         Glib::Mutex _mutexMsg;
         volatile int _msgIndex;
         volatile int _msgCount;
         Message _msg[MSG_MAX];
         Glib::Dispatcher _dispatcher;
+        GdkRectangle _updatedRectangle;
     };
 }
 
