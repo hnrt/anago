@@ -108,6 +108,18 @@ bool ConsoleImpl::isActive() const
 }
 
 
+inline bool ConsoleImpl::canContinue() const
+{
+    return !_terminate && _state < STATE_COMPLETED;
+}
+
+
+inline bool ConsoleImpl::isServerNotResponding() const
+{
+    return _fbupdateAt + _fbupdateLimit < time(NULL) && _obuf.remaining() <= 0;
+}
+
+
 void ConsoleImpl::open(const char* location, const char* authorization)
 {
     TRACE(StringBuffer().format("ConsoleImpl@%zx::open", this));
@@ -161,19 +173,21 @@ void ConsoleImpl::run()
         tx = ThreadManager::instance().create(sigc::mem_fun(*this, &ConsoleImpl::txMain), true, "ConsoleTx");
 
         Glib::Mutex::Lock lock(_mutexPx);
-        while (!_terminate && _state < STATE_COMPLETED)
+        while (canContinue())
         {
             processIncomingData();
 
-            if (_state < STATE_COMPLETED)
+            if (!canContinue())
             {
-                if (processOutgoingData())
-                {
-                    Glib::TimeVal timeout;
-                    timeout.assign_current_time();
-                    timeout.add_milliseconds(100);
-                    _condPx.timed_wait(_mutexPx, timeout);
-                }
+                break;
+            }
+
+            if (processOutgoingData())
+            {
+                Glib::TimeVal timeout;
+                timeout.assign_current_time();
+                timeout.add_milliseconds(100);
+                _condPx.timed_wait(_mutexPx, timeout);
             }
         }
     }
@@ -213,7 +227,7 @@ void ConsoleImpl::rxMain()
     try
     {
         Glib::Mutex::Lock lock(_mutexRx);
-        while (!_terminate && _state < STATE_COMPLETED)
+        while (canContinue())
         {
             if (_ibuf.space() <= 0)
             {
@@ -276,7 +290,7 @@ void ConsoleImpl::txMain()
     try
     {
         Glib::Mutex::Lock lock(_mutexTx);
-        while (!_terminate && _state < STATE_COMPLETED)
+        while (canContinue())
         {
             if (_obuf.remaining() <= 0)
             {
@@ -708,9 +722,8 @@ bool ConsoleImpl::processOutgoingData()
 
         case STATE_READY:
         {
-            if (_fbupdateAt + _fbupdateLimit < time(NULL) && _obuf.remaining() <= 0)
+            if (canContinue() && isServerNotResponding())
             {
-                // in case of server not responding
                 try
                 {
                     // CentOS 7 is likely to respond no framebuffer update while it is starting up.

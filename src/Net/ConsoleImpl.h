@@ -35,6 +35,8 @@ namespace hnrt
 
         ConsoleImpl(const ConsoleImpl&);
         void operator =(const ConsoleImpl&);
+        inline bool canContinue() const;
+        inline bool isServerNotResponding() const;
         void rxMain();
         void txMain();
         void processIncomingData();
