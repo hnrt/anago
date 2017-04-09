@@ -19,7 +19,7 @@
 using namespace hnrt;
 
 
-#define IBUFSZ 33554432
+#define IBUFSZ 16777216
 #define OBUFSZ 65536
 
 
