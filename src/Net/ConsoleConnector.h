@@ -31,8 +31,10 @@ namespace hnrt
         void operator =(const ConsoleConnector &);
         void open(const char* location, const char* authorization);
         void close();
-        ssize_t send();
         ssize_t recv();
+        ssize_t send();
+        bool canRecv(long = 1000000L) const;
+        bool canSend(long = 1000000L) const;
         Glib::ustring getRequest(const char* location, const char* authorization);
         void parseLocation(const char* location, Glib::ustring& host, Glib::ustring& absPathAndQuery);
         bool getHeaderLength(size_t&);

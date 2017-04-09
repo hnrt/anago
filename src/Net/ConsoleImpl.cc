@@ -1,14 +1,6 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
-#include <ctype.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/time.h>
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
 #include "Exception/ConsoleException.h"
@@ -77,6 +69,9 @@ using namespace hnrt;
 
 ConsoleImpl::ConsoleImpl(ConsoleView& view)
     : _view(view)
+    , _fbUpdateLimit(15L)
+    , _scanCodeEnabled(true)
+    , _reconnectCount(0)
     , _terminate(false)
     , _state(STATE_CLOSED)
     , _protocolVersion(0)
@@ -86,11 +81,7 @@ ConsoleImpl::ConsoleImpl(ConsoleView& view)
     , _incremental(0)
     , _numRects(0)
     , _rectIndex(0)
-    , _fbupdateAt(0)
-    , _fbupdateLimit(15)
-    , _fbupdateCount(0)
-    , _reconnectCount(0)
-    , _scanCodeEnabled(true)
+    , _fbUpdateCount(0)
 {
     TRACE(StringBuffer().format("ConsoleImpl@%zx::ctor", this));
 }
@@ -114,9 +105,53 @@ inline bool ConsoleImpl::canContinue() const
 }
 
 
+inline static void add(struct timeval& tv, long delta)
+{
+    tv.tv_usec += delta;
+    tv.tv_sec += tv.tv_usec / 1000000L;
+    tv.tv_usec %= 1000000L;
+}
+
+
+inline static int compare(struct timeval& t1, struct timeval& t2)
+{
+    if (t1.tv_sec < t2.tv_sec)
+    {
+        return -1;
+    }
+    else if (t1.tv_sec > t2.tv_sec)
+    {
+        return 1;
+    }
+    else if (t1.tv_usec < t2.tv_usec)
+    {
+        return -1;
+    }
+    else if (t1.tv_usec > t2.tv_usec)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+
 inline bool ConsoleImpl::isServerNotResponding() const
 {
-    return _fbupdateAt + _fbupdateLimit < time(NULL) && _obuf.rLen() <= 0;
+    struct timeval t1 = _fbUpdateRequestAt;
+    struct timeval t2 = { 0 };
+    gettimeofday(&t2, NULL);
+    add(t1, _fbUpdateLimit * 1000000L);
+    if (compare(t1, t2) < 0 && !_obuf.canRead())
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
@@ -128,7 +163,7 @@ void ConsoleImpl::open(const char* location, const char* authorization)
     {
         _terminate = false;
         _state = STATE_CONNECT_RESPONSE;
-        _fbupdateCount = 0;
+        _fbUpdateCount = 0;
         ConsoleConnector::open(location, authorization);
         _location = location;
         _authorization = authorization;
@@ -233,7 +268,22 @@ void ConsoleImpl::rxMain()
         Glib::Mutex::Lock lock(_mutexRx);
         while (canContinue())
         {
-            if (_ibuf.wLen() <= 0)
+            if (_ibuf.canWrite())
+            {
+                if (recv() > 0)
+                {
+                    _condPx.signal();
+                }
+                else if (canRecv())
+                {
+                    TRACEPUT("recv ready.");
+                }
+                else
+                {
+                    TRACEPUT("recv not ready.");
+                }
+            }
+            else
             {
                 TRACEPUT("BUFFER FULL!");
                 _condPx.signal();
@@ -241,25 +291,6 @@ void ConsoleImpl::rxMain()
                 timeout.assign_current_time();
                 timeout.add_milliseconds(1000);
                 _condRx.timed_wait(_mutexRx, timeout);
-            }
-            else
-            {
-                fd_set fds;
-                FD_ZERO(&fds);
-                FD_SET(_sockHost, &fds);
-                struct timeval timeout;
-                timeout.tv_sec = 1;
-                timeout.tv_usec = 0;
-                int rc = select(_sockHost + 1, &fds, NULL, NULL, &timeout);
-                if (rc < 0)
-                {
-                    Logger::instance().error("ConsoleImpl::rxMain: select failed: %s", strerror(errno));
-                    _state = STATE_ERROR;
-                }
-                else if (recv() > 0)
-                {
-                    _condPx.signal();
-                }
             }
         }
     }
@@ -301,27 +332,28 @@ void ConsoleImpl::txMain()
         Glib::Mutex::Lock lock(_mutexTx);
         while (canContinue())
         {
-            if (_obuf.rLen() <= 0)
+            if (_obuf.canRead())
             {
+                if (send() > 0)
+                {
+                    _condPx.signal();
+                }
+                else if (canSend())
+                {
+                    TRACE("send ready.");
+                }
+                else
+                {
+                    TRACE("send not ready.");
+                }
+            }
+            else
+            {
+                _condPx.signal();
                 Glib::TimeVal timeout;
                 timeout.assign_current_time();
                 timeout.add_milliseconds(1000);
                 _condTx.timed_wait(_mutexTx, timeout);
-            }
-            else if (send() == 0)
-            {
-                fd_set fds;
-                FD_ZERO(&fds);
-                FD_SET(_sockHost, &fds);
-                struct timeval timeout;
-                timeout.tv_sec = 1;
-                timeout.tv_usec = 0;
-                int rc = select(_sockHost + 1, NULL, &fds, NULL, &timeout);
-                if (rc < 0)
-                {
-                    Logger::instance().error("ConsoleImpl::txMain: select failed: %s", strerror(errno));
-                    _state = STATE_ERROR;
-                }
             }
         }
     }
@@ -346,6 +378,7 @@ void ConsoleImpl::txMain()
 void ConsoleImpl::terminate()
 {
     _terminate = true;
+    _condPx.signal();
 }
 
 
@@ -523,12 +556,17 @@ void ConsoleImpl::processIncomingData()
                 {
                     Rfb::FramebufferUpdate fu(_ibuf);
                     _numRects = fu.numberOfRectangles;
+                    TRACEPUT("FramebufferUpdate: number-of-rectangles=%d", _numRects);
                     if (_numRects)
                     {
-                        TRACEPUT("FramebufferUpdate: number-of-rectangles=%d", _numRects);
                         _rectIndex = 0;
-                        _fbupdateCount++;
+                        _fbUpdateCount++;
+                        gettimeofday(&_fbUpdateResponseAt, NULL);
                         InterlockedCompareExchange(&_state, STATE_FBUPDATE, STATE_READY);
+                    }
+                    else
+                    {
+                        InterlockedCompareExchange(&_state, STATE_FBUPDATEREQUEST, STATE_READY);
                     }
                     break;
                 }
@@ -739,7 +777,7 @@ bool ConsoleImpl::processOutgoingData()
             _condTx.signal();
             _incremental = 1;
             InterlockedCompareExchange(&_state, STATE_READY, STATE_FBUPDATEREQUEST);
-            _fbupdateAt = time(NULL);
+            gettimeofday(&_fbUpdateRequestAt, NULL);
             break;
         }
 
@@ -754,7 +792,7 @@ bool ConsoleImpl::processOutgoingData()
                     TRACEPUT("Reconnecting...");
                     close();
                     _state = STATE_CONNECT_RESPONSE;
-                    _fbupdateCount = 0;
+                    _fbUpdateCount = 0;
                     ConsoleConnector::open(_location.c_str(), _authorization.c_str());
                     _reconnectCount++;
                 }
@@ -794,7 +832,7 @@ bool ConsoleImpl::processOutgoingData()
 
 void ConsoleImpl::sendPointerEvent(unsigned char buttonMask, unsigned short x, unsigned short y)
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::sendKeyEvent", this));
+    TRACE(StringBuffer().format("ConsoleImpl@%zx::sendPointerEvent", this));
 
     if (STATE_INTERACTION_PHASE <= _state && _state < STATE_COMPLETED)
     {

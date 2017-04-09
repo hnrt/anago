@@ -6,8 +6,11 @@
 #include <string.h>
 #include <errno.h>
 #include <libintl.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <stdexcept>
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
@@ -42,13 +45,9 @@ void ConsoleConnector::open(const char* location, const char* authorization)
 {
     TRACE(StringBuffer().format("ConsoleConnector@%zx::open", this), "location=%s authorization=%s", location, authorization);
 
-    Glib::ustring request = getRequest(location, authorization);
-
-    _obuf.clear();
-    _obuf.write(request.c_str(), request.bytes());
-
     _sockHost = -1;
     _ibuf.clear();
+    _obuf.clear();
     _statusCode = -1;
     _headerMap.clear();
 
@@ -57,6 +56,7 @@ void ConsoleConnector::open(const char* location, const char* authorization)
     {
         throw CommunicationConsoleException(CURLE_FAILED_INIT, "CURL unavailable.");
     }
+
     //curl_easy_setopt(_curl, CURLOPT_VERBOSE, 1);
     curl_easy_setopt(_curl, CURLOPT_URL, location);
     curl_easy_setopt(_curl, CURLOPT_CONNECT_ONLY, 1);
@@ -83,6 +83,9 @@ void ConsoleConnector::open(const char* location, const char* authorization)
     }
     _sockHost = (int)lastSocket;
 
+    Glib::ustring request = getRequest(location, authorization);
+    _obuf.write(request.c_str(), request.bytes());
+
     send();
 }
 
@@ -95,6 +98,46 @@ void ConsoleConnector::close()
     if (curl)
     {
         curl_easy_cleanup(curl);
+    }
+}
+
+
+ssize_t ConsoleConnector::recv()
+{
+    TRACE("ConsoleConnector::recv", "pos=%zd len=%zd", _ibuf.wPos(), _ibuf.wLen());
+    if (_ibuf.tryRewind())
+    {
+        TRACEPUT("Buffer rewinded.");
+    }
+    else if (!_ibuf.canWrite())
+    {
+        TRACEPUT("No space to receive.");
+        return -1;
+    }
+    size_t n = 0;
+    CURLcode result = curl_easy_recv(_curl, _ibuf.wPtr(), _ibuf.wLen(), &n);
+    _ibuf.wPos(_ibuf.wPos() + n);
+    if (result == CURLE_OK)
+    {
+        TRACEPUT("CURLE_OK %zu", n);
+        return n;
+    }
+    else if (result == CURLE_AGAIN)
+    {
+        TRACEPUT("CURLE_AGAIN (no data to receive)");
+        return 0;
+    }
+    else if (result == CURLE_UNSUPPORTED_PROTOCOL)
+    {
+        throw CommunicationConsoleException(result, "CURL: recv failed. error=UNSUPPORTED_PROTOCOL (possibly disconnected by host)");
+    }
+    else if (result == CURLE_BAD_FUNCTION_ARGUMENT)
+    {
+        throw CommunicationConsoleException(result, "CURL: recv failed. error=BAD_FUNCTION_ARGUMENT");
+    }
+    else
+    {
+        throw CommunicationConsoleException(result, "CURL: recv failed. error=%d", result);
     }
 }
 
@@ -131,43 +174,39 @@ ssize_t ConsoleConnector::send()
 }
 
 
-ssize_t ConsoleConnector::recv()
+bool ConsoleConnector::canRecv(long timeoutInMicroseconds) const
 {
-    TRACE("ConsoleConnector::recv", "pos=%zd len=%zd", _ibuf.wPos(), _ibuf.wLen());
-    if (_ibuf.tryRewind())
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(_sockHost, &fds);
+    struct timeval timeout;
+    timeout.tv_sec = timeoutInMicroseconds / 1000000L;
+    timeout.tv_usec = timeoutInMicroseconds % 1000000L;
+    int rc = select(_sockHost + 1, &fds, NULL, NULL, &timeout);
+    if (rc < 0)
     {
-        TRACEPUT("Buffer rewinded.");
+        int errorCode = errno;
+        throw CommunicationConsoleException(errorCode + 65536, "select failed. error=%d (%s)", errorCode, strerror(errorCode));
     }
-    else if (!_ibuf.canWrite())
+    return rc > 0;
+}
+
+
+bool ConsoleConnector::canSend(long timeoutInMicroseconds) const
+{
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(_sockHost, &fds);
+    struct timeval timeout;
+    timeout.tv_sec = timeoutInMicroseconds / 1000000L;
+    timeout.tv_usec = timeoutInMicroseconds % 1000000L;
+    int rc = select(_sockHost + 1, NULL, &fds, NULL, &timeout);
+    if (rc < 0)
     {
-        TRACEPUT("No space to receive.");
-        return -1;
+        int errorCode = errno;
+        throw CommunicationConsoleException(errorCode + 65536, "select failed. error=%d (%s)", errorCode, strerror(errorCode));
     }
-    size_t n = 0;
-    CURLcode result = curl_easy_recv(_curl, _ibuf.wPtr(), _ibuf.wLen(), &n);
-    _ibuf.wPos(_ibuf.wPos() + n);
-    if (result == CURLE_OK)
-    {
-        TRACEPUT("CURLE_OK %zu", n);
-        return n;
-    }
-    else if (result == CURLE_AGAIN)
-    {
-        TRACEPUT("CURLE_AGAIN (no data to receive)");
-        return 0;
-    }
-    else if (result == CURLE_UNSUPPORTED_PROTOCOL)
-    {
-        throw CommunicationConsoleException(result, "CURL: Recv failed. error=UNSUPPORTED_PROTOCOL (possibly disconnected by host)");
-    }
-    else if (result == CURLE_BAD_FUNCTION_ARGUMENT)
-    {
-        throw CommunicationConsoleException(result, "CURL: Recv failed. error=BAD_FUNCTION_ARGUMENT");
-    }
-    else
-    {
-        throw CommunicationConsoleException(result, "CURL: Recv failed. error=%d", result);
-    }
+    return rc > 0;
 }
 
 

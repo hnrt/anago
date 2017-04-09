@@ -43,6 +43,10 @@ namespace hnrt
         bool processOutgoingData();
 
         ConsoleView& _view;
+        // to indicate that reconnect should be initiated
+        // when this duration of time in seconds have passed
+        // since the last frame buffer update request
+        long _fbUpdateLimit;
         Glib::Mutex _mutexPx;
         Glib::Cond _condPx;
         Glib::Mutex _mutexRx;
@@ -52,6 +56,8 @@ namespace hnrt
         Glib::Mutex _mutexTxWrite;
         Glib::ustring _location;
         Glib::ustring _authorization;
+        bool _scanCodeEnabled;
+        unsigned long _reconnectCount;
         volatile bool _terminate;
         volatile int _state;
         int _protocolVersion;
@@ -62,11 +68,9 @@ namespace hnrt
         unsigned char _incremental;
         int _numRects;
         int _rectIndex;
-        time_t _fbupdateAt;
-        time_t _fbupdateLimit;
-        unsigned long _fbupdateCount;
-        unsigned long _reconnectCount;
-        bool _scanCodeEnabled;
+        unsigned long _fbUpdateCount;
+        struct timeval _fbUpdateRequestAt;
+        struct timeval _fbUpdateResponseAt;
     };
 }
 
