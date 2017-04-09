@@ -45,7 +45,7 @@ void ConsoleConnector::open(const char* location, const char* authorization)
     Glib::ustring request = getRequest(location, authorization);
 
     _obuf.clear();
-    _obuf.put(request.c_str(), request.bytes());
+    _obuf.write(request.c_str(), request.bytes());
 
     _sockHost = -1;
     _ibuf.clear();
@@ -101,14 +101,14 @@ void ConsoleConnector::close()
 
 ssize_t ConsoleConnector::send()
 {
-    TRACE("ConsoleConnector::send", "pos=%zd len=%zd", _obuf.rPos(), _obuf.remaining());
-    if (_obuf.remaining() <= 0)
+    TRACE("ConsoleConnector::send", "pos=%zd len=%zd", _obuf.rPos(), _obuf.rLen());
+    if (!_obuf.canRead())
     {
         TRACEPUT("No data to send.");
         return -1;
     }
     size_t n = 0;
-    CURLcode result = curl_easy_send(_curl, _obuf.rPtr(), _obuf.remaining(), &n);
+    CURLcode result = curl_easy_send(_curl, _obuf.rPtr(), _obuf.rLen(), &n);
     if (result == CURLE_OK)
     {
         TRACEPUT("CURLE_OK %zu", n);
@@ -133,14 +133,18 @@ ssize_t ConsoleConnector::send()
 
 ssize_t ConsoleConnector::recv()
 {
-    TRACE("ConsoleConnector::recv", "pos=%zd len=%zd", _ibuf.wPos(), _ibuf.space());
-    if (_ibuf.space() <= 0)
+    TRACE("ConsoleConnector::recv", "pos=%zd len=%zd", _ibuf.wPos(), _ibuf.wLen());
+    if (_ibuf.tryRewind())
+    {
+        TRACEPUT("Buffer rewinded.");
+    }
+    else if (!_ibuf.canWrite())
     {
         TRACEPUT("No space to receive.");
         return -1;
     }
     size_t n = 0;
-    CURLcode result = curl_easy_recv(_curl, _ibuf.wPtr(), _ibuf.space(), &n);
+    CURLcode result = curl_easy_recv(_curl, _ibuf.wPtr(), _ibuf.wLen(), &n);
     _ibuf.wPos(_ibuf.wPos() + n);
     if (result == CURLE_OK)
     {
@@ -225,7 +229,7 @@ bool ConsoleConnector::getHeaderLength(size_t& length)
 {
     char* s0 = (char*)_ibuf.rPtr();
     char* s1 = s0;
-    char* s9 = s0 + _ibuf.remaining();
+    char* s9 = s0 + _ibuf.rLen();
     while (1)
     {
         s1 = (char *)memchr(s1, '\r', s9 - s1);

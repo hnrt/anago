@@ -49,7 +49,7 @@ namespace hnrt
         Glib::Cond _condRx;
         Glib::Mutex _mutexTx;
         Glib::Cond _condTx;
-        Glib::Mutex _mutexTxBuf;
+        Glib::Mutex _mutexTxWrite;
         Glib::ustring _location;
         Glib::ustring _authorization;
         volatile bool _terminate;

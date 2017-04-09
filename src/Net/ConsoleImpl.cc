@@ -116,7 +116,7 @@ inline bool ConsoleImpl::canContinue() const
 
 inline bool ConsoleImpl::isServerNotResponding() const
 {
-    return _fbupdateAt + _fbupdateLimit < time(NULL) && _obuf.remaining() <= 0;
+    return _fbupdateAt + _fbupdateLimit < time(NULL) && _obuf.rLen() <= 0;
 }
 
 
@@ -191,13 +191,17 @@ void ConsoleImpl::run()
             }
         }
     }
-    catch (std::bad_alloc)
+    catch (Rfb::ProtocolException ex)
     {
-        Logger::instance().error("ConsoleImpl::run: Out of memory.");
+        Logger::instance().error("ConsoleImpl::run: RFB Protocol error: %s", ex.message);
     }
     catch (ConsoleException ex)
     {
         Logger::instance().error("ConsoleImpl::run: %s", ex.what().c_str());
+    }
+    catch (std::bad_alloc)
+    {
+        Logger::instance().error("ConsoleImpl::run: Out of memory.");
     }
     catch (...)
     {
@@ -229,7 +233,7 @@ void ConsoleImpl::rxMain()
         Glib::Mutex::Lock lock(_mutexRx);
         while (canContinue())
         {
-            if (_ibuf.space() <= 0)
+            if (_ibuf.wLen() <= 0)
             {
                 TRACEPUT("BUFFER FULL!");
                 _condPx.signal();
@@ -276,6 +280,11 @@ void ConsoleImpl::rxMain()
         Logger::instance().error("ConsoleImpl::rxMain: %s", ex.what().c_str());
         _state = STATE_ERROR;
     }
+    catch (std::bad_alloc)
+    {
+        Logger::instance().error("ConsoleImpl::rxMain: Out of memory.");
+        _state = STATE_ERROR;
+    }
     catch (...)
     {
         Logger::instance().error("ConsoleImpl::rxMain: Unhandled exception caught.");
@@ -292,7 +301,7 @@ void ConsoleImpl::txMain()
         Glib::Mutex::Lock lock(_mutexTx);
         while (canContinue())
         {
-            if (_obuf.remaining() <= 0)
+            if (_obuf.rLen() <= 0)
             {
                 Glib::TimeVal timeout;
                 timeout.assign_current_time();
@@ -321,6 +330,11 @@ void ConsoleImpl::txMain()
         Logger::instance().error("ConsoleImpl::txMain: %s", ex.what().c_str());
         _state = STATE_ERROR;
     }
+    catch (std::bad_alloc)
+    {
+        Logger::instance().error("ConsoleImpl::txMain: Out of memory.");
+        _state = STATE_ERROR;
+    }
     catch (...)
     {
         Logger::instance().error("ConsoleImpl::txMain: Unhandled exception caught.");
@@ -341,7 +355,7 @@ void ConsoleImpl::processIncomingData()
 
     try
     {
-        while (_ibuf.remaining() > 0)
+        while (_ibuf.rLen() > 0)
         {
             switch (_state)
             {
@@ -351,7 +365,7 @@ void ConsoleImpl::processIncomingData()
                 if (!getHeaderLength(headerLength))
                 {
                     // not yet received all of the response -- waiting for the rest
-                    goto done;
+                    return;
                 }
                 if (!parseHeader(headerLength))
                 {
@@ -369,7 +383,7 @@ void ConsoleImpl::processIncomingData()
                     // 404: server side console object cannot be found probably because of shutdown
                     Logger::instance().warn("CONNECT response status: %d", _statusCode);
                     InterlockedCompareExchange(&_state, STATE_COMPLETED, STATE_CONNECT_RESPONSE);
-                    goto done;
+                    return;
                 }
                 //FALLTHROUGH
             }
@@ -388,7 +402,7 @@ void ConsoleImpl::processIncomingData()
                     _protocolVersion = 3003;
                 }
                 InterlockedCompareExchange(&_state, STATE_START_RESPONSE, STATE_START);
-                goto done;
+                return;
             }
 
             case STATE_SECURITY37:
@@ -400,7 +414,7 @@ void ConsoleImpl::processIncomingData()
                     TRACEPUT("security-type[%u]=%d", i, s.securityTypes[i]);
                 }
                 InterlockedCompareExchange(&_state, STATE_SECURITY37_RESPONSE, STATE_SECURITY37);
-                goto done;
+                return;
             }
 
             case STATE_SECURITY33:
@@ -415,12 +429,12 @@ void ConsoleImpl::processIncomingData()
                 else if (s.securityType == Rfb::NONE)
                 {
                     InterlockedCompareExchange(&_state, STATE_CLIENTINIT, STATE_SECURITY33);
-                    goto done;
+                    return;
                 }
                 else
                 {
                     _state = STATE_UNSUPPORTED;
-                    goto done;
+                    return;
                 }
             }
 
@@ -443,7 +457,7 @@ void ConsoleImpl::processIncomingData()
                 if (sr.status == Rfb::OK)
                 {
                     InterlockedCompareExchange(&_state, STATE_CLIENTINIT, STATE_SECURITY_RESULT);
-                    goto done;
+                    return;
                 }
                 else // if (result.status == FailedSecurityResult)
                 {
@@ -574,42 +588,28 @@ void ConsoleImpl::processIncomingData()
             }
 
             default:
-                goto done;
+                return;
             }
         }
     }
-    catch (std::bad_alloc)
+    catch (Rfb::NeedMoreDataException)
     {
-        Logger::instance().error("Out of memory.");
-        _state = STATE_ERROR;
-    }
-    catch (Rfb::NeedMoreDataException ex)
-    {
-        if (_ibuf.space() <= 0)
+        if (!_ibuf.canWrite())
         {
             TRACEPUT("BUFFER FULL!");
             Glib::Mutex::Lock lock(_mutexRx);
-            if (_ibuf.remaining() < _ibuf.capacity())
+            if (_ibuf.push())
             {
-                _ibuf.push();
+                TRACEPUT("Leading space removed.");
             }
             else
             {
                 _ibuf.capacity(_ibuf.capacity() * 2);
+                TRACEPUT("capacity=%zd", _ibuf.capacity());
             }
-            TRACEPUT("position=%zd length=%zd capacity=%zd", _ibuf.rPos(), _ibuf.remaining(), _ibuf.capacity());
         }
         _condRx.signal();
     }
-    catch (Rfb::ProtocolException ex)
-    {
-        throw ConsoleException("RFB Protocol failure: %s", ex.message);
-        _state = STATE_ERROR;
-    }
-
-done:
-
-    (void)0;
 }
 
 
@@ -626,7 +626,11 @@ bool ConsoleImpl::processOutgoingData()
             Rfb::ProtocolVersion pv(_protocolVersion);
             TRACEPUT("ProtocolVersion: response=%d.%d", _protocolVersion / 1000, _protocolVersion % 1000);
             {
-                Glib::Mutex::Lock lock(_mutexTxBuf);
+                Glib::Mutex::Lock lock(_mutexTxWrite);
+                if (_obuf.tryRewind())
+                {
+                    TRACEPUT("Buffer rewinded.");
+                }
                 pv.write(_obuf);
             }
             _condTx.signal();
@@ -639,7 +643,11 @@ bool ConsoleImpl::processOutgoingData()
             Rfb::Security37Response sr(Rfb::NONE);
             TRACEPUT("Security: response=%d", sr.securityType);
             {
-                Glib::Mutex::Lock lock(_mutexTxBuf);
+                Glib::Mutex::Lock lock(_mutexTxWrite);
+                if (_obuf.tryRewind())
+                {
+                    TRACEPUT("Buffer rewinded.");
+                }
                 sr.write(_obuf);
             }
             _condTx.signal();
@@ -652,7 +660,11 @@ bool ConsoleImpl::processOutgoingData()
             Rfb::ClientInit ci(0);
             TRACEPUT("ClientInit: shared-flag=%d", ci.sharedFlag);
             {
-                Glib::Mutex::Lock lock(_mutexTxBuf);
+                Glib::Mutex::Lock lock(_mutexTxWrite);
+                if (_obuf.tryRewind())
+                {
+                    TRACEPUT("Buffer rewinded.");
+                }
                 ci.write(_obuf);
             }
             _condTx.signal();
@@ -675,7 +687,11 @@ bool ConsoleImpl::processOutgoingData()
             TRACEPUT("SetPixelFormat: g-shift=%d", pf.pixelFormat.gShift);
             TRACEPUT("SetPixelFormat: b-shift=%d", pf.pixelFormat.bShift);
             {
-                Glib::Mutex::Lock lock(_mutexTxBuf);
+                Glib::Mutex::Lock lock(_mutexTxWrite);
+                if (_obuf.tryRewind())
+                {
+                    TRACEPUT("Buffer rewinded.");
+                }
                 pf.write(_obuf);
             }
             _condTx.signal();
@@ -691,7 +707,11 @@ bool ConsoleImpl::processOutgoingData()
             TRACEPUT("SetEncodings: encoding-type[0]=%d", se.encodingTypes[0]);
             TRACEPUT("SetEncodings: encoding-type[1]=%d", se.encodingTypes[1]);
             {
-                Glib::Mutex::Lock lock(_mutexTxBuf);
+                Glib::Mutex::Lock lock(_mutexTxWrite);
+                if (_obuf.tryRewind())
+                {
+                    TRACEPUT("Buffer rewinded.");
+                }
                 se.write(_obuf);
             }
             _condTx.signal();
@@ -709,8 +729,11 @@ bool ConsoleImpl::processOutgoingData()
             TRACEPUT("FramebufferUpdateRequest: cx=%d", fu.width);
             TRACEPUT("FramebufferUpdateRequest: cy=%d", fu.height);
             {
-                Glib::Mutex::Lock lock(_mutexTxBuf);
-                while (_obuf.remaining() > 0);
+                Glib::Mutex::Lock lock(_mutexTxWrite);
+                if (_obuf.tryRewind())
+                {
+                    TRACEPUT("Buffer rewinded.");
+                }
                 fu.write(_obuf);
             }
             _condTx.signal();
@@ -748,17 +771,21 @@ bool ConsoleImpl::processOutgoingData()
             break;
         }
     }
-    catch (std::bad_alloc)
-    {
-        Logger::instance().error("Out of memory.");
-        _state = STATE_ERROR;
-    }
-    catch (Rfb::NeedMoreSpaceException e)
+    catch (Rfb::NeedMoreSpaceException)
     {
         TRACEPUT("NeedMoreSpaceException caught.");
-        Glib::Mutex::Lock lock(_mutexTx);
-        _obuf.push();
-        return false;
+        Glib::Mutex::Lock lock1(_mutexTxWrite);
+        Glib::Mutex::Lock lock2(_mutexTx);
+        if (_obuf.push())
+        {
+            TRACEPUT("Leading space removed.");
+        }
+        else
+        {
+            _obuf.capacity(_obuf.capacity() * 2);
+            TRACEPUT("capacity=%zd", _obuf.capacity());
+        }
+        return false; // need to be called again soon
     }
 
     return true;
@@ -771,37 +798,28 @@ void ConsoleImpl::sendPointerEvent(unsigned char buttonMask, unsigned short x, u
 
     if (STATE_INTERACTION_PHASE <= _state && _state < STATE_COMPLETED)
     {
-        try
+        Rfb::PointerEvent pe(buttonMask, x, y);
+        TRACEPUT("PointerEvent: %02X %u %u", pe.buttonMask, pe.x, pe.y);
+        for (;;)
         {
-            Rfb::PointerEvent pe(buttonMask, x, y);
-            TRACEPUT("PointerEvent: %02X %u %u", pe.buttonMask, pe.x, pe.y);
-            for (;;)
+            Glib::Mutex::Lock lock1(_mutexTxWrite);
+            try
             {
-                try
+                if (_obuf.tryRewind())
                 {
-                    Glib::Mutex::Lock lock(_mutexTxBuf);
-                    pe.write(_obuf);
-                    break;
+                    TRACEPUT("Buffer rewinded.");
                 }
-                catch (Rfb::NeedMoreSpaceException e)
-                {
-                    TRACEPUT("NeedMoreSpaceException caught.");
-                    Glib::Mutex::Lock lock(_mutexTx);
-                    _obuf.push();
-                }
+                pe.write(_obuf);
+                break;
             }
-            _condTx.signal();
+            catch (Rfb::NeedMoreSpaceException)
+            {
+                TRACEPUT("NeedMoreSpaceException caught.");
+                Glib::Mutex::Lock lock2(_mutexTx);
+                _obuf.push();
+            }
         }
-        catch (std::bad_alloc)
-        {
-            Logger::instance().error("Out of memory.");
-            _state = STATE_ERROR;
-        }
-        catch (...)
-        {
-            Logger::instance().error("ConsoleImpl::sendPointerEvent: Unexpected exception caught.");
-            _state = STATE_ERROR;
-        }
+        _condTx.signal();
     }
 }
 
@@ -1098,50 +1116,29 @@ void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsi
 
     if (STATE_INTERACTION_PHASE <= _state && _state < STATE_COMPLETED)
     {
-        try
+        if (_scanCodeEnabled)
         {
-            if (_scanCodeEnabled)
+            guint scancode = keycodeToScancode[keycode & 0xFF];
+            if (scancode)
             {
-                guint scancode = keycodeToScancode[keycode & 0xFF];
-                if (scancode)
-                {
-                    Rfb::ScanKeyEvent ke(downFlag, scancode);
-                    TRACEPUT("ScanKeyEvent: %d %04X", ke.downFlag, ke.key);
-                    for (;;)
-                    {
-                        try
-                        {
-                            Glib::Mutex::Lock lock(_mutexTxBuf);
-                            ke.write(_obuf);
-                            break;
-                        }
-                        catch (Rfb::NeedMoreSpaceException e)
-                        {
-                            TRACEPUT("NeedMoreSpaceException caught.");
-                            Glib::Mutex::Lock lock(_mutexTx);
-                            _obuf.push();
-                        }
-                    }
-                    _condTx.signal();
-                    return;
-                }
-            }
-            if (keyval)
-            {
-                Rfb::KeyEvent ke(downFlag, keyval);
-                TRACEPUT("KeyEvent: %d %04X", ke.downFlag, ke.key);
+                Rfb::ScanKeyEvent ke(downFlag, scancode);
+                TRACEPUT("ScanKeyEvent: %d %04X", ke.downFlag, ke.key);
                 for (;;)
                 {
+                    Glib::Mutex::Lock lock1(_mutexTxWrite);
                     try
                     {
-                        Glib::Mutex::Lock lock(_mutexTxBuf);
+                        if (_obuf.tryRewind())
+                        {
+                            TRACEPUT("Buffer rewinded.");
+                        }
                         ke.write(_obuf);
                         break;
                     }
-                    catch (Rfb::NeedMoreSpaceException e)
+                    catch (Rfb::NeedMoreSpaceException)
                     {
                         TRACEPUT("NeedMoreSpaceException caught.");
-                        Glib::Mutex::Lock lock(_mutexTx);
+                        Glib::Mutex::Lock lock2(_mutexTx);
                         _obuf.push();
                     }
                 }
@@ -1149,15 +1146,31 @@ void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsi
                 return;
             }
         }
-        catch (std::bad_alloc)
+        if (keyval)
         {
-            _state = STATE_ERROR;
-            Logger::instance().error("Out of memory.");
-        }
-        catch (...)
-        {
-            _state = STATE_ERROR;
-            Logger::instance().error("Unexpected exception caught in ConsoleImpl::sendKeyEvent.");
+            Rfb::KeyEvent ke(downFlag, keyval);
+            TRACEPUT("KeyEvent: %d %04X", ke.downFlag, ke.key);
+            for (;;)
+            {
+                Glib::Mutex::Lock lock1(_mutexTxWrite);
+                try
+                {
+                    if (_obuf.tryRewind())
+                    {
+                        TRACEPUT("Buffer rewinded.");
+                    }
+                    ke.write(_obuf);
+                    break;
+                }
+                catch (Rfb::NeedMoreSpaceException e)
+                {
+                    TRACEPUT("NeedMoreSpaceException caught.");
+                    Glib::Mutex::Lock lock2(_mutexTx);
+                    _obuf.push();
+                }
+            }
+            _condTx.signal();
+            return;
         }
     }
 }

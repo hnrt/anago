@@ -79,9 +79,7 @@ namespace hnrt
             U8 rShift;
             U8 gShift;
             U8 bShift;
-            U8 padding1;
-            U8 padding2;
-            U8 padding3;
+            U8 padding[3];
 
             inline PixelFormat();
             inline void read(ByteBuffer&);
@@ -110,22 +108,18 @@ namespace hnrt
             U16 blue;
 
             inline Colour(ByteBuffer&);
-
-        } __attribute__((__packed__));
+        }  __attribute__((__packed__));
 
         struct CutText
         {
             U8 messageType; // 6
-            U8 padding1;
-            U8 padding2;
-            U8 padding3;
+            U8 padding[3];
             U32 length;
             U8* text; //[length]
 
             inline CutText(ByteBuffer&);
             inline ~CutText();
-
-        } __attribute__((__packed__));
+        };
 
         //
         // Handshaking phase packets
@@ -150,8 +144,7 @@ namespace hnrt
 
             inline Security37(ByteBuffer&);
             inline ~Security37();
-
-        } __attribute__((__packed__));
+        };
 
         struct Security37Response
         {
@@ -167,8 +160,7 @@ namespace hnrt
             U32 status;
 
             inline SecurityResult(ByteBuffer&);
-
-        } __attribute__((__packed__));
+        };
 
         struct FailureDescription
         {
@@ -177,16 +169,14 @@ namespace hnrt
 
             inline FailureDescription(ByteBuffer&);
             inline ~FailureDescription();
-
-        } __attribute__((__packed__));
+        };
 
         struct Security33
         {
             U32 securityType;
 
             inline Security33(ByteBuffer&);
-
-        } __attribute__((__packed__));
+        };
 
         //
         // Initialization phase packets
@@ -211,8 +201,7 @@ namespace hnrt
 
             inline ServerInit(ByteBuffer&);
             inline ~ServerInit();
-
-        } __attribute__((__packed__));
+        };
 
         //
         // Normal interaction phase packets
@@ -320,8 +309,7 @@ namespace hnrt
 
             inline SetColourMapEntries(ByteBuffer&);
             inline ~SetColourMapEntries();
-
-        } __attribute__((__packed__));
+        };
 
         struct Bell
         {
@@ -357,15 +345,56 @@ namespace hnrt
 
             inline ProtocolException(const char* message_);
         };
+
+    protected:
+
+        static inline void checkReadBySize(ByteBuffer&, size_t);
+        static inline void checkWriteBySize(ByteBuffer&, size_t);
+
+        template<typename T> static inline void checkRead(ByteBuffer&, T&);
+        template<typename T> static inline void checkWrite(ByteBuffer&, T&);
+        template<typename T> static inline void allocate(T*&, size_t);
     };
+
+    inline void Rfb::checkReadBySize(ByteBuffer& buf, size_t required)
+    {
+        if (buf.rLen() < static_cast<int64_t>(required))
+        {
+            throw NeedMoreDataException(required);
+        }
+    }
+
+    inline void Rfb::checkWriteBySize(ByteBuffer& buf, size_t required)
+    {
+        if (buf.wLen() < static_cast<int64_t>(required))
+        {
+            throw NeedMoreSpaceException(required);
+        }
+    }
+
+    template<typename T> inline void Rfb::checkRead(ByteBuffer& buf, T&)
+    {
+        checkReadBySize(buf, sizeof(T));
+    }
+
+    template<typename T> inline void Rfb::checkWrite(ByteBuffer& buf, T&)
+    {
+        checkWriteBySize(buf, sizeof(T));
+    }
+
+    template<typename T> inline void Rfb::allocate(T*& ptr, size_t count)
+    {
+        ptr = (T*)malloc(sizeof(T) * count);
+        if (!ptr)
+        {
+            throw std::bad_alloc();
+        }
+    }
 
     inline Rfb::ProtocolVersion::ProtocolVersion(ByteBuffer& buf)
     {
-        if (buf.remaining() < static_cast<int>(sizeof(value)))
-        {
-            throw NeedMoreDataException(sizeof(value));
-        }
-        buf.get(value, sizeof(value));
+        checkRead(buf, value);
+        buf.read(value, sizeof(value));
     }
 
     inline Rfb::ProtocolVersion::ProtocolVersion(int version)
@@ -433,33 +462,19 @@ namespace hnrt
 
     inline void Rfb::ProtocolVersion::write(ByteBuffer& buf)
     {
-        if (buf.space() < static_cast<int64_t>(sizeof(value)))
-        {
-            throw NeedMoreSpaceException(sizeof(value));
-        }
-        buf.put(value, sizeof(value));
+        checkWrite(buf, value);
+        buf.write(value, sizeof(value));
     }
 
     inline Rfb::Security37::Security37(ByteBuffer& buf)
-        : securityTypes(NULL)
+        : securityTypes(0)
     {
-        if (buf.remaining() < 1)
-        {
-            throw NeedMoreDataException(1);
-        }
-        numberOfSecurityTypes = buf.peekU8(0);
-        int size = 1 + numberOfSecurityTypes;
-        if (buf.remaining() < size)
-        {
-            throw NeedMoreDataException(size);
-        }
-        securityTypes = (U8*)malloc(sizeof(U8) * numberOfSecurityTypes);
-        if (!securityTypes)
-        {
-            throw std::bad_alloc();
-        }
-        numberOfSecurityTypes = buf.getU8();
-        buf.get(securityTypes, numberOfSecurityTypes);
+        checkRead(buf, numberOfSecurityTypes);
+        buf.peek(numberOfSecurityTypes, 0);
+        checkReadBySize(buf, sizeof(numberOfSecurityTypes) + numberOfSecurityTypes);
+        allocate(securityTypes, numberOfSecurityTypes);
+        buf.read(numberOfSecurityTypes);
+        buf.read(securityTypes, numberOfSecurityTypes);
     }
 
     inline Rfb::Security37::~Security37()
@@ -468,26 +483,20 @@ namespace hnrt
     }
 
     inline Rfb::Security37Response::Security37Response(int value)
-        : securityType((U8)value)
+        : securityType(static_cast<U8>(value))
     {
     }
 
     inline void Rfb::Security37Response::write(ByteBuffer& buf)
     {
-        if (buf.space() < static_cast<int64_t>(sizeof(securityType)))
-        {
-            throw NeedMoreSpaceException(sizeof(securityType));
-        }
-        buf.put(securityType);
+        checkWrite(buf, securityType);
+        buf.write(securityType);
     }
 
     inline Rfb::SecurityResult::SecurityResult(ByteBuffer& buf)
     {
-        if (buf.remaining() < static_cast<int64_t>(sizeof(SecurityResult)))
-        {
-            throw NeedMoreDataException(sizeof(SecurityResult));
-        }
-        status = buf.getU32();
+        checkReadBySize(buf, sizeof(status));
+        buf.read(status);
         if (status != OK && status != FAILED)
         {
             throw ProtocolException("Bad seurity result.");
@@ -497,24 +506,12 @@ namespace hnrt
     inline Rfb::FailureDescription::FailureDescription(ByteBuffer& buf)
         : reasonString(NULL)
     {
-        const int sizeHeader = 4;
-        if (buf.remaining() < sizeHeader)
-        {
-            throw NeedMoreDataException(sizeHeader);
-        }
-        reasonLength = buf.peekU32(0);
-        int size = sizeHeader + reasonLength;
-        if (buf.remaining() < size)
-        {
-            throw NeedMoreDataException(size);
-        }
-        reasonString = (U8*)malloc(sizeof(U8) * (reasonLength + 1));
-        if (!reasonString)
-        {
-            throw std::bad_alloc();
-        }
-        reasonLength = buf.getU32();
-        buf.get(reasonString, reasonLength);
+        checkRead(buf, reasonLength);
+        buf.peek(reasonLength, 0);
+        checkReadBySize(buf, sizeof(reasonLength) + reasonLength);
+        allocate(reasonString, reasonLength + 1);
+        buf.read(reasonLength);
+        buf.read(reasonString, reasonLength);
         reasonString[reasonLength] = 0;
     }
 
@@ -525,11 +522,8 @@ namespace hnrt
 
     inline Rfb::Security33::Security33(ByteBuffer& buf)
     {
-        if (buf.remaining() < static_cast<int64_t>(sizeof(Security33)))
-        {
-            throw NeedMoreDataException(sizeof(Security33));
-        }
-        securityType = buf.getU32();
+        checkRead(buf, securityType);
+        buf.read(securityType);
     }
 
     inline Rfb::ClientInit::ClientInit(U8 value)
@@ -539,38 +533,24 @@ namespace hnrt
 
     inline void Rfb::ClientInit::write(ByteBuffer& buf)
     {
-        if (buf.space() < static_cast<int64_t>(sizeof(sharedFlag)))
-        {
-            throw NeedMoreSpaceException(sizeof(sharedFlag));
-        }
-        buf.put(sharedFlag);
+        checkWrite(buf, sharedFlag);
+        buf.write(sharedFlag);
     }
 
     inline Rfb::ServerInit::ServerInit(ByteBuffer& buf)
-        : nameString(NULL)
+        : nameString(0)
     {
-        const int offsetNameLength = 2 + 2 + static_cast<int>(sizeof(pixelFormat));
-        const int sizeHeader = 2 + 2 + static_cast<int>(sizeof(pixelFormat)) + 4;
-        if (buf.remaining() < sizeHeader)
-        {
-            throw NeedMoreDataException(sizeHeader);
-        }
-        nameLength = buf.peekU32(offsetNameLength);
-        int size = sizeHeader + nameLength;
-        if (buf.remaining() < size)
-        {
-            throw NeedMoreDataException(size);
-        }
-        nameString = (U8*)malloc(sizeof(U8) * (nameLength + 1));
-        if (!nameString)
-        {
-            throw std::bad_alloc();
-        }
-        width = buf.getU16();
-        height = buf.getU16();
+        const size_t offsetNameLength = sizeof(width) + sizeof(height) + sizeof(pixelFormat);
+        const size_t sizeHeader = offsetNameLength + sizeof(nameLength);
+        checkReadBySize(buf, sizeHeader);
+        buf.peek(nameLength, offsetNameLength);
+        checkReadBySize(buf, sizeHeader + nameLength);
+        allocate(nameString, nameLength + 1);
+        buf.read(width);
+        buf.read(height);
         pixelFormat.read(buf);
-        nameLength = buf.getU32();
-        buf.get(nameString, nameLength);
+        buf.read(nameLength);
+        buf.read(nameString, nameLength);
         nameString[nameLength] = 0;
     }
 
@@ -590,14 +570,11 @@ namespace hnrt
 
     inline void Rfb::SetPixelFormat::write(ByteBuffer& buf)
     {
-        if (buf.space() < static_cast<int64_t>(sizeof(SetPixelFormat)))
-        {
-            throw NeedMoreSpaceException(sizeof(SetPixelFormat));
-        }
-        buf.put(messageType);
-        buf.put(padding1);
-        buf.put(padding2);
-        buf.put(padding3);
+        checkWrite(buf, *this);
+        buf.write(messageType);
+        buf.write(padding1);
+        buf.write(padding2);
+        buf.write(padding3);
         pixelFormat.write(buf);
     }
 
@@ -613,15 +590,12 @@ namespace hnrt
 
     inline void Rfb::SetEncodings2::write(ByteBuffer& buf)
     {
-        if (buf.space() < static_cast<int64_t>(sizeof(SetEncodings2)))
-        {
-            throw NeedMoreSpaceException(sizeof(SetEncodings2));
-        }
-        buf.put(messageType);
-        buf.put(padding);
-        buf.put(numerOfEncodings);
-        buf.put(encodingTypes[0]);
-        buf.put(encodingTypes[1]);
+        checkWrite(buf, *this);
+        buf.write(messageType);
+        buf.write(padding);
+        buf.write(numerOfEncodings);
+        buf.write(encodingTypes[0]);
+        buf.write(encodingTypes[1]);
     }
 
     inline Rfb::FramebufferUpdateRequest::FramebufferUpdateRequest(U8 incremental_, U16 x_, U16 y_, U16 width_, U16 height_)
@@ -636,16 +610,13 @@ namespace hnrt
 
     inline void Rfb::FramebufferUpdateRequest::write(ByteBuffer& buf)
     {
-        if (buf.space() < static_cast<int64_t>(sizeof(FramebufferUpdateRequest)))
-        {
-            throw NeedMoreSpaceException(sizeof(FramebufferUpdateRequest));
-        }
-        buf.put(messageType);
-        buf.put(incremental);
-        buf.put(x);
-        buf.put(y);
-        buf.put(width);
-        buf.put(height);
+        checkWrite(buf, *this);
+        buf.write(messageType);
+        buf.write(incremental);
+        buf.write(x);
+        buf.write(y);
+        buf.write(width);
+        buf.write(height);
     }
 
     inline Rfb::KeyEvent::KeyEvent(U8 downFlag_, U32 key_)
@@ -659,15 +630,12 @@ namespace hnrt
 
     inline void Rfb::KeyEvent::write(ByteBuffer& buf)
     {
-        if (buf.space() < static_cast<int64_t>(sizeof(KeyEvent)))
-        {
-            throw NeedMoreSpaceException(sizeof(KeyEvent));
-        }
-        buf.put(messageType);
-        buf.put(downFlag);
-        buf.put(padding1);
-        buf.put(padding2);
-        buf.put(key);
+        checkWrite(buf, *this);
+        buf.write(messageType);
+        buf.write(downFlag);
+        buf.write(padding1);
+        buf.write(padding2);
+        buf.write(key);
     }
 
     inline Rfb::ScanKeyEvent::ScanKeyEvent(U8 downFlag_, U32 key_)
@@ -681,15 +649,12 @@ namespace hnrt
 
     inline void Rfb::ScanKeyEvent::write(ByteBuffer& buf)
     {
-        if (buf.space() < static_cast<int64_t>(sizeof(ScanKeyEvent)))
-        {
-            throw NeedMoreSpaceException(sizeof(ScanKeyEvent));
-        }
-        buf.put(messageType);
-        buf.put(downFlag);
-        buf.put(padding1);
-        buf.put(padding2);
-        buf.put(key);
+        checkWrite(buf, *this);
+        buf.write(messageType);
+        buf.write(downFlag);
+        buf.write(padding1);
+        buf.write(padding2);
+        buf.write(key);
     }
 
     inline Rfb::PointerEvent::PointerEvent(U8 buttonMask_, U16 x_, U16 y_)
@@ -702,54 +667,37 @@ namespace hnrt
 
     inline void Rfb::PointerEvent::write(ByteBuffer& buf)
     {
-        if (buf.space() < static_cast<int64_t>(sizeof(PointerEvent)))
-        {
-            throw NeedMoreSpaceException(sizeof(PointerEvent));
-        }
-        buf.put(messageType);
-        buf.put(buttonMask);
-        buf.put(x);
-        buf.put(y);
+        checkWrite(buf, *this);
+        buf.write(messageType);
+        buf.write(buttonMask);
+        buf.write(x);
+        buf.write(y);
     }
 
     inline Rfb::FramebufferUpdate::FramebufferUpdate(ByteBuffer& buf)
     {
-        if (buf.remaining() < static_cast<int64_t>(sizeof(FramebufferUpdate)))
-        {
-            throw NeedMoreDataException(sizeof(FramebufferUpdate));
-        }
-        messageType = buf.getU8();
-        padding = buf.getU8();
-        numberOfRectangles = buf.getU16();
+        checkRead(buf, *this);
+        messageType = buf.readU8();
+        padding = buf.readU8();
+        numberOfRectangles = buf.readU16();
     }
 
     inline Rfb::SetColourMapEntries::SetColourMapEntries(ByteBuffer& buf)
         : colours(NULL)
     {
-        const int offsetNumberOfColours = 1 + 1 + 2;
-        const int sizeHeader = 1 + 1 + 2 + 2;
-        if (buf.remaining() < sizeHeader)
-        {
-            throw NeedMoreDataException(sizeHeader);
-        }
-        numberOfColours = buf.peekU16(offsetNumberOfColours);
-        int size = sizeHeader + sizeof(Colour) * numberOfColours;
-        if (buf.remaining() < size)
-        {
-            throw NeedMoreDataException(size);
-        }
+        const size_t offsetNumberOfColours = sizeof(messageType) + sizeof(padding) + sizeof(firstColour);
+        const size_t sizeHeader = offsetNumberOfColours + sizeof(numberOfColours);
+        checkReadBySize(buf, sizeHeader);
+        buf.peek(numberOfColours, offsetNumberOfColours);
+        checkReadBySize(buf, sizeHeader + sizeof(Colour) * numberOfColours);
         if (numberOfColours)
         {
-            colours = (Colour*)malloc(sizeof(Colour) * numberOfColours);
-            if (!colours)
-            {
-                throw std::bad_alloc();
-            }
+            allocate(colours, numberOfColours);
         }
-        messageType = buf.getU8();
-        padding = buf.getU8();
-        firstColour = buf.getU16();
-        numberOfColours = buf.getU16();
+        buf.read(messageType);
+        buf.read(padding);
+        buf.read(firstColour);
+        buf.read(numberOfColours);
         for (U16 i = 0; i < numberOfColours; i++)
         {
             new(colours + i) Colour(buf);
@@ -763,11 +711,8 @@ namespace hnrt
 
     inline Rfb::Bell::Bell(ByteBuffer& buf)
     {
-        if (buf.remaining() < 1)
-        {
-            throw NeedMoreDataException(1);
-        }
-        messageType = buf.getU8();
+        checkRead(buf, messageType);
+        buf.read(messageType);
     }
 
     inline Rfb::PixelFormat::PixelFormat()
@@ -781,111 +726,79 @@ namespace hnrt
         , rShift(0)
         , gShift(8)
         , bShift(16)
-        , padding1(0)
-        , padding2(0)
-        , padding3(0)
     {
+        memset(padding, 0, sizeof(padding));
     }
 
     inline void Rfb::PixelFormat::read(ByteBuffer& buf)
     {
-        if (buf.remaining() < static_cast<int64_t>(sizeof(PixelFormat)))
-        {
-            throw NeedMoreDataException(sizeof(PixelFormat));
-        }
-        bitsPerPixel = buf.getU8();
-        depth = buf.getU8();
-        bigEndian = buf.getU8();
-        trueColour = buf.getU8();
-        rMax = buf.getU16();
-        gMax = buf.getU16();
-        bMax = buf.getU16();
-        rShift = buf.getU8();
-        gShift = buf.getU8();
-        bShift = buf.getU8();
-        padding1 = buf.getU8();
-        padding2 = buf.getU8();
-        padding3 = buf.getU8();
+        bitsPerPixel = buf.readU8();
+        depth = buf.readU8();
+        bigEndian = buf.readU8();
+        trueColour = buf.readU8();
+        rMax = buf.readU16();
+        gMax = buf.readU16();
+        bMax = buf.readU16();
+        rShift = buf.readU8();
+        gShift = buf.readU8();
+        bShift = buf.readU8();
+        buf.read(padding, sizeof(padding));
     }
 
     inline void Rfb::PixelFormat::write(ByteBuffer& buf)
     {
-        buf.put(bitsPerPixel);
-        buf.put(depth);
-        buf.put(bigEndian);
-        buf.put(trueColour);
-        buf.put(rMax);
-        buf.put(gMax);
-        buf.put(bMax);
-        buf.put(rShift);
-        buf.put(gShift);
-        buf.put(bShift);
-        buf.put(padding1);
-        buf.put(padding2);
-        buf.put(padding3);
+        buf.write(bitsPerPixel);
+        buf.write(depth);
+        buf.write(bigEndian);
+        buf.write(trueColour);
+        buf.write(rMax);
+        buf.write(gMax);
+        buf.write(bMax);
+        buf.write(rShift);
+        buf.write(gShift);
+        buf.write(bShift);
+        buf.write(padding, sizeof(padding));
     }
 
     inline Rfb::Rectangle::Rectangle(ByteBuffer& buf, int bitsPerPixel)
     {
-        const int offsetWidth = 2 + 2;
-        const int offsetHeight = 2 + 2 + 2;
-        const int offsetEncodingType = 2 + 2 + 2 + 2;
-        const int sizeHeader = 2 + 2 + 2 + 2 + 4;
-        if (buf.remaining() < sizeHeader)
-        {
-            throw NeedMoreDataException(sizeHeader);
-        }
-        encodingType = buf.peekU32(offsetEncodingType);
+        checkRead(buf, *this);
+        const size_t offsetWidth = sizeof(x) + sizeof(y);
+        const size_t offsetHeight = offsetWidth + sizeof(width);
+        encodingType = buf.peekS32(offsetHeight + sizeof(height));
         if (encodingType == RAW)
         {
             width = buf.peekU16(offsetWidth);
             height = buf.peekU16(offsetHeight);
-            int size = sizeHeader + dataSize(bitsPerPixel);
-            if (buf.remaining() < size)
-            {
-                throw NeedMoreDataException(size);
-            }
+            checkReadBySize(buf, sizeof(*this) + dataSize(bitsPerPixel));
         }
-        x = buf.getU16();
-        y = buf.getU16();
-        width = buf.getU16();
-        height = buf.getU16();
-        encodingType = buf.getU32();
+        x = buf.readU16();
+        y = buf.readU16();
+        width = buf.readU16();
+        height = buf.readU16();
+        encodingType = buf.readS32();
     }
 
     inline Rfb::Colour::Colour(ByteBuffer& buf)
     {
-        red = buf.getU16();
-        green = buf.getU16();
-        blue = buf.getU16();
+        red = buf.readU16();
+        green = buf.readU16();
+        blue = buf.readU16();
     }
 
     inline Rfb::CutText::CutText(ByteBuffer& buf)
         : text(NULL)
     {
-        const int offsetLength = 1 + 1 + 1 + 1;
-        const int sizeHeader = 1 + 1 + 1 + 1 + 4;
-        if (buf.remaining() < sizeHeader)
-        {
-            throw NeedMoreDataException(sizeHeader);
-        }
-        length = buf.peekU32(offsetLength);
-        int size = sizeHeader + sizeof(U8) * length;
-        if (buf.remaining() < size)
-        {
-            throw NeedMoreDataException(size);
-        }
-        text = (U8*)malloc(sizeof(U8) * (length + 1));
-        if (!text)
-        {
-            throw std::bad_alloc();
-        }
-        messageType = buf.getU8();
-        padding1 = buf.getU8();
-        padding2 = buf.getU8();
-        padding3 = buf.getU8();
-        length = buf.getU32();
-        buf.get(text, length);
+        const size_t offsetLength = sizeof(messageType) + sizeof(padding);
+        const int sizeHeader = offsetLength + sizeof(length);
+        checkReadBySize(buf, sizeHeader);
+        buf.peek(length, offsetLength);
+        checkReadBySize(buf, sizeHeader + length);
+        allocate(text, length + 1);
+        buf.read(messageType);
+        buf.read(padding, sizeof(padding));
+        buf.read(length);
+        buf.read(text, length);
         text[length] = 0;
     }
 
