@@ -76,6 +76,7 @@ namespace hnrt
         ControllerImpl(const ControllerImpl&);
         void operator =(const ControllerImpl&);
         bool quit2();
+        void connectAtStartup();
         void onConnectFailed(RefPtr<XenObject>, int);
         void onXenObjectError(RefPtr<XenObject>, int);
         void onXenTaskUpdated(RefPtr<XenObject>, int);

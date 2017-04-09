@@ -79,6 +79,8 @@ void ControllerImpl::parseCommandLine(int argc, char *argv[])
     }
 
     PingAgent::instance().open();
+
+    connectAtStartup();
 }
 
 
@@ -136,6 +138,23 @@ bool ControllerImpl::quit2()
     {
         View::instance().getWindow().hide();
         return false; // done
+    }
+}
+
+
+void ControllerImpl::connectAtStartup()
+{
+    std::list<RefPtr<Host> > hosts;
+    Model::instance().get(hosts);
+    for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
+    {
+        RefPtr<Host>& host = *iter;
+        Session& session = host->getSession();
+        ConnectSpec& cs = session.getConnectSpec();
+        if (cs.autoConnect)
+        {
+            ThreadManager::instance().create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::connectInBackground), host), false, "Connect");
+        }
     }
 }
 
