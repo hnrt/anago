@@ -60,7 +60,7 @@ namespace hnrt
             inline void setContainerSize(int, int);
             inline RefPtr<FrameBuffer> getFrameBuffer();
             inline RefPtr<FrameBuffer> getScaledFrameBuffer();
-            inline void resetScaling();
+            inline void requestResize();
             inline void scale(GdkRectangle&);
             inline void translateVirtualCoordinates(int&, int&);
             inline int bpp() const { return _bpp; }
@@ -71,7 +71,7 @@ namespace hnrt
 
             FrameBufferManager(const FrameBufferManager&);
             void operator =(const FrameBufferManager&);
-            inline void initScaling();
+            inline void resize();
 
             ConsoleViewImpl& _view;
             Glib::Mutex _mutex;
@@ -81,7 +81,7 @@ namespace hnrt
             bool _scaleEnabled;
             int _scalingMultiplier;
             int _scalingDivisor;
-            bool _needInitScaling;
+            bool _resizeRequested;
             int _containerWidth;
             int _containerHeight;
             FrameScaler::ScaleFunc _scale;

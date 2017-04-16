@@ -70,8 +70,6 @@ ConsoleViewImpl::~ConsoleViewImpl()
 }
 
 
-
-
 inline ConsoleViewImpl::FrameBufferManager::FrameBufferManager(ConsoleViewImpl& view)
     : _view(view)
     , _frameBuffer(FrameBuffer::create(0, 0))
@@ -79,7 +77,7 @@ inline ConsoleViewImpl::FrameBufferManager::FrameBufferManager(ConsoleViewImpl& 
     , _scaleEnabled(false)
     , _scalingMultiplier(0)
     , _scalingDivisor(0)
-    , _needInitScaling(true)
+    , _resizeRequested(true)
     , _containerWidth(65535)
     , _containerHeight(65535)
 {
@@ -88,10 +86,12 @@ inline ConsoleViewImpl::FrameBufferManager::FrameBufferManager(ConsoleViewImpl& 
 
 inline void ConsoleViewImpl::FrameBufferManager::init(int width, int height, int bpp)
 {
+    TRACE(StringBuffer().format("FrameBufferManager@%zx::init", this));
     Glib::Mutex::Lock lock(_mutex);
     _bpp = bpp;
     if (width != _frameBuffer->getWidth() || height != _frameBuffer->getHeight())
     {
+        TRACEPUT("%dx%d", width, height);
         _frameBuffer = FrameBuffer::create(width, height);
     }
 }
@@ -119,7 +119,7 @@ inline void ConsoleViewImpl::FrameBufferManager::setContainerSize(int width, int
         _containerHeight = height;
         if (_scaleEnabled)
         {
-            _needInitScaling = true;
+            _resizeRequested = true;
         }
     }
 }
@@ -135,28 +135,25 @@ inline RefPtr<FrameBuffer> ConsoleViewImpl::FrameBufferManager::getFrameBuffer()
 inline RefPtr<FrameBuffer> ConsoleViewImpl::FrameBufferManager::getScaledFrameBuffer()
 {
     Glib::Mutex::Lock lock(_mutex);
-    if (_needInitScaling)
+    if (_resizeRequested)
     {
-        _needInitScaling = false;
-        initScaling();
+        _resizeRequested = false;
+        resize();
     }
     return _frameBufferScaled ? _frameBufferScaled : _frameBuffer;
 }
 
 
-inline void ConsoleViewImpl::FrameBufferManager::resetScaling()
+inline void ConsoleViewImpl::FrameBufferManager::requestResize()
 {
-    if (_scaleEnabled)
-    {
-        _needInitScaling = true;
-    }
+    _resizeRequested = true;
 }
 
 
 inline void ConsoleViewImpl::FrameBufferManager::scale(GdkRectangle& rect)
 {
     Glib::Mutex::Lock lock(_mutex);
-    if (_frameBufferScaled && !_needInitScaling)
+    if (_frameBufferScaled && !_resizeRequested)
     {
         (_view._scaler.*_scale)(_frameBuffer, _frameBufferScaled, _scalingMultiplier, _scalingDivisor, rect);
     }
@@ -210,9 +207,9 @@ inline bool ConsoleViewImpl::FrameBufferManager::setScaleEnabled(bool value, int
 
 
 // note: lock _mutex before calling this function.
-inline void ConsoleViewImpl::FrameBufferManager::initScaling()
+inline void ConsoleViewImpl::FrameBufferManager::resize()
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::initScaling", this));
+    TRACE(StringBuffer().format("FrameBufferManager@%zx::resize", this));
 
     int cxDtp = _frameBuffer->getWidth();
     int cyDtp = _frameBuffer->getHeight();
@@ -343,7 +340,7 @@ int ConsoleViewImpl::getFrameHeight()
 bool ConsoleViewImpl::on_configure_event(GdkEventConfigure* event)
 {
     TRACE(StringBuffer().format("ConsoleViewImpl@%zx::on_configure_event", this));
-    _fbMgr.resetScaling();
+    _fbMgr.requestResize();
     return false;
 }
 
@@ -621,7 +618,7 @@ void ConsoleViewImpl::update(Message& msg)
         switch (msg.type)
         {
         case Message::RESIZE_DESKTOP:
-            _fbMgr.resetScaling();
+            _fbMgr.requestResize();
             TRACEPUT("invalidate_rect(true)");
             window->invalidate(true);
             break;
@@ -655,10 +652,11 @@ void ConsoleViewImpl::update(Message& msg)
 
 void ConsoleViewImpl::enableScale(bool value)
 {
-    int width, height;
+    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::enableScale", this), "value=%d", value);
+    int width = 0, height = 0;
     if (_fbMgr.setScaleEnabled(value, width, height))
     {
-        dispatchUpdateDesktop(0, 0, width, height);
+        dispatchResizeDesktop(width, height);
     }
 }
 
@@ -671,13 +669,14 @@ void ConsoleViewImpl::enableScaleByThreads(bool value)
 
 void ConsoleViewImpl::onContainerResized(int cx, int cy)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::onContainerResized", this));
+    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::onContainerResized", this), "cx=%d cy=%d", cx, cy);
     _fbMgr.setContainerSize(cx, cy);
 }
 
 
 void ConsoleViewImpl::onContainerResized(Gtk::ScrolledWindow& sw)
 {
+    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::onContainerResized", this));
     int cx = sw.get_width() - 2;
     int cy = sw.get_height() - 2;
     onContainerResized(cx, cy);
