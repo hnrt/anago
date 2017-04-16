@@ -31,8 +31,6 @@ ConsoleViewImpl::ConsoleViewImpl()
 {
     TRACE(StringBuffer().format("ConsoleViewImpl@%zx::ctor", this));
 
-    _scaler.init();
-
     _fbMgr.setScaleFunc(&FrameScaler::scaleInParallel);
 
     set_double_buffered(false);
@@ -60,13 +58,11 @@ ConsoleViewImpl::~ConsoleViewImpl()
 {
     TRACE(StringBuffer().format("ConsoleViewImpl@%zx::dtor", this));
 
-    _scaler.fini();
-
-    delete &_scaler;
-
     close();
 
     _connection.disconnect();
+
+    delete &_scaler;
 }
 
 
@@ -281,6 +277,7 @@ void ConsoleViewImpl::open(const char* location, const char* authorization)
 {
     TRACE(StringBuffer().format("ConsoleViewImpl@%zx::open", this));
     close();
+    _scaler.init();
     _consoleThread = ThreadManager::instance().create(sigc::bind<Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ConsoleViewImpl::run), Glib::ustring(location), Glib::ustring(authorization)), true, "Console");
     _consoleThread->set_priority(Glib::THREAD_PRIORITY_HIGH);
 }
@@ -306,6 +303,7 @@ void ConsoleViewImpl::close()
             }
         }
     }
+    _scaler.fini();
 }
 
 

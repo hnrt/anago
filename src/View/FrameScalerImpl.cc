@@ -13,21 +13,25 @@ using namespace hnrt;
 
 
 FrameScalerImpl::FrameScalerImpl()
-    : _terminate(false)
+    : _terminate(true)
     , _partitionCount(0)
     , _remaining(0)
 {
+    memset(_threads, 0, sizeof(_threads));
 }
 
 
 void FrameScalerImpl::init()
 {
     TRACE("FrameScalerImpl::init");
-    for (unsigned int i = 0; i < THREAD_COUNT; i++)
+    Glib::Mutex::Lock lock(_mutexScale);
+    if (_terminate)
     {
-        StringBuffer name;
-        name.format("%s-Scaler", ThreadManager::instance().getName());
-        _threads[i] = ThreadManager::instance().create(sigc::mem_fun(*this, &FrameScalerImpl::run), true, name);
+        _terminate = false;
+        for (unsigned int i = 0; i < THREAD_COUNT; i++)
+        {
+            _threads[i] = ThreadManager::instance().create(sigc::mem_fun(*this, &FrameScalerImpl::run), true, "FrameScaler");
+        }
     }
 }
 
@@ -35,10 +39,16 @@ void FrameScalerImpl::init()
 void FrameScalerImpl::fini()
 {
     TRACE("FrameScalerImpl::fini");
-    _mutexStart.lock();
-    _terminate = true;
-    _condStart.broadcast();
-    _mutexStart.unlock();
+    Glib::Mutex::Lock lock1(_mutexScale);
+    {
+        Glib::Mutex::Lock lock2(_mutexStart);
+        if (_terminate)
+        {
+            return;
+        }
+        _terminate = true;
+        _condStart.broadcast();
+    }
     for (unsigned int i = 0; i < THREAD_COUNT; i++)
     {
         if (_threads[i])
@@ -46,6 +56,7 @@ void FrameScalerImpl::fini()
             _threads[i]->join();
         }
     }
+    memset(_threads, 0, sizeof(_threads));
 }
 
 
@@ -173,6 +184,10 @@ void FrameScalerImpl::scaleInParallel(RefPtr<FrameBuffer> fb, RefPtr<FrameBuffer
 {
     TRACE("ConsoleViewImpl::scaleInParallel");
     Glib::Mutex::Lock lock(_mutexScale);
+    if (_terminate)
+    {
+        return;
+    }
     const int heightMin = 16;
     if (rect.height <= heightMin)
     {
@@ -205,11 +220,15 @@ void FrameScalerImpl::scaleInParallel(RefPtr<FrameBuffer> fb, RefPtr<FrameBuffer
             y += _rects[i].height;
             cy -= _rects[i].height;
         }
-        _rects[i].x = x;
-        _rects[i].y = y;
-        _rects[i].width = cx;
-        _rects[i].height = cy;
-        _remaining = _partitionCount = THREAD_COUNT;
+        if (cy > 0)
+        {
+            _rects[i].x = x;
+            _rects[i].y = y;
+            _rects[i].width = cx;
+            _rects[i].height = cy;
+            i++;
+        }
+        _remaining = _partitionCount = i;
         TRACEPUT("Broadcasting...");
         _condStart.broadcast();
         _mutexStart.unlock();
