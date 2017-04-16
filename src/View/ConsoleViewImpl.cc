@@ -16,6 +16,7 @@
 #include "Thread/ThreadManager.h"
 #include "ConsoleViewImpl.h"
 #include "FrameBuffer.h"
+#include "FrameScalerImpl.h"
 
 
 using namespace hnrt;
@@ -24,19 +25,15 @@ using namespace hnrt;
 ConsoleViewImpl::ConsoleViewImpl()
     : _console(Console::create(*this))
     , _consoleThread(NULL)
-    , _frameBuffer(FrameBuffer::create(0, 0))
-    , _bpp(0)
+    , _fbMgr(*this)
+    , _scaler(*new FrameScalerImpl())
     , _hasFocus(false)
-    , _scaleEnabled(false)
-    , _scalingMultiplier(0)
-    , _scalingDivisor(0)
-    , _needInitScaling(true)
-    , _containerWidth(65535)
-    , _containerHeight(65535)
-    , _terminate(false)
-    , _pScale(&ConsoleViewImpl::scaleByThreads)
 {
     TRACE(StringBuffer().format("ConsoleViewImpl@%zx::ctor", this));
+
+    _scaler.init();
+
+    _fbMgr.setScaleFunc(&FrameScaler::scaleInParallel);
 
     set_double_buffered(false);
     set_flags(Gtk::CAN_FOCUS);
@@ -52,11 +49,6 @@ ConsoleViewImpl::ConsoleViewImpl()
                Gdk::KEY_PRESS_MASK |
                Gdk::KEY_RELEASE_MASK);
 
-    for (unsigned int i = 0; i < sizeof(_scaleThreads) / sizeof(_scaleThreads[0]); i++)
-    {
-        _scaleThreads[i] = ThreadManager::instance().create(sigc::mem_fun(*this, &ConsoleViewImpl::scaleWorker), true, "CV-Scaler");
-    }
-
     memset(_keyvals, 0, sizeof(_keyvals));
     memset(&_updatedRectangle, 0, sizeof(_updatedRectangle));
 
@@ -68,21 +60,223 @@ ConsoleViewImpl::~ConsoleViewImpl()
 {
     TRACE(StringBuffer().format("ConsoleViewImpl@%zx::dtor", this));
 
+    _scaler.fini();
+
+    delete &_scaler;
+
     close();
 
-    _mutexStart.lock();
-    _terminate = true;
-    _condStart.broadcast();
-    _mutexStart.unlock();
-    for (unsigned int i = 0; i < sizeof(_scaleThreads) / sizeof(_scaleThreads[0]); i++)
+    _connection.disconnect();
+}
+
+
+
+
+inline ConsoleViewImpl::FrameBufferManager::FrameBufferManager(ConsoleViewImpl& view)
+    : _view(view)
+    , _frameBuffer(FrameBuffer::create(0, 0))
+    , _bpp(0)
+    , _scaleEnabled(false)
+    , _scalingMultiplier(0)
+    , _scalingDivisor(0)
+    , _needInitScaling(true)
+    , _containerWidth(65535)
+    , _containerHeight(65535)
+{
+}
+
+
+inline void ConsoleViewImpl::FrameBufferManager::init(int width, int height, int bpp)
+{
+    Glib::Mutex::Lock lock(_mutex);
+    _bpp = bpp;
+    if (width != _frameBuffer->getWidth() || height != _frameBuffer->getHeight())
     {
-        if (_scaleThreads[i])
+        _frameBuffer = FrameBuffer::create(width, height);
+    }
+}
+
+
+inline void ConsoleViewImpl::FrameBufferManager::init(int width, int height)
+{
+    init(width, height, _bpp);
+}
+
+
+inline void ConsoleViewImpl::FrameBufferManager::setScaleFunc(FrameScaler::ScaleFunc scale)
+{
+    Glib::Mutex::Lock lock(_mutex);
+    _scale = scale;
+}
+
+
+inline void ConsoleViewImpl::FrameBufferManager::setContainerSize(int width, int height)
+{
+    Glib::Mutex::Lock lock(_mutex);
+    if (width != _containerWidth || height != _containerHeight)
+    {
+        _containerWidth = width;
+        _containerHeight = height;
+        if (_scaleEnabled)
         {
-            _scaleThreads[i]->join();
+            _needInitScaling = true;
+        }
+    }
+}
+
+
+inline RefPtr<FrameBuffer> ConsoleViewImpl::FrameBufferManager::getFrameBuffer()
+{
+    Glib::Mutex::Lock lock(_mutex);
+    return _frameBuffer;
+}
+
+
+inline RefPtr<FrameBuffer> ConsoleViewImpl::FrameBufferManager::getScaledFrameBuffer()
+{
+    Glib::Mutex::Lock lock(_mutex);
+    if (_needInitScaling)
+    {
+        _needInitScaling = false;
+        initScaling();
+    }
+    return _frameBufferScaled ? _frameBufferScaled : _frameBuffer;
+}
+
+
+inline void ConsoleViewImpl::FrameBufferManager::resetScaling()
+{
+    if (_scaleEnabled)
+    {
+        _needInitScaling = true;
+    }
+}
+
+
+inline void ConsoleViewImpl::FrameBufferManager::scale(GdkRectangle& rect)
+{
+    Glib::Mutex::Lock lock(_mutex);
+    if (_frameBufferScaled && !_needInitScaling)
+    {
+        (_view._scaler.*_scale)(_frameBuffer, _frameBufferScaled, _scalingMultiplier, _scalingDivisor, rect);
+    }
+}
+
+
+inline void ConsoleViewImpl::FrameBufferManager::translateVirtualCoordinates(int& x, int& y)
+{
+    Glib::Mutex::Lock lock(_mutex);
+    if (_scalingMultiplier && _scalingDivisor)
+    {
+        x = (x * _scalingDivisor) / _scalingMultiplier;
+        y = (y * _scalingDivisor) / _scalingMultiplier;
+    }
+    int width = _frameBuffer->getWidth();
+    int height = _frameBuffer->getHeight();
+    if (x < 0)
+    {
+        x = 0;
+    }
+    else if (x > width - 1)
+    {
+        x = width - 1;
+    }
+    if (y < 0)
+    {
+        y = 0;
+    }
+    else if (y > height - 1)
+    {
+        y = height - 1;
+    }
+}
+
+
+inline bool ConsoleViewImpl::FrameBufferManager::setScaleEnabled(bool value, int& width, int& height)
+{
+    Glib::Mutex::Lock lock(_mutex);
+    if ((_scaleEnabled && !value) || (!_scaleEnabled && value))
+    {
+        _scaleEnabled = value;
+        width = _frameBuffer->getWidth();
+        height = _frameBuffer->getHeight();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+// note: lock _mutex before calling this function.
+inline void ConsoleViewImpl::FrameBufferManager::initScaling()
+{
+    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::initScaling", this));
+
+    int cxDtp = _frameBuffer->getWidth();
+    int cyDtp = _frameBuffer->getHeight();
+    TRACEPUT("console=%dx%d", cxDtp, cyDtp);
+
+    _scalingMultiplier = 0;
+    _scalingDivisor = 0;
+
+    if (_scaleEnabled)
+    {
+        int cxWin = _containerWidth;
+        int cyWin = _containerHeight;
+        TRACEPUT("window=%dx%d", cxWin, cyWin);
+
+        if (cxWin < cxDtp)
+        {
+            if (cyWin < cyDtp)
+            {
+                if (cxWin * cyDtp < cyWin * cxDtp)
+                {
+                    _scalingMultiplier = cxWin;
+                    _scalingDivisor = cxDtp;
+                }
+                else
+                {
+                    _scalingMultiplier = cyWin;
+                    _scalingDivisor = cyDtp;
+                }
+            }
+            else
+            {
+                _scalingMultiplier = cxWin;
+                _scalingDivisor = cxDtp;
+            }
+        }
+        else if (cyWin < cyDtp)
+        {
+            _scalingMultiplier = cyWin;
+            _scalingDivisor = cyDtp;
         }
     }
 
-    _connection.disconnect();
+    if (_scalingMultiplier && _scalingDivisor)
+    {
+        TRACEPUT("scalingMultiplier=%d scalingDivisor=%d scale=%g", _scalingMultiplier,  _scalingDivisor, 1.0 * _scalingMultiplier / _scalingDivisor);
+        GdkRectangle rect;
+        rect.x = 0;
+        rect.y = 0;
+        rect.width = cxDtp;
+        rect.height = cyDtp;
+        cxDtp = (cxDtp * _scalingMultiplier) / _scalingDivisor;
+        cyDtp = (cyDtp * _scalingMultiplier) / _scalingDivisor;
+        if (!_frameBufferScaled || _frameBufferScaled->getWidth() != cxDtp || _frameBufferScaled->getHeight() != cyDtp)
+        {
+            _frameBufferScaled = FrameBuffer::create(cxDtp, cyDtp);
+        }
+        (_view._scaler.*_scale)(_frameBuffer, _frameBufferScaled, _scalingMultiplier, _scalingDivisor, rect);
+    }
+    else
+    {
+        _frameBufferScaled.reset();
+    }
+
+    _view.set_size_request(cxDtp, cyDtp);
 }
 
 
@@ -98,8 +292,6 @@ void ConsoleViewImpl::open(const char* location, const char* authorization)
 void ConsoleViewImpl::close()
 {
     TRACE(StringBuffer().format("ConsoleViewImpl@%zx::close", this));
-    int width = 0;
-    int height = 0;
     Glib::Thread* thread = InterlockedExchangePointer(&_consoleThread, (Glib::Thread*)NULL);
     if (thread)
     {
@@ -107,18 +299,15 @@ void ConsoleViewImpl::close()
         thread->join();
         if (_console->statusCode() == 200)
         {
-            Glib::Mutex::Lock lock(_mutexFb);
-            width = _frameBuffer->getWidth();
-            height = _frameBuffer->getHeight();
+            RefPtr<FrameBuffer> fb = _fbMgr.getFrameBuffer();
+            int width = fb->getWidth();
+            int height = fb->getHeight();
             if (width > 0 && height > 0)
             {
-                _frameBuffer->changeColor(0.5);
+                fb->changeColor(0.5);
+                dispatchUpdateDesktop(0, 0, width, height);
             }
         }
-    }
-    if (width > 0 && height > 0)
-    {
-        dispatchUpdateDesktop(0, 0, width, height);
     }
 }
 
@@ -141,37 +330,20 @@ void ConsoleViewImpl::run(Glib::ustring location, Glib::ustring authorization)
 
 int ConsoleViewImpl::getFrameWidth()
 {
-    if (_frameBuffer)
-    {
-        return _frameBuffer->getWidth();
-    }
-    else
-    {
-        return 0;
-    }
+    return _fbMgr.getFrameBuffer()->getWidth();
 }
 
 
 int ConsoleViewImpl::getFrameHeight()
 {
-    if (_frameBuffer)
-    {
-        return _frameBuffer->getHeight();
-    }
-    else
-    {
-        return 0;
-    }
+    return _fbMgr.getFrameBuffer()->getHeight();
 }
 
 
 bool ConsoleViewImpl::on_configure_event(GdkEventConfigure* event)
 {
     TRACE(StringBuffer().format("ConsoleViewImpl@%zx::on_configure_event", this));
-    if (_scaleEnabled)
-    {
-        _needInitScaling = true;
-    }
+    _fbMgr.resetScaling();
     return false;
 }
 
@@ -180,16 +352,7 @@ bool ConsoleViewImpl::on_expose_event(GdkEventExpose* event)
 {
     TRACE(StringBuffer().format("ConsoleViewImpl@%zx::on_expose_event", this));
     Glib::RefPtr<Gdk::Window> window = get_window();
-    RefPtr<FrameBuffer> fb;
-    {
-        Glib::Mutex::Lock lock(_mutexFb);
-        if (_needInitScaling)
-        {
-            _needInitScaling = false;
-            initScaling(window);
-        }
-        fb = _frameBufferScaled ? _frameBufferScaled : _frameBuffer;
-    }
+    RefPtr<FrameBuffer> fb = _fbMgr.getScaledFrameBuffer();
     int width = fb->getWidth();
     int height = fb->getHeight();
     int left = event->area.x;
@@ -382,30 +545,7 @@ bool ConsoleViewImpl::on_key_release_event(GdkEventKey* event)
 
 inline void ConsoleViewImpl::dispatchResizeDesktop(int width, int height)
 {
-    {
-        Glib::Mutex::Lock lock(_mutexMsg);
-        if (_msgCount < MSG_MAX)
-        {
-            int index = (_msgIndex + _msgCount++) % MSG_MAX;
-            Message& message = _msg[index];
-            message.type = Message::RESIZE_DESKTOP;
-            message.rect.x = 0;
-            message.rect.y = 0;
-            message.rect.width = width;
-            message.rect.height = height;
-        }
-        else
-        {
-            Logger::instance().trace("ConsoleViewImpl: Message queue is FULL!");
-            _msgIndex = (_msgIndex + 1) % MSG_MAX;
-            Message& message = _msg[_msgIndex];
-            message.type = Message::RESIZE_DESKTOP;
-            message.rect.x = 0;
-            message.rect.y = 0;
-            message.rect.width = width;
-            message.rect.height = height;
-        }
-    }
+    _msgQueue.enqueue(Message::RESIZE_DESKTOP, 0, 0, width, height);
     incRef();
     _dispatcher();
 }
@@ -413,30 +553,7 @@ inline void ConsoleViewImpl::dispatchResizeDesktop(int width, int height)
 
 inline void ConsoleViewImpl::dispatchUpdateDesktop(int x, int y, int width, int height)
 {
-    {
-        Glib::Mutex::Lock lock(_mutexMsg);
-        if (_msgCount < MSG_MAX)
-        {
-            int index = (_msgIndex + _msgCount++) % MSG_MAX;
-            Message& message = _msg[index];
-            message.type = Message::UPDATE_DESKTOP;
-            message.rect.x = x;
-            message.rect.y = y;
-            message.rect.width = width;
-            message.rect.height = height;
-        }
-        else
-        {
-            Logger::instance().trace("ConsoleViewImpl::enableScale: Message queue is FULL!");
-            _msgIndex = (_msgIndex + 1) % MSG_MAX;
-            Message& message = _msg[_msgIndex];
-            message.type = Message::UPDATE_DESKTOP;
-            message.rect.x = x;
-            message.rect.y = y;
-            message.rect.width = width;
-            message.rect.height = height;
-        }
-    }
+    _msgQueue.enqueue(Message::UPDATE_DESKTOP, x, y, width, height);
     incRef();
     _dispatcher();
 }
@@ -444,30 +561,7 @@ inline void ConsoleViewImpl::dispatchUpdateDesktop(int x, int y, int width, int 
 
 inline void ConsoleViewImpl::dispatchBeep()
 {
-    {
-        Glib::Mutex::Lock lock(_mutexMsg);
-        if (_msgCount < MSG_MAX)
-        {
-            int index = (_msgIndex + _msgCount++) % MSG_MAX;
-            Message& message = _msg[index];
-            message.type = Message::BEEP;
-            message.rect.x = 0;
-            message.rect.y = 0;
-            message.rect.width = 0;
-            message.rect.height = 0;
-        }
-        else
-        {
-            Logger::instance().trace("ConsoleViewImpl::enableScale: Message queue is FULL!");
-            _msgIndex = (_msgIndex + 1) % MSG_MAX;
-            Message& message = _msg[_msgIndex];
-            message.type = Message::BEEP;
-            message.rect.x = 0;
-            message.rect.y = 0;
-            message.rect.width = 0;
-            message.rect.height = 0;
-        }
-    }
+    _msgQueue.enqueue(Message::BEEP);
     incRef();
     _dispatcher();
 }
@@ -476,41 +570,17 @@ inline void ConsoleViewImpl::dispatchBeep()
 void ConsoleViewImpl::onDispatched()
 {
     Message message;
+    if (_msgQueue.dequeue(message))
     {
-        Glib::Mutex::Lock lock(_mutexMsg);
-        if (!_msgCount)
-        {
-            return;
-        }
-        message = _msg[_msgIndex];
-        _msgIndex = (_msgIndex + 1) % MSG_MAX;
-        _msgCount--;
+        update(message);
+        decRef();
     }
-    update(message);
-    decRef();
 }
 
 
 void ConsoleViewImpl::sendPointerEvent(unsigned char buttonMask, int x, int y)
 {
-    {
-        Glib::Mutex::Lock lock(_mutexFb);
-        if (_scalingMultiplier && _scalingDivisor)
-        {
-            x = (x * _scalingDivisor) / _scalingMultiplier;
-            y = (y * _scalingDivisor) / _scalingMultiplier;
-        }
-        int width = _frameBuffer->getWidth();
-        int height = _frameBuffer->getHeight();
-        if (x > width - 1)
-        {
-            x = width - 1;
-        }
-        if (y > height - 1)
-        {
-            y = height - 1;
-        }
-    }
+    _fbMgr.translateVirtualCoordinates(x, y);
     _console->sendPointerEvent(buttonMask, static_cast<unsigned short>(x), static_cast<unsigned short>(y));
 }
 
@@ -551,18 +621,13 @@ void ConsoleViewImpl::update(Message& msg)
         switch (msg.type)
         {
         case Message::RESIZE_DESKTOP:
-            _needInitScaling = true;
+            _fbMgr.resetScaling();
             TRACEPUT("invalidate_rect(true)");
             window->invalidate(true);
             break;
         case Message::UPDATE_DESKTOP:
         {
-            _mutexFb.lock();
-            if (_frameBufferScaled)
-            {
-                (this->*_pScale)(msg.rect);
-            }
-            _mutexFb.unlock();
+            _fbMgr.scale(msg.rect);
 #ifdef SEND_EXPOSE
             GdkEvent event;
             memset(&event, 0, sizeof(event));
@@ -590,338 +655,24 @@ void ConsoleViewImpl::update(Message& msg)
 
 void ConsoleViewImpl::enableScale(bool value)
 {
-    if ((_scaleEnabled && !value) || (!_scaleEnabled && value))
+    int width, height;
+    if (_fbMgr.setScaleEnabled(value, width, height))
     {
-        int width, height;
-        {
-            Glib::Mutex::Lock lock(_mutexFb);
-            _scaleEnabled = value;
-            width = _frameBuffer->getWidth();
-            height = _frameBuffer->getHeight();
-        }
         dispatchUpdateDesktop(0, 0, width, height);
     }
 }
 
 
-// note: lock _mutexFb before calling this function.
-void ConsoleViewImpl::initScaling(Glib::RefPtr<Gdk::Window> window)
-{
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::initScaling", this));
-
-    int cxDtp = _frameBuffer->getWidth();
-    int cyDtp = _frameBuffer->getHeight();
-    TRACEPUT("console=%dx%d", cxDtp, cyDtp);
-
-    _scalingMultiplier = 0;
-    _scalingDivisor = 0;
-
-    if (_scaleEnabled)
-    {
-        int cxWin = _containerWidth;
-        int cyWin = _containerHeight;
-        TRACEPUT("window=%dx%d", cxWin, cyWin);
-
-        if (cxWin < cxDtp)
-        {
-            if (cyWin < cyDtp)
-            {
-                if (cxWin * cyDtp < cyWin * cxDtp)
-                {
-                    _scalingMultiplier = cxWin;
-                    _scalingDivisor = cxDtp;
-                }
-                else
-                {
-                    _scalingMultiplier = cyWin;
-                    _scalingDivisor = cyDtp;
-                }
-            }
-            else
-            {
-                _scalingMultiplier = cxWin;
-                _scalingDivisor = cxDtp;
-            }
-        }
-        else if (cyWin < cyDtp)
-        {
-            _scalingMultiplier = cyWin;
-            _scalingDivisor = cyDtp;
-        }
-    }
-
-    if (_scalingMultiplier && _scalingDivisor)
-    {
-        TRACEPUT("scalingMultiplier=%d scalingDivisor=%d scale=%g", _scalingMultiplier,  _scalingDivisor, 1.0 * _scalingMultiplier / _scalingDivisor);
-        GdkRectangle rect;
-        rect.x = 0;
-        rect.y = 0;
-        rect.width = cxDtp;
-        rect.height = cyDtp;
-        cxDtp = (cxDtp * _scalingMultiplier) / _scalingDivisor;
-        cyDtp = (cyDtp * _scalingMultiplier) / _scalingDivisor;
-        if (!_frameBufferScaled || _frameBufferScaled->getWidth() != cxDtp || _frameBufferScaled->getHeight() != cyDtp)
-        {
-            _frameBufferScaled = FrameBuffer::create(cxDtp, cyDtp);
-        }
-        (this->*_pScale)(rect);
-    }
-    else
-    {
-        _frameBufferScaled = RefPtr<FrameBuffer>(NULL);
-    }
-
-    set_size_request(cxDtp, cyDtp);
-}
-
-
-void ConsoleViewImpl::scale(GdkRectangle& rect)
-{
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::initScaling", this), "x=%d y=%d width=%d height=%d", rect.x, rect.y, rect.width, rect.height);
-    if (_needInitScaling)
-    {
-        return;
-    }
-    int xStart = (rect.x * _scalingMultiplier) / _scalingDivisor;
-    int xEnd = ((rect.x + rect.width) * _scalingMultiplier + _scalingDivisor - 1) / _scalingDivisor;
-    int xEnd2 = xEnd;
-    if (xEnd >= _frameBufferScaled->getWidth())
-    {
-        xEnd2 = _frameBufferScaled->getWidth();
-        xEnd = xEnd2 - 1;
-    }
-    int yStart = (rect.y * _scalingMultiplier) / _scalingDivisor;
-    int yEnd = ((rect.y + rect.height) * _scalingMultiplier + _scalingDivisor - 1) / _scalingDivisor;
-    int yEnd2 = yEnd;
-    if (yEnd >= _frameBufferScaled->getHeight())
-    {
-        yEnd2 = _frameBufferScaled->getHeight();
-        yEnd = yEnd2 - 1;
-    }
-    for (int y = yStart; y < yEnd; y++)
-    {
-        int yBase = y * _scalingDivisor / _scalingMultiplier;
-        double yDist = 1.0 * y * _scalingDivisor / _scalingMultiplier - yBase;
-        for (int x = xStart; x < xEnd; x++)
-        {
-            int xBase = x * _scalingDivisor / _scalingMultiplier;
-            double xDist = 1.0 * x * _scalingDivisor / _scalingMultiplier - xBase;
-            guchar* p1 = _frameBuffer->getData(xBase + 0, yBase + 0);
-            guchar* p2 = _frameBuffer->getData(xBase + 1, yBase + 0);
-            guchar* p3 = _frameBuffer->getData(xBase + 0, yBase + 1);
-            guchar* p4 = _frameBuffer->getData(xBase + 1, yBase + 1);
-            guchar* pDest = _frameBufferScaled->getData(x, y);
-            double r =
-                p1[0] * (1.0 - xDist) * (1.0 - yDist) +
-                p2[0] * xDist * (1.0 - yDist) +
-                p3[0] * (1.0 - xDist) * yDist +
-                p4[0] * xDist * yDist;
-            double g =
-                p1[1] * (1.0 - xDist) * (1.0 - yDist) +
-                p2[1] * xDist * (1.0 - yDist) +
-                p3[1] * (1.0 - xDist) * yDist +
-                p4[1] * xDist * yDist;
-            double b =
-                p1[2] * (1.0 - xDist) * (1.0 - yDist) +
-                p2[2] * xDist * (1.0 - yDist) +
-                p3[2] * (1.0 - xDist) * yDist +
-                p4[2] * xDist * yDist;
-            pDest[0] = static_cast<guchar>(r);
-            pDest[1] = static_cast<guchar>(g);
-            pDest[2] = static_cast<guchar>(b);
-        }
-        if (xEnd < xEnd2)
-        {
-            int xBase = xEnd * _scalingDivisor / _scalingMultiplier;
-            double xDist = 1.0 * xEnd * _scalingDivisor / _scalingMultiplier - xBase;
-            guchar* p1 = _frameBuffer->getData(xBase + 0, yBase + 0);
-            guchar* p3 = _frameBuffer->getData(xBase + 0, yBase + 1);
-            guchar* pDest = _frameBufferScaled->getData(xEnd, y);
-            double r =
-                p1[0] * (1.0 - xDist) * (1.0 - yDist) +
-                p3[0] * (1.0 - xDist) * yDist;
-            double g =
-                p1[1] * (1.0 - xDist) * (1.0 - yDist) +
-                p3[1] * (1.0 - xDist) * yDist;
-            double b =
-                p1[2] * (1.0 - xDist) * (1.0 - yDist) +
-                p3[2] * (1.0 - xDist) * yDist;
-            pDest[0] = static_cast<guchar>(r);
-            pDest[1] = static_cast<guchar>(g);
-            pDest[2] = static_cast<guchar>(b);
-        }
-    }
-    if (yEnd < yEnd2)
-    {
-        int yBase = yEnd * _scalingDivisor / _scalingMultiplier;
-        double yDist = 1.0 * yEnd * _scalingDivisor / _scalingMultiplier - yBase;
-        for (int x = xStart; x < xEnd; x++)
-        {
-            int xBase = x * _scalingDivisor / _scalingMultiplier;
-            double xDist = 1.0 * x * _scalingDivisor / _scalingMultiplier - xBase;
-            guchar* p1 = _frameBuffer->getData(xBase + 0, yBase + 0);
-            guchar* p2 = _frameBuffer->getData(xBase + 1, yBase + 0);
-            guchar* pDest = _frameBufferScaled->getData(x, yEnd);
-            double r =
-                p1[0] * (1.0 - xDist) * (1.0 - yDist) +
-                p2[0] * xDist * (1.0 - yDist);
-            double g =
-                p1[1] * (1.0 - xDist) * (1.0 - yDist) +
-                p2[1] * xDist * (1.0 - yDist);
-            double b =
-                p1[2] * (1.0 - xDist) * (1.0 - yDist) +
-                p2[2] * xDist * (1.0 - yDist);
-            pDest[0] = static_cast<guchar>(r);
-            pDest[1] = static_cast<guchar>(g);
-            pDest[2] = static_cast<guchar>(b);
-        }
-        if (xEnd < xEnd2)
-        {
-            int xBase = xEnd * _scalingDivisor / _scalingMultiplier;
-            double xDist = 1.0 * xEnd * _scalingDivisor / _scalingMultiplier - xBase;
-            guchar* p1 = _frameBuffer->getData(xBase + 0, yBase + 0);
-            guchar* pDest = _frameBufferScaled->getData(xEnd, yEnd);
-            double r =
-                p1[0] * (1.0 - xDist) * (1.0 - yDist);
-            double g =
-                p1[1] * (1.0 - xDist) * (1.0 - yDist);
-            double b =
-                p1[2] * (1.0 - xDist) * (1.0 - yDist);
-            pDest[0] = static_cast<guchar>(r);
-            pDest[1] = static_cast<guchar>(g);
-            pDest[2] = static_cast<guchar>(b);
-        }
-    }
-    rect.x = xStart;
-    rect.y = yStart;
-    rect.width = xEnd - xStart;
-    rect.height = yEnd - yStart;
-}
-
-
-void ConsoleViewImpl::scaleByThreads(GdkRectangle& rect)
-{
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::scaleByThreads", this));
-    Glib::Mutex::Lock lock(_mutexScale);
-    const int heightMin = 16;
-    if (rect.height <= heightMin)
-    {
-        scale(rect);
-    }
-    else
-    {
-        _mutexStart.lock();
-        int t = sizeof(_scaleThreads) / sizeof(_scaleThreads[0]);
-        int h = rect.height / t;
-        if (h < heightMin)
-        {
-            h = heightMin;
-        }
-        int x = rect.x;
-        int y = rect.y;
-        int cx = rect.width;
-        int cy = rect.height;
-        int i;
-        for (i = 0; i < t - 1 && cy > 0; i++)
-        {
-            _scaleRects[i].x = x;
-            _scaleRects[i].y = y;
-            _scaleRects[i].width = cx;
-            _scaleRects[i].height = h < cy ? h : cy;
-            y += _scaleRects[i].height;
-            cy -= _scaleRects[i].height;
-        }
-        _scaleRects[i].x = x;
-        _scaleRects[i].y = y;
-        _scaleRects[i].width = cx;
-        _scaleRects[i].height = cy;
-        _remaining = _scaleCount = i + 1;
-        TRACEPUT("Broadcasting...");
-        _condStart.broadcast();
-        _mutexCompleted.lock();
-        _mutexStart.unlock();
-        _condCompleted.wait(_mutexCompleted);
-        _mutexCompleted.unlock();
-        int xStart = (rect.x * _scalingMultiplier) / _scalingDivisor;
-        int xEnd = ((rect.x + rect.width) * _scalingMultiplier + _scalingDivisor - 1) / _scalingDivisor;
-        if (xEnd >= _frameBufferScaled->getWidth())
-        {
-            xEnd = _frameBufferScaled->getWidth() - 1;
-        }
-        int yStart = (rect.y * _scalingMultiplier) / _scalingDivisor;
-        int yEnd = ((rect.y + rect.height) * _scalingMultiplier + _scalingDivisor - 1) / _scalingDivisor;
-        if (yEnd >= _frameBufferScaled->getHeight())
-        {
-            yEnd = _frameBufferScaled->getHeight() - 1;
-        }
-        rect.x = xStart;
-        rect.y = yStart;
-        rect.width = xEnd - xStart;
-        rect.height = yEnd - yStart;
-    }
-}
-
-
-void ConsoleViewImpl::scaleWorker()
-{
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::scaleWorker", this));
-    _mutexStart.lock();
-    for (;;)
-    {
-        if (_terminate)
-        {
-            break;
-        }
-        while (_scaleCount <= 0)
-        {
-            TRACEPUT("Waiting...");
-            _condStart.wait(_mutexStart);
-            if (_terminate)
-            {
-                break;
-            }
-        }
-        int index = --_scaleCount;
-        if (index < 0)
-        {
-            continue;
-        }
-        TRACEPUT("Resumed.");
-        _mutexStart.unlock();
-        scale(_scaleRects[index]);
-        int ret = InterlockedDecrement(&_remaining);
-        TRACEPUT("Done. remaining=%d", ret);
-        if (!ret)
-        {
-            _mutexCompleted.lock();
-            _condCompleted.signal();
-            _mutexCompleted.unlock();
-        }
-        _mutexStart.lock();
-    }
-    _mutexStart.unlock();
-}
-
-
 void ConsoleViewImpl::enableScaleByThreads(bool value)
 {
-    Glib::Mutex::Lock lock(_mutexFb);
-    _pScale = value ? &ConsoleViewImpl::scaleByThreads : &ConsoleViewImpl::scale;
+    _fbMgr.setScaleFunc(value ? &FrameScaler::scaleInParallel : &FrameScaler::scale);
 }
 
 
 void ConsoleViewImpl::onContainerResized(int cx, int cy)
 {
     TRACE(StringBuffer().format("ConsoleViewImpl@%zx::onContainerResized", this));
-    if (_scaleEnabled)
-    {
-        if (cx != _containerWidth || cy != _containerHeight)
-        {
-            _containerWidth = cx;
-            _containerHeight = cy;
-            _needInitScaling = true;
-        }
-    }
+    _fbMgr.setContainerSize(cx, cy);
 }
 
 
@@ -941,14 +692,7 @@ void ConsoleViewImpl::setKeyboardInputFilter(const RefPtr<ConsoleViewKeyboardInp
 
 void ConsoleViewImpl::init(int width, int height, int bpp)
 {
-    {
-        Glib::Mutex::Lock lock(_mutexFb);
-        _bpp = bpp;
-        if (width != _frameBuffer->getWidth() || height != _frameBuffer->getHeight())
-        {
-            _frameBuffer = FrameBuffer::create(width, height);
-        }
-    }
+    _fbMgr.init(width, height, bpp);
     dispatchResizeDesktop(width, height);
     memset(&_updatedRectangle, 0, sizeof(_updatedRectangle));
 }
@@ -956,13 +700,7 @@ void ConsoleViewImpl::init(int width, int height, int bpp)
 
 void ConsoleViewImpl::resize(int width, int height)
 {
-    {
-        Glib::Mutex::Lock lock(_mutexFb);
-        if (width != _frameBuffer->getWidth() || height != _frameBuffer->getHeight())
-        {
-            _frameBuffer = FrameBuffer::create(width, height);
-        }
-    }
+    _fbMgr.init(width, height);
     dispatchResizeDesktop(width, height);
     memset(&_updatedRectangle, 0, sizeof(_updatedRectangle));
 }
@@ -970,10 +708,9 @@ void ConsoleViewImpl::resize(int width, int height)
 
 void ConsoleViewImpl::copy(int x, int y, int width, int height, const unsigned char* data, int remaining)
 {
-    {
-        Glib::Mutex::Lock lock(_mutexFb);
-        _frameBuffer->copy(x, y, width, height, data, _bpp, width * _bpp / 8);
-    }
+    RefPtr<FrameBuffer> fb = _fbMgr.getFrameBuffer();
+    int bpp = _fbMgr.bpp();
+    fb->copy(x, y, width, height, data, bpp, width * bpp / 8);
     if (!_updatedRectangle.width)
     {
         _updatedRectangle.x = x;
@@ -1028,5 +765,5 @@ void ConsoleViewImpl::bell()
 
 int ConsoleViewImpl::getDefaultBpp()
 {
-    return _frameBuffer->getBpp();
+    return _fbMgr.getFrameBuffer()->getBpp();
 }

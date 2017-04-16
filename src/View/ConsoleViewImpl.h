@@ -8,8 +8,10 @@
 #include <gtkmm.h>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
+#include "Logger/Logger.h"
 #include "ConsoleView.h"
 #include "ConsoleViewKeyboardInputFilter.h"
+#include "FrameScaler.h"
 
 
 namespace hnrt
@@ -47,9 +49,62 @@ namespace hnrt
 
     protected:
 
-        enum ProtectedConstants
+        class FrameBufferManager
         {
-            MSG_MAX = 8192,
+        public:
+
+            inline FrameBufferManager(ConsoleViewImpl&);
+            inline void init(int, int, int);
+            inline void init(int, int);
+            inline void setScaleFunc(FrameScaler::ScaleFunc);
+            inline void setContainerSize(int, int);
+            inline RefPtr<FrameBuffer> getFrameBuffer();
+            inline RefPtr<FrameBuffer> getScaledFrameBuffer();
+            inline void resetScaling();
+            inline void scale(GdkRectangle&);
+            inline void translateVirtualCoordinates(int&, int&);
+            inline int bpp() const { return _bpp; }
+            inline bool scaleEnabled() const { return _scaleEnabled; }
+            inline bool setScaleEnabled(bool, int&, int&);
+
+        private:
+
+            FrameBufferManager(const FrameBufferManager&);
+            void operator =(const FrameBufferManager&);
+            inline void initScaling();
+
+            ConsoleViewImpl& _view;
+            Glib::Mutex _mutex;
+            RefPtr<FrameBuffer> _frameBuffer;
+            RefPtr<FrameBuffer> _frameBufferScaled;
+            int _bpp;
+            bool _scaleEnabled;
+            int _scalingMultiplier;
+            int _scalingDivisor;
+            bool _needInitScaling;
+            int _containerWidth;
+            int _containerHeight;
+            FrameScaler::ScaleFunc _scale;
+        };
+
+        class MessageQueue
+        {
+        public:
+
+            inline MessageQueue();
+            inline ~MessageQueue();
+            inline void enqueue(Message::Type, int = 0, int = 0, int = 0, int = 0);
+            inline bool dequeue(Message&);
+
+        private:
+
+            MessageQueue(const MessageQueue&);
+            void operator =(const MessageQueue&);
+            Glib::Mutex _mutex;
+            size_t _head;
+            size_t _tail;
+            size_t _length;
+            Message* _slots;
         };
 
         ConsoleViewImpl();
@@ -76,45 +131,71 @@ namespace hnrt
         void sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsigned int state, unsigned int keycode);
         guint convertKey(guint keycode, guint modstate, guint keyval);
         void update(Message&);
-        void initScaling(Glib::RefPtr<Gdk::Window>);
-        void scale(GdkRectangle&);
-        void scaleByThreads(GdkRectangle&);
-        void scaleWorker();
 
         RefPtr<Console> _console;
         Glib::Thread* _consoleThread;
         sigc::connection _connection;
-        Glib::Mutex _mutexFb;
-        RefPtr<FrameBuffer> _frameBuffer;
-        RefPtr<FrameBuffer> _frameBufferScaled;
-        int _bpp;
+        FrameBufferManager _fbMgr;
+        FrameScaler& _scaler;
         bool _hasFocus;
-        bool _scaleEnabled;
-        int _scalingMultiplier;
-        int _scalingDivisor;
-        bool _needInitScaling;
-        int _containerWidth;
-        int _containerHeight;
-        Glib::Mutex _mutexScale;
-        Glib::Mutex _mutexStart;
-        Glib::Cond _condStart;
-        Glib::Mutex _mutexCompleted;
-        Glib::Cond _condCompleted;
-        Glib::Thread* _scaleThreads[4];
-        GdkRectangle _scaleRects[4];
-        bool _terminate;
-        int _scaleCount;
-        int _remaining;
-        void (ConsoleViewImpl::*_pScale)(GdkRectangle&);
         RefPtr<ConsoleViewKeyboardInputFilter> _keyboardInputFilter;
         unsigned char _keyvals[256];
-        Glib::Mutex _mutexMsg;
-        volatile int _msgIndex;
-        volatile int _msgCount;
-        Message _msg[MSG_MAX];
+        MessageQueue _msgQueue;
         Glib::Dispatcher _dispatcher;
         GdkRectangle _updatedRectangle;
     };
+
+    inline ConsoleViewImpl::MessageQueue::MessageQueue()
+        : _head(0)
+        , _tail(0)
+        , _length(32)
+        , _slots(new Message[_length])
+    {
+    }
+
+    inline ConsoleViewImpl::MessageQueue::~MessageQueue()
+    {
+        delete[] _slots;
+    }
+
+    inline void ConsoleViewImpl::MessageQueue::enqueue(Message::Type type, int x, int y, int width, int height)
+    {
+        Glib::Mutex::Lock lock(_mutex);
+        size_t count = _tail - _head;
+        if (count >= _length)
+        {
+            size_t newLength = _length < 65536 ? _length * 2 : _length + 65536;
+            Logger::instance().trace("ConsoleViewImpl::MessageQueue: Message queue is FULL! length %zu ==>> %zu", _length, newLength);
+            Message* newSlots = new Message[newLength];
+            for (size_t current = _head; current < _tail; current++)
+            {
+                newSlots[current % newLength] = _slots[current % _length];
+            }
+            delete[] _slots;
+            _slots = newSlots;
+            _length = newLength;
+        }
+        Message& message = _slots[_tail++ % _length];
+        message.type = type;
+        message.rect.x = x;
+        message.rect.y = y;
+        message.rect.width = width;
+        message.rect.height = height;
+    }
+
+    inline bool ConsoleViewImpl::MessageQueue::dequeue(Message& message)
+    {
+        Glib::Mutex::Lock lock(_mutex);
+        if (_head < _tail)
+        {
+            message = _slots[_head++ % _length];
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 }
 
 
