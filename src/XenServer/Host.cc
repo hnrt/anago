@@ -311,20 +311,24 @@ bool Host::setName(const char* label, const char* description)
 
 void Host::initPatchList()
 {
+    TRACE(StringBuffer().format("Host@%zx::initPatchList", this));
     XenPtr<xen_host_record> record = getRecord();
     if (!record)
     {
+        TRACEPUT("No record.");
         return;
     }
     const char* version = XenServer::find(record->software_version, "product_version");
     if (!version)
     {
+        TRACEPUT("No version.");
         return;
     }
     RefPtr<PatchBase> pb = Model::instance().getPatchBase();
     PatchBase::RecordIterator iter = pb->getRecordIterator(version);
     for (RefPtr<PatchRecord> patchRecord = iter.next(); patchRecord; patchRecord = iter.next())
     {
+        TRACEPUT("PatchRecord={%s}", patchRecord->label.c_str());
         for (std::list<RefPtr<PatchRecord> >::iterator i = _patchList.begin();; i++)
         {
             if (i == _patchList.end())

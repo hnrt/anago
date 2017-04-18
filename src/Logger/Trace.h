@@ -31,7 +31,7 @@ namespace hnrt
 }
 
 
-#ifdef _DEBUG
+#if defined(_DEBUG) && !defined(NO_TRACE)
 #define TRACE(fun,...) Trace trace__(fun,##__VA_ARGS__)
 #define TRACEPUT(fmt,...) trace__.put(fmt,##__VA_ARGS__)
 #else

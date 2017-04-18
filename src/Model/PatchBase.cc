@@ -12,7 +12,7 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include "Base/StringBuffer.h"
-#include "Logger/Logger.h"
+#include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "PatchBase.h"
 #include "PatchRecord.h"
@@ -31,22 +31,27 @@ PatchBase::PatchBase()
     : _fp(0)
     , _size(0)
 {
+    TRACE(StringBuffer().format("PatchBase@%zx::ctor", this));
 }
 
 
 PatchBase::~PatchBase()
 {
+    TRACE(StringBuffer().format("PatchBase@%zx::dtor", this));
 }
 
 
 void PatchBase::init()
 {
+    TRACE(StringBuffer().format("PatchBase@%zx::init", this));
     _path = Glib::ustring::compose("%1%2", Model::instance().getAppDir(), "updates.xml");
+    TRACEPUT("path=%s", _path.c_str());
 }
 
 
 void PatchBase::fini()
 {
+    TRACE(StringBuffer().format("PatchBase@%zx::fini", this));
 }
 
 
@@ -463,6 +468,8 @@ static bool ParseServerVersion(xmlNode* node, PatchBase::ServerRecord& serverRec
 
 bool PatchBase::load()
 {
+    TRACE(StringBuffer().format("PatchBase@%zx::load", this));
+
     bool downloadRequired = true;
 
     struct stat statinfo = { 0 };
@@ -590,12 +597,43 @@ static size_t receive(void* ptr, size_t size, size_t nmemb, PatchBase* pThis)
 
 bool PatchBase::download()
 {
+    TRACE(StringBuffer().format("PatchBase@%zx::download", this));
+
     bool retval = false;
 
     CURL* curl = NULL;
 
     try
     {
+        Glib::ustring::size_type i = _path.rfind("/");
+        if (i == Glib::ustring::npos)
+        {
+            throw "malformed path";
+        }
+        Glib::ustring dir(_path, 0, i);
+        struct stat statinfo = { 0 };
+        if (stat(dir.c_str(), &statinfo))
+        {
+            if (!mkdir(dir.c_str(), 0777))
+            {
+                TRACEPUT("dir={%s} created.", dir.c_str());
+            }
+            else
+            {
+                TRACEPUT("dir={%s} mkdir failed. error=%d", dir.c_str(), errno);
+                throw "unable to create dir";
+            }
+        }
+        else if (S_ISDIR(statinfo.st_mode))
+        {
+            TRACEPUT("dir={%s} exists.", dir.c_str());
+        }
+        else
+        {
+            TRACEPUT("dir={%s} is not a directory.", dir.c_str());
+            throw "no such directory";
+        }
+
         Glib::ustring tmp1 = Glib::ustring::compose("%1.tmp1", _path);
         Glib::ustring tmp2 = Glib::ustring::compose("%1.tmp2", _path);
 

@@ -1,6 +1,9 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#define NO_TRACE
+
+
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -108,6 +111,7 @@ inline void ConsoleViewImpl::FrameBufferManager::setScaleFunc(FrameScaler::Scale
 
 inline void ConsoleViewImpl::FrameBufferManager::setContainerSize(int width, int height)
 {
+    TRACE(StringBuffer().format("FrameBufferManager@%zx::setContainerSize", this));
     Glib::Mutex::Lock lock(_mutex);
     if (width != _containerWidth || height != _containerHeight)
     {

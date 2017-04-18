@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#include <glibmm.h>
+#include <glibmm/ustring.h>
 #include <list>
 #include <map>
 #include "Base/RefObj.h"

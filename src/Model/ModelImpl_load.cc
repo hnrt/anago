@@ -13,6 +13,7 @@
 #include "View/View.h"
 #include "ConnectSpec.h"
 #include "ModelImpl.h"
+#include "PatchBase.h"
 
 
 using namespace hnrt;
@@ -64,6 +65,8 @@ void ModelImpl::load()
             throw Glib::ustring::compose("%1: %2", _path, msg);
         }
         fclose(fp);
+        fp = NULL;
+        _patchBase->load();
     }
     catch (Glib::ustring msg)
     {
