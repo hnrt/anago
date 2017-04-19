@@ -337,7 +337,7 @@ void ModelImpl::setPane1Width(int value)
 }
 
 
-ModelImpl::ConsoleInfo& ModelImpl::getConsoleInfo(const Glib::ustring& uuid)
+ConsoleInfo& ModelImpl::getConsoleInfo(const Glib::ustring& uuid)
 {
     ConsoleMap::iterator iter = _consoleMap.find(uuid);
     if (iter == _consoleMap.end())

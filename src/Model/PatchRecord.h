@@ -18,11 +18,6 @@ namespace hnrt
     struct PatchRecord
         : public RefObj
     {
-        static RefPtr<PatchRecord> create()
-        {
-            return RefPtr<PatchRecord>(new PatchRecord);
-        }
-
         Glib::ustring uuid;
         Glib::ustring label;
         Glib::ustring description;
@@ -38,39 +33,46 @@ namespace hnrt
         std::list<Glib::ustring> required;
         PatchState state;
 
-        virtual ~PatchRecord()
-        {
-        }
+        inline static RefPtr<PatchRecord> create();
 
-        PatchRecord& operator =(const PatchRecord& rhs)
-        {
-            uuid = rhs.uuid;
-            label = rhs.label;
-            description = rhs.description;
-            afterApplyGuidance = rhs.afterApplyGuidance;
-            url = rhs.url;
-            patchUrl = rhs.patchUrl;
-            releaseNotes = rhs.releaseNotes;
-            version = rhs.version;
-            timestamp = rhs.timestamp;
-            guidanceMandatory = rhs.guidanceMandatory;
-            size = rhs.size;
-            conflicting = rhs.conflicting;
-            required = rhs.required;
-            state = rhs.state;
-            return *this;
-        }
+        inline PatchRecord& operator =(const PatchRecord& rhs);
 
     protected:
 
-        PatchRecord()
-            : timestamp(0)
-            , guidanceMandatory(-1)
-            , size(0)
-            , state(PatchState::AVAILABLE)
-        {
-        }
+        inline PatchRecord();
     };
+
+    inline RefPtr<PatchRecord> PatchRecord::create()
+    {
+        return RefPtr<PatchRecord>(new PatchRecord());
+    }
+
+    inline PatchRecord::PatchRecord()
+        : timestamp(0)
+        , guidanceMandatory(-1)
+        , size(0)
+        , state(PatchState::AVAILABLE)
+    {
+    }
+
+    inline PatchRecord& PatchRecord::operator =(const PatchRecord& rhs)
+    {
+        uuid = rhs.uuid;
+        label = rhs.label;
+        description = rhs.description;
+        afterApplyGuidance = rhs.afterApplyGuidance;
+        url = rhs.url;
+        patchUrl = rhs.patchUrl;
+        releaseNotes = rhs.releaseNotes;
+        version = rhs.version;
+        timestamp = rhs.timestamp;
+        guidanceMandatory = rhs.guidanceMandatory;
+        size = rhs.size;
+        conflicting = rhs.conflicting;
+        required = rhs.required;
+        state = rhs.state;
+        return *this;
+    }
 }
 
 

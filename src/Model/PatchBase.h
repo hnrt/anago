@@ -18,7 +18,8 @@ namespace hnrt
 {
     struct PatchRecord;
 
-    class PatchBase : public RefObj
+    class PatchBase
+        : public RefObj
     {
     public:
 

@@ -6,8 +6,8 @@
 
 
 #include <glibmm.h>
-#include <map>
 #include "Logger/Logger.h"
+#include "ConsoleInfo.h"
 #include "Model.h"
 
 
@@ -59,40 +59,6 @@ namespace hnrt
         virtual void setConsoleScale(const Glib::ustring&, bool);
 
     private:
-
-        struct ConsoleInfo
-        {
-            Glib::ustring uuid;
-            bool enabled;
-            bool scale;
-
-            ConsoleInfo(const Glib::ustring uuid_)
-                : uuid(uuid_)
-                , enabled(true)
-                , scale(false)
-            {
-            }
-
-            ConsoleInfo(const ConsoleInfo& src)
-            {
-                assign(src);
-            }
-
-            void operator =(const ConsoleInfo& rhs)
-            {
-                assign(rhs);
-            }
-
-            void assign(const ConsoleInfo& rhs)
-            {
-                uuid = rhs.uuid;
-                enabled = rhs.enabled;
-                scale = rhs.scale;
-            }
-        };
-
-        typedef std::map<Glib::ustring, ConsoleInfo> ConsoleMap;
-        typedef std::pair<Glib::ustring, ConsoleInfo> ConsoleEntry;
 
         ModelImpl(const ModelImpl&);
         void operator =(const ModelImpl&);

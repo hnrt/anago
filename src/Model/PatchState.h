@@ -30,36 +30,42 @@ namespace hnrt
             CLEAN_FAILURE,
         };
 
-        PatchState(Value value = UNDEFINED)
-            : _value(value)
-        {
-        }
-
-        PatchState(const PatchState& src)
-            : _value(src._value)
-        {
-        }
-
-        PatchState& operator =(const PatchState& src)
-        {
-            _value = src._value;
-            return *this;
-        }
-
-        Value value() const
-        {
-            return _value;
-        }
-
-        operator Value() const
-        {
-            return _value;
-        }
+        inline PatchState(Value = UNDEFINED);
+        inline PatchState(const PatchState&);
+        inline PatchState& operator =(const PatchState&);
+        inline Value value() const;
+        inline operator Value() const;
 
     protected:
 
         Value _value;
     };
+
+    inline PatchState::PatchState(Value value)
+        : _value(value)
+    {
+    }
+
+    inline PatchState::PatchState(const PatchState& src)
+        : _value(src._value)
+    {
+    }
+
+    inline PatchState& PatchState::operator =(const PatchState& src)
+    {
+        _value = src._value;
+        return *this;
+    }
+
+    inline PatchState::Value PatchState::value() const
+    {
+        return _value;
+    }
+
+    inline PatchState::operator PatchState::Value() const
+    {
+        return _value;
+    }
 }
 
 

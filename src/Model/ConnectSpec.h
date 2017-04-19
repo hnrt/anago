@@ -5,7 +5,7 @@
 #define HNRT_CONNECTSPEC_H
 
 
-#include <glibmm.h>
+#include <glibmm/ustring.h>
 #include "Net/MacAddress.h"
 
 
@@ -27,7 +27,7 @@ namespace hnrt
         ConnectSpec(const ConnectSpec&);
         ConnectSpec& operator =(const ConnectSpec&);
         Glib::ustring toString() const;
-        static bool parse(int version, const char* s, ConnectSpec& cs);
+        static bool parse(int, const char*, ConnectSpec&);
         Glib::ustring descramblePassword() const;
         Glib::ustring getBasicAuthString() const;
     };
