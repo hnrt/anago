@@ -132,6 +132,9 @@ $(OBJDIR)/Base/RefObj.o \
 $(OBJDIR)/Base/StringBuffer.o \
 $(OBJDIR)/Controller/Controller.o \
 $(OBJDIR)/Controller/ControllerImpl.o \
+$(OBJDIR)/Controller/ControllerImpl_host.o \
+$(OBJDIR)/Controller/ControllerImpl_sr.o \
+$(OBJDIR)/Controller/ControllerImpl_vm.o \
 $(OBJDIR)/Controller/SignalManager.o \
 $(OBJDIR)/Controller/SignalManagerImpl.o \
 $(OBJDIR)/Env/Env.o \
@@ -261,7 +264,10 @@ $(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Base/RefPtr.h Controller/Contr
 $(OBJDIR)/Base/RefObj.o: Base/RefObj.cc Base/Atomic.h Base/RefObj.h Logger/LogLevel.h Logger/Logger.h 
 $(OBJDIR)/Base/StringBuffer.o: Base/StringBuffer.cc Base/StringBuffer.h 
 $(OBJDIR)/Controller/Controller.o: Controller/Controller.cc Base/RefPtr.h Controller/Controller.h Controller/ControllerImpl.h Controller/SignalManager.h 
-$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h Controller/ControllerImpl.h Controller/SignalManager.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Net/MacAddress.h Net/PingAgent.h Net/WakeOnLan.h Thread/ThreadManager.h View/View.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Network.h XenServer/PerformanceMonitor.h XenServer/PhysicalBlockDevice.h XenServer/PhysicalInterface.h XenServer/Session.h XenServer/StorageRepository.h XenServer/VirtualBlockDevice.h XenServer/VirtualDiskImage.h XenServer/VirtualInterface.h XenServer/VirtualMachine.h XenServer/XenEventMonitor.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h XenServer/XenTask.h 
+$(OBJDIR)/Controller/ControllerImpl.o: Controller/ControllerImpl.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h Controller/ControllerImpl.h Controller/SignalManager.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Net/MacAddress.h Net/PingAgent.h Thread/ThreadManager.h View/View.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Session.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h XenServer/XenTask.h 
+$(OBJDIR)/Controller/ControllerImpl_host.o: Controller/ControllerImpl_host.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Net/MacAddress.h Net/WakeOnLan.h Thread/ThreadManager.h View/View.h XenServer/Api.h XenServer/Constants.h XenServer/Host.h XenServer/Network.h XenServer/PerformanceMonitor.h XenServer/PhysicalBlockDevice.h XenServer/PhysicalInterface.h XenServer/Session.h XenServer/StorageRepository.h XenServer/VirtualBlockDevice.h XenServer/VirtualDiskImage.h XenServer/VirtualInterface.h XenServer/VirtualMachine.h XenServer/XenEventMonitor.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
+$(OBJDIR)/Controller/ControllerImpl_sr.o: Controller/ControllerImpl_sr.cc Base/RefPtr.h Controller/Controller.h Controller/ControllerImpl.h 
+$(OBJDIR)/Controller/ControllerImpl_vm.o: Controller/ControllerImpl_vm.cc Base/Atomic.h Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Controller/Controller.h Controller/ControllerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Model/Model.h Net/MacAddress.h Thread/ThreadManager.h View/View.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/VirtualMachine.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/Controller/SignalManager.o: Controller/SignalManager.cc Base/RefPtr.h Controller/SignalManager.h Controller/SignalManagerImpl.h 
 $(OBJDIR)/Controller/SignalManagerImpl.o: Controller/SignalManagerImpl.cc Base/RefObj.h Base/RefPtr.h Controller/SignalManager.h Controller/SignalManagerImpl.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Thread/ThreadManager.h XenServer/Api.h XenServer/Constants.h XenServer/XenObject.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/Env/Env.o: Env/Env.cc Env/Env.h Env/Locale.h Env/Process.h 
