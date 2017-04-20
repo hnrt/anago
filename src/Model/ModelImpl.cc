@@ -263,14 +263,42 @@ int ModelImpl::getSelected(std::list<RefPtr<StorageRepository> >& list)
 
 RefPtr<Host> ModelImpl::getSelectedHost()
 {
-    std::list<RefPtr<Host> > hosts;
-    if (getSelected(hosts) == 1)
+    std::list<RefPtr<Host> > list;
+    if (getSelected(list) == 1)
     {
-        return hosts.front();
+        return list.front();
     }
     else
     {
         return RefPtr<Host>();
+    }
+}
+
+
+RefPtr<VirtualMachine> ModelImpl::getSelectedVm()
+{
+    std::list<RefPtr<VirtualMachine> > list;
+    if (getSelected(list) == 1)
+    {
+        return list.front();
+    }
+    else
+    {
+        return RefPtr<VirtualMachine>();
+    }
+}
+
+
+RefPtr<StorageRepository> ModelImpl::getSelectedSr()
+{
+    std::list<RefPtr<StorageRepository> > list;
+    if (getSelected(list) == 1)
+    {
+        return list.front();
+    }
+    else
+    {
+        return RefPtr<StorageRepository>();
     }
 }
 

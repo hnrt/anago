@@ -42,6 +42,8 @@ namespace hnrt
         virtual int getSelected(std::list<RefPtr<VirtualMachine> >&) = 0;
         virtual int getSelected(std::list<RefPtr<StorageRepository> >&) = 0;
         virtual RefPtr<Host> getSelectedHost() = 0;
+        virtual RefPtr<VirtualMachine> getSelectedVm() = 0;
+        virtual RefPtr<StorageRepository> getSelectedSr() = 0;
 
         virtual void selectSnapshot(const RefPtr<VirtualMachine>&) = 0;
         virtual void deselectSnapshot() = 0;
