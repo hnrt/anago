@@ -10,6 +10,7 @@
 #include "Thread/ThreadManager.h"
 #include "View/View.h"
 #include "XenServer/Session.h"
+#include "XenServer/VirtualBlockDevice.h"
 #include "XenServer/VirtualMachine.h"
 #include "ControllerImpl.h"
 
@@ -83,7 +84,39 @@ void ControllerImpl::controlVm(bool (VirtualMachine::*memfunc)(bool), bool arg1)
 
 void ControllerImpl::changeCd()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    Glib::ustring device;
+    Glib::ustring disc;
+    if (!View::instance().selectCd(*vm, device, disc))
+    {
+        return;
+    }
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    vm->changeCd((xen_vbd)device.c_str(), (xen_vdi)disc.c_str());
+}
+
+
+void ControllerImpl::changeCd2(const VirtualBlockDevice& vbd)
+{
+    RefPtr<VirtualMachine> vm = vbd.getVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    Glib::ustring device;
+    Glib::ustring disc;
+    if (!View::instance().selectCd(*vm, device, disc))
+    {
+        return;
+    }
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    vm->changeCd((xen_vbd)device.c_str(), (xen_vdi)disc.c_str());
 }
 
 

@@ -7,6 +7,8 @@
 
 namespace hnrt
 {
+    class VirtualBlockDevice;
+
     class Controller
     {
     public:
@@ -32,6 +34,7 @@ namespace hnrt
         virtual void suspendVm() = 0;
         virtual void resumeVm() = 0;
         virtual void changeCd() = 0;
+        virtual void changeCd2(const VirtualBlockDevice&) = 0;
         virtual void sendCtrlAltDelete() = 0;
         virtual void addVm() = 0;
         virtual void copyVm() = 0;

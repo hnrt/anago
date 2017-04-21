@@ -132,5 +132,5 @@ void VirtualBlockDeviceMenu::onDetach()
 
 void VirtualBlockDeviceMenu::onChangeCd()
 {
-    //Controller::instance().changeCd2(_vbd);
+    Controller::instance().changeCd2(*_vbd);
 }

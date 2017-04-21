@@ -36,6 +36,7 @@ namespace hnrt
         virtual bool getMemorySettings(int64_t&, int64_t&, int64_t&, int64_t&);
         virtual bool getShadowMemorySettings(double&);
         virtual bool getVgaSettings(bool&, int&);
+        virtual bool selectCd(const VirtualMachine&, Glib::ustring&, Glib::ustring&);
 
     private:
 

@@ -10,8 +10,9 @@
 #include "Model/ConnectSpec.h"
 #include "Model/Model.h"
 #include "XenServer/PerformanceMonitor.h"
-#include "XenServer/XenObject.h"
+#include "XenServer/VirtualMachine.h"
 #include "AboutDialog.h"
+#include "ChangeCdDialog.h"
 #include "ConnectDialog.h"
 #include "CpuDialog.h"
 #include "MemoryDialog.h"
@@ -327,6 +328,23 @@ bool ViewImpl::getVgaSettings(bool& stdVga, int& ram)
     {
         stdVga = dialog.isStdVga();
         ram = dialog.getVideoRam();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::selectCd(const VirtualMachine& vm, Glib::ustring& device, Glib::ustring& disc)
+{
+    ChangeCdDialog dialog(_mainWindow, vm);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        device = dialog.getDevice();
+        disc = dialog.getImage();
         return true;
     }
     else

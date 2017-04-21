@@ -42,6 +42,7 @@ namespace hnrt
         virtual void suspendVm();
         virtual void resumeVm();
         virtual void changeCd();
+        virtual void changeCd2(const VirtualBlockDevice&);
         virtual void sendCtrlAltDelete();
         virtual void addVm();
         virtual void copyVm();
