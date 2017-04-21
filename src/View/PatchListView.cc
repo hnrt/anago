@@ -171,3 +171,13 @@ bool PatchListView::on_button_press_event(GdkEventButton* event)
 
     return retval;
 }
+
+
+Gtk::ScrolledWindow* PatchListView::createScrolledWindow()
+{
+    Gtk::ScrolledWindow* pW = new Gtk::ScrolledWindow();
+    pW->add(*this);
+    pW->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+    pW->set_shadow_type(Gtk::SHADOW_IN);
+    return pW;
+}

@@ -12,7 +12,7 @@
 #include "MemoryGraph.h"
 #include "NameValueListView.h"
 #include "Notebook.h"
-#include "PatchListViewSw.h"
+#include "PatchListView.h"
 
 
 namespace hnrt
@@ -54,8 +54,7 @@ namespace hnrt
         NameValueListView _swvLv;
 
         Gtk::VBox _patBox;
-        PatchListViewSw _patLvSw;
-        PatchListView& _patLv;
+        PatchListView _patLv;
 
         Gtk::VBox _pfmBox;
         Gtk::ScrolledWindow _pfmSw;

@@ -7,27 +7,28 @@
 
 #include <time.h>
 #include <gtkmm.h>
-#include "XenServer/Api.h"
 #include "Model/PatchRecord.h"
 #include "Model/PatchState.h"
+#include "XenServer/Api.h"
 #include "PatchMenu.h"
 
 
 namespace hnrt
 {
-    class PatchListViewSw;
-
     class PatchListView
         : public Gtk::TreeView
     {
     public:
 
+        PatchListView();
         void clear();
         void set(const PatchRecord&);
+        Gtk::ScrolledWindow* createScrolledWindow();
 
     protected:
 
-        struct Record : public Gtk::TreeModel::ColumnRecord
+        struct Record
+            : public Gtk::TreeModel::ColumnRecord
         {
             Gtk::TreeModelColumn<Glib::ustring> colId;
             Gtk::TreeModelColumn<Glib::ustring> colLabel;
@@ -70,7 +71,6 @@ namespace hnrt
             void operator =(const Record&);
         };
 
-        PatchListView();
         PatchListView(const PatchListView&);
         void operator =(const PatchListView&);
         virtual bool on_button_press_event(GdkEventButton*);
@@ -78,8 +78,6 @@ namespace hnrt
         Record _record;
         Glib::RefPtr<Gtk::ListStore> _store;
         PatchMenu _menu;
-
-        friend class PatchListViewSw;
     };
 }
 
