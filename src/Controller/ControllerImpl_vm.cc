@@ -186,7 +186,26 @@ void ControllerImpl::changeCpu()
 
 void ControllerImpl::changeMemory()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    XenPtr<xen_vm_record> record = vm->getRecord();
+    int64_t staticMin = record->memory_static_min;
+    int64_t staticMax = record->memory_static_max;
+    int64_t dynamicMin = record->memory_dynamic_min;
+    int64_t dynamicMax = record->memory_dynamic_max;
+    while (View::instance().getMemorySettings(staticMin, staticMax, dynamicMin, dynamicMax))
+    {
+        Logger::instance().trace("ControllerImpl::changeMemory: %zu,%zu,%zu,%zu",staticMin, staticMax, dynamicMin, dynamicMax);
+        Session& session = vm->getSession();
+        Session::Lock lock(session);
+        if (vm->setMemory(staticMin, staticMax, dynamicMin, dynamicMax))
+        {
+            return;
+        }
+    }
 }
 
 

@@ -14,6 +14,7 @@
 #include "AboutDialog.h"
 #include "ConnectDialog.h"
 #include "CpuDialog.h"
+#include "MemoryDialog.h"
 #include "NameDialog.h"
 #include "PixStore.h"
 #include "ViewImpl.h"
@@ -264,6 +265,29 @@ bool ViewImpl::getCpuSettings(int64_t& vcpusMax, int64_t& vcpusAtStartup, int& c
         vcpusMax = dialog.getVcpusMax();
         vcpusAtStartup = dialog.getVcpusAtStartup();
         coresPerSocket = dialog.getCoresPerSocket();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getMemorySettings(int64_t& staticMin, int64_t& staticMax, int64_t& dynamicMin, int64_t& dynamicMax)
+{
+    MemoryDialog dialog(_mainWindow);
+    dialog.setStaticMin(staticMin);
+    dialog.setStaticMax(staticMax);
+    dialog.setDynamicMin(dynamicMin);
+    dialog.setDynamicMax(dynamicMax);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        staticMin = dialog.getStaticMin();
+        staticMax = dialog.getStaticMax();
+        dynamicMin = dialog.getDynamicMin();
+        dynamicMax = dialog.getDynamicMax();
         return true;
     }
     else

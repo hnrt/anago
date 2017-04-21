@@ -33,6 +33,7 @@ namespace hnrt
         virtual bool confirmServersToShutdown(const std::list<Glib::ustring>&, bool);
         virtual bool getName(const char*, Glib::ustring&, Glib::ustring&);
         virtual bool getCpuSettings(int64_t&, int64_t&, int&);
+        virtual bool getMemorySettings(int64_t&, int64_t&, int64_t&, int64_t&);
 
     private:
 
