@@ -198,7 +198,6 @@ void ControllerImpl::changeMemory()
     int64_t dynamicMax = record->memory_dynamic_max;
     while (View::instance().getMemorySettings(staticMin, staticMax, dynamicMin, dynamicMax))
     {
-        //Logger::instance().trace("ControllerImpl::changeMemory: %zu,%zu,%zu,%zu",staticMin, staticMax, dynamicMin, dynamicMax);
         Session& session = vm->getSession();
         Session::Lock lock(session);
         if (vm->setMemory(staticMin, staticMax, dynamicMin, dynamicMax))
@@ -232,7 +231,27 @@ void ControllerImpl::changeShadowMemory()
 
 void ControllerImpl::changeVga()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    XenPtr<xen_vm_record> record = vm->getRecord();
+    bool stdVga = vm->isStdVga();
+    int ram = vm->getVideoRam();
+    if (ram <= 0)
+    {
+        ram = 8;
+    }
+    while (View::instance().getVgaSettings(stdVga, ram))
+    {
+        Session& session = vm->getSession();
+        Session::Lock lock(session);
+        if (vm->setStdVga(stdVga) && vm->setVideoRam(stdVga ? ram : 0))
+        {
+            return;
+        }
+    }
 }
 
 

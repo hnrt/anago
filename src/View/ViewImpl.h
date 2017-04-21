@@ -35,6 +35,7 @@ namespace hnrt
         virtual bool getCpuSettings(int64_t&, int64_t&, int&);
         virtual bool getMemorySettings(int64_t&, int64_t&, int64_t&, int64_t&);
         virtual bool getShadowMemorySettings(double&);
+        virtual bool getVgaSettings(bool&, int&);
 
     private:
 

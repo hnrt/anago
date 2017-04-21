@@ -18,6 +18,7 @@
 #include "NameDialog.h"
 #include "PixStore.h"
 #include "ShadowMemoryDialog.h"
+#include "VgaDialog.h"
 #include "ViewImpl.h"
 
 
@@ -313,4 +314,23 @@ bool ViewImpl::getShadowMemorySettings(double& multiplier)
         return false;
     }
 
+}
+
+
+bool ViewImpl::getVgaSettings(bool& stdVga, int& ram)
+{
+    VgaDialog dialog(_mainWindow);
+    dialog.setStdVga(stdVga);
+    dialog.setVideoRam(ram > 0 ? ram : 8);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        stdVga = dialog.isStdVga();
+        ram = dialog.getVideoRam();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }

@@ -20,4 +20,4 @@ namespace hnrt
 }
 
 
-#endif //!ANAGO_XENOBJECTTYPEMAP_H
+#endif //!HNRT_XENOBJECTTYPEMAP_H

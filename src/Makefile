@@ -218,6 +218,7 @@ $(OBJDIR)/View/SnapshotTreeView.o \
 $(OBJDIR)/View/SnapshotView.o \
 $(OBJDIR)/View/StorageRepositoryMenu.o \
 $(OBJDIR)/View/StorageRepositoryNotebook.o \
+$(OBJDIR)/View/VgaDialog.o \
 $(OBJDIR)/View/VirtualBlockDeviceMenu.o \
 $(OBJDIR)/View/VirtualDiskImageMenu.o \
 $(OBJDIR)/View/VirtualDiskImageListView.o \

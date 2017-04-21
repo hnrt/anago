@@ -39,6 +39,7 @@ namespace hnrt
         virtual bool getCpuSettings(int64_t&, int64_t&, int&) = 0;
         virtual bool getMemorySettings(int64_t&, int64_t&, int64_t&, int64_t&) = 0;
         virtual bool getShadowMemorySettings(double&) = 0;
+        virtual bool getVgaSettings(bool&, int&) = 0;
     };
 }
 
