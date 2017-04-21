@@ -7,28 +7,29 @@
 
 #include <list>
 #include <gtkmm.h>
-#include "hnrt/String.h"
 
 
 namespace hnrt
 {
     class Session;
 
-
-    class NetworkListView : public Gtk::TreeView
+    class NetworkListView
+        : public Gtk::TreeView
     {
     public:
 
-        NetworkListView(Session& session);
-        int getSelected(std::list<String>& list) const;
+        NetworkListView(const Session& session);
+        int getSelected(std::list<Glib::ustring>& list) const;
         Glib::SignalProxy0<void> signalSelectionChanged() { return get_selection()->signal_changed(); }
+        Gtk::ScrolledWindow* createScrolledWindow();
 
     private:
 
-        struct Record : public Gtk::TreeModel::ColumnRecord
+        struct Record
+            : public Gtk::TreeModel::ColumnRecord
         {
             Gtk::TreeModelColumn<Glib::ustring> colName;
-            Gtk::TreeModelColumn<String> colValue;
+            Gtk::TreeModelColumn<Glib::ustring> colValue;
 
             Record()
             {
@@ -44,7 +45,7 @@ namespace hnrt
 
         NetworkListView(const NetworkListView&);
         void operator =(const NetworkListView&);
-        void initStore(Session& session);
+        void initStore(const Session& session);
 
         Record _record;
         Glib::RefPtr<Gtk::ListStore> _store;

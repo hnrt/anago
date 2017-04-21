@@ -2,16 +2,16 @@
 
 
 #include <libintl.h>
+#include "XenServer/Network.h"
+#include "XenServer/Session.h"
+#include "XenServer/XenObjectStore.h"
 #include "NetworkListView.h"
-#include "Model/Network.h"
-#include "Model/Session.h"
-#include "Model/XenObjectStore.h"
 
 
 using namespace hnrt;
 
 
-NetworkListView::NetworkListView(Session& session)
+NetworkListView::NetworkListView(const Session& session)
 {
     _store = Gtk::ListStore::create(_record);
     initStore(session);
@@ -26,9 +26,9 @@ NetworkListView::NetworkListView(Session& session)
 }
 
 
-void NetworkListView::initStore(Session& session)
+void NetworkListView::initStore(const Session& session)
 {
-    std::list<std::pair<String, String> > a;
+    std::list<std::pair<Glib::ustring, Glib::ustring> > a;
     std::list<RefPtr<Network> > nwList;
     session.getStore().getList(nwList);
     for (std::list<RefPtr<Network> >::const_iterator ii = nwList.begin(); ii != nwList.end(); ii++)
@@ -39,31 +39,31 @@ void NetworkListView::initStore(Session& session)
             // This check serves to exclude "Host internal management network".
             continue;
         }
-        std::pair<String, String> entry(String(record->name_label), (*ii)->getREFID());
-        for (std::list<std::pair<String, String> >::iterator i = a.begin(); ; i++)
+        std::pair<Glib::ustring, Glib::ustring> entry(Glib::ustring(record->name_label), (*ii)->getREFID());
+        for (std::list<std::pair<Glib::ustring, Glib::ustring> >::iterator i = a.begin(); ; i++)
         {
             if (i == a.end())
             {
                 a.push_back(entry);
                 break;
             }
-            else if (strcmp(entry.first, i->first) < 0)
+            else if (entry.first < i->first)
             {
                 a.insert(i, entry);
                 break;
             }
         }
     }
-    for (std::list<std::pair<String, String> >::const_iterator i = a.begin(); i != a.end(); i++)
+    for (std::list<std::pair<Glib::ustring, Glib::ustring> >::const_iterator i = a.begin(); i != a.end(); i++)
     {
         Gtk::TreeModel::Row row = *_store->append();
-        row[_record.colName] = Glib::ustring(i->first);
+        row[_record.colName] = i->first;
         row[_record.colValue] = i->second;
     }
 }
 
 
-int NetworkListView::getSelected(std::list<String>& list) const
+int NetworkListView::getSelected(std::list<Glib::ustring>& list) const
 {
     int count = 0;
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
@@ -79,4 +79,14 @@ int NetworkListView::getSelected(std::list<String>& list) const
         iter++;
     }
     return count;
+}
+
+
+Gtk::ScrolledWindow* NetworkListView::createScrolledWindow()
+{
+    Gtk::ScrolledWindow* pW = new Gtk::ScrolledWindow();
+    pW->add(*this);
+    pW->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+    pW->set_shadow_type(Gtk::SHADOW_IN);
+    return pW;
 }
