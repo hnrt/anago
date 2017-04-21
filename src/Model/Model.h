@@ -12,6 +12,7 @@
 
 namespace hnrt
 {
+    class Console;
     class Host;
     class PatchBase;
     class Session;
@@ -49,6 +50,10 @@ namespace hnrt
         virtual void deselectSnapshot() = 0;
 
         virtual RefPtr<PatchBase> getPatchBase() = 0;
+
+        virtual void addConsole(const Glib::ustring&, const RefPtr<Console>&) = 0;
+        virtual void removeConsole(const Glib::ustring&) = 0;
+        virtual RefPtr<Console> getConsole(const Glib::ustring&) = 0;
 
         virtual const char* getAppDir() const = 0;
 

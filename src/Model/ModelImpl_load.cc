@@ -10,6 +10,7 @@
 #include "Base/RefPtr.h"
 #include "File/Json.h"
 #include "Logger/Trace.h"
+#include "Net/Console.h"
 #include "View/View.h"
 #include "ConnectSpec.h"
 #include "ModelImpl.h"

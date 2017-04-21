@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "App/Constants.h"
 #include "Logger/Trace.h"
+#include "Net/Console.h"
 #include "Net/PingAgent.h"
 #include "Util/UUID.h"
 #include "XenServer/Host.h"
@@ -320,6 +321,27 @@ void ModelImpl::deselectSnapshot()
 RefPtr<PatchBase> ModelImpl::getPatchBase()
 {
     return _patchBase;
+}
+
+
+void ModelImpl::addConsole(const Glib::ustring& uuid, const RefPtr<Console>& console)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    getConsoleInfo(uuid).console = console;
+}
+
+
+void ModelImpl::removeConsole(const Glib::ustring& uuid)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    getConsoleInfo(uuid).console.reset();
+}
+
+
+RefPtr<Console> ModelImpl::getConsole(const Glib::ustring& uuid)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    return getConsoleInfo(uuid).console;
 }
 
 

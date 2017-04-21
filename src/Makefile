@@ -154,6 +154,7 @@ $(OBJDIR)/Logger/Logger.o \
 $(OBJDIR)/Logger/LoggerImpl.o \
 $(OBJDIR)/Logger/Trace.o \
 $(OBJDIR)/Model/ConnectSpec.o \
+$(OBJDIR)/Model/ConsoleInfo.o \
 $(OBJDIR)/Model/Model.o \
 $(OBJDIR)/Model/ModelImpl.o \
 $(OBJDIR)/Model/ModelImpl_load.o \

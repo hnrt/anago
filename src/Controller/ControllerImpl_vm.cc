@@ -7,6 +7,7 @@
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
+#include "Net/Console.h"
 #include "Thread/ThreadManager.h"
 #include "View/View.h"
 #include "XenServer/Session.h"
@@ -122,7 +123,16 @@ void ControllerImpl::changeCd2(const VirtualBlockDevice& vbd)
 
 void ControllerImpl::sendCtrlAltDelete()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm)
+    {
+        return;
+    }
+    RefPtr<Console> console = Model::instance().getConsole(vm->getUUID());
+    if (console)
+    {
+        console->sendCtrlAltDelete();
+    }
 }
 
 

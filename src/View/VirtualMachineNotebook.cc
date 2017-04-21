@@ -145,7 +145,7 @@ VirtualMachineNotebook::VirtualMachineNotebook(const RefPtr<VirtualMachine>& vm)
 
     _propertyView.init();
 
-    //Model::instance().addConsole(_vm->getREFID(), _consoleView->getConsole());
+    Model::instance().addConsole(_vm->getUUID(), _consoleView->getConsole());
 
     set_current_page(0);
 
@@ -166,7 +166,7 @@ VirtualMachineNotebook::~VirtualMachineNotebook()
     _keyboardInputFilter.reset();
     _consoleView->setKeyboardInputFilter(RefPtr<ConsoleViewKeyboardInputFilter>::castStatic(_keyboardInputFilter));
 
-    //Model::instance().removeConsole(_vm->getREFID());
+    Model::instance().removeConsole(_vm->getUUID());
 
     _connectionSession.disconnect();
     _connection.disconnect();

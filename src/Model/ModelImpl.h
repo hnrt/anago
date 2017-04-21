@@ -47,6 +47,10 @@ namespace hnrt
 
         virtual RefPtr<PatchBase> getPatchBase();
 
+        virtual void addConsole(const Glib::ustring&, const RefPtr<Console>&);
+        virtual void removeConsole(const Glib::ustring&);
+        virtual RefPtr<Console> getConsole(const Glib::ustring&);
+
         virtual const char* getAppDir() const { return _appDir.c_str(); }
 
         virtual int getWidth();
@@ -74,11 +78,10 @@ namespace hnrt
         std::list<RefPtr<XenObject> > _selected;
         RefPtr<VirtualMachine> _selectedSnapshot;
         RefPtr<PatchBase> _patchBase;
-
+        ConsoleMap _consoleMap;
         int _width;
         int _height;
         int _pane1Width;
-        ConsoleMap _consoleMap;
     };
 }
 
