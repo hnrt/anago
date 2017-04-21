@@ -24,9 +24,7 @@ RefPtr<Notebook> NetworkNotebook::create(const RefPtr<Network>& network)
 
 
 NetworkNotebook::NetworkNotebook(const RefPtr<Network>& network)
-    : _networkLv(_networkLvSw.listView())
-    , _networkMenu(network)
-    , _pifLv(_pifLvSw.listView())
+    : _networkMenu(network)
     , _network(network)
 {
     Trace trace(StringBuffer().format("NetworkNotebook@%zx::ctor", this));
@@ -36,12 +34,12 @@ NetworkNotebook::NetworkNotebook(const RefPtr<Network>& network)
     _networkLabel.set_label(gettext("Network:"));
     _networkLabel.set_alignment(0, 0.5); // h=left, v=center
     _networkBox.pack_start(_networkLabel, Gtk::PACK_SHRINK);
-    _networkBox.pack_start(_networkLvSw);
+    _networkBox.pack_start(*Gtk::manage(_networkLv.createScrolledWindow()));
 
     _pifLabel.set_label(gettext("Physical interface:"));
     _pifLabel.set_alignment(0, 0.5); // h=left, v=center
     _pifBox.pack_start(_pifLabel, Gtk::PACK_SHRINK);
-    _pifBox.pack_start(_pifLvSw);
+    _pifBox.pack_start(*Gtk::manage(_pifLv.createScrolledWindow()));
 
     _genBox.pack1(_networkBox, true, true);
     _genBox.pack2(_pifBox, true, true);

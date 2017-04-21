@@ -5,7 +5,7 @@
 #define HNRT_VIRTUALMACHINEPROPERTYVIEW_H
 
 
-#include "NameValueListViewSw.h"
+#include "NameValueListView.h"
 #include "VirtualBlockDeviceMenu.h"
 #include "VirtualDiskImageMenu.h"
 #include "VirtualInterfaceMenu.h"
@@ -109,12 +109,12 @@ namespace hnrt
 
         Gtk::Widget* _selected;
 
-        NameValueListViewSw _genLvSw;
-        NameValueListView& _genLv;
+        NameValueListView _genLv;
+        Gtk::ScrolledWindow& _genSw;
         VirtualMachineGenMenu _genMenu;
 
-        NameValueListViewSw _memLvSw;
-        NameValueListView& _memLv;
+        NameValueListView _memLv;
+        Gtk::ScrolledWindow& _memSw;
         VirtualMachineMemMenu _memMenu;
 
         VirtualMachineDevicePage* _storages[MAX_STORAGES];

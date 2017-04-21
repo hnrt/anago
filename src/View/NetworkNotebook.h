@@ -6,7 +6,7 @@
 
 
 #include "Base/RefPtr.h"
-#include "NameValueListViewSw.h"
+#include "NameValueListView.h"
 #include "NetworkMenu.h"
 #include "Notebook.h"
 
@@ -35,14 +35,12 @@ namespace hnrt
 
         Gtk::VBox _networkBox;
         Gtk::Label _networkLabel;
-        NameValueListViewSw _networkLvSw;
-        NameValueListView& _networkLv;
+        NameValueListView _networkLv;
         NetworkMenu _networkMenu;
 
         Gtk::VBox _pifBox;
         Gtk::Label _pifLabel;
-        NameValueListViewSw _pifLvSw;
-        NameValueListView& _pifLv;
+        NameValueListView _pifLv;
 
         RefPtr<Network> _network;
 

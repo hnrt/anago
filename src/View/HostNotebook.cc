@@ -25,24 +25,20 @@ RefPtr<Notebook> HostNotebook::create(const RefPtr<Host>& host)
 
 
 HostNotebook::HostNotebook(const RefPtr<Host>& host)
-    : _genLv(_genLvSw.listView())
-    , _genLvMenu(HostMenu::NAME_VALUE)
-    , _cpuLv(_cpuLvSw.listView())
-    , _memLv(_memLvSw.listView())
-    , _swvLv(_swvLvSw.listView())
+    : _genLvMenu(HostMenu::NAME_VALUE)
     , _patLv(_patLvSw.listView())
     , _host(host)
 {
     Trace trace(StringBuffer().format("HostNotebook@%zx::ctor(%s)", this, _host->getSession().getConnectSpec().hostname.c_str()));
 
-    _genBox.pack_start(_genLvSw);
+    _genBox.pack_start(*Gtk::manage(_genLv.createScrolledWindow()));
     _genLv.setMenu(&_genLvMenu);
 
-    _cpuBox.pack_start(_cpuLvSw);
+    _cpuBox.pack_start(*Gtk::manage(_cpuLv.createScrolledWindow()));
 
-    _memBox.pack_start(_memLvSw);
+    _memBox.pack_start(*Gtk::manage(_memLv.createScrolledWindow()));
 
-    _swvBox.pack_start(_swvLvSw);
+    _swvBox.pack_start(*Gtk::manage(_swvLv.createScrolledWindow()));
 
     _patBox.pack_start(_patLvSw);
 

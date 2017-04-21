@@ -12,13 +12,12 @@
 
 namespace hnrt
 {
-    class NameValueListViewSw;
-
     class NameValueListView
         : public Gtk::TreeView
     {
     public:
 
+        NameValueListView();
         void clear();
         void set(const char* name, const Glib::ustring& value, bool end = false);
         void set(const char* name, const char* value, bool end = false);
@@ -29,10 +28,12 @@ namespace hnrt
         void set(const char* name, xen_string_string_map *value, bool end = false);
         void set(const char* name, xen_string_set *value, bool end = false);
         void setMenu(NameValueMenu* pMenu) { _pMenu = pMenu; }
+        Gtk::ScrolledWindow* createScrolledWindow();
 
     protected:
 
-        struct Record : public Gtk::TreeModel::ColumnRecord
+        struct Record
+            : public Gtk::TreeModel::ColumnRecord
         {
             Gtk::TreeModelColumn<Glib::ustring> colName;
             Gtk::TreeModelColumn<Glib::ustring> colValue;
@@ -49,7 +50,6 @@ namespace hnrt
             void operator =(const Record&);
         };
 
-        NameValueListView();
         NameValueListView(const NameValueListView&);
         void operator =(const NameValueListView&);
         virtual bool on_button_press_event(GdkEventButton*);
@@ -57,8 +57,6 @@ namespace hnrt
         Record _record;
         Glib::RefPtr<Gtk::ListStore> _store;
         NameValueMenu* _pMenu;
-
-        friend class NameValueListViewSw;
     };
 }
 

@@ -27,9 +27,9 @@ using namespace hnrt;
 VirtualMachinePropertyView::VirtualMachinePropertyView(const RefPtr<VirtualMachine>& vm)
     : _left(*this)
     , _selected(NULL)
-    , _genLv(_genLvSw.listView())
+    , _genSw(*Gtk::manage(_genLv.createScrolledWindow()))
     , _genMenu(vm)
-    , _memLv(_memLvSw.listView())
+    , _memSw(*Gtk::manage(_memLv.createScrolledWindow()))
     , _memMenu(vm)
     , _vm(vm)
 {
@@ -68,14 +68,14 @@ VirtualMachinePropertyView::~VirtualMachinePropertyView()
 
 void VirtualMachinePropertyView::init()
 {
-    _genLvSw.show_all_children();
-    _genLvSw.hide();
-    _right.pack_start(_genLvSw);
+    _genSw.show_all_children();
+    _genSw.hide();
+    _right.pack_start(_genSw);
     _genLv.setMenu(&_genMenu);
 
-    _memLvSw.show_all_children();
-    _memLvSw.hide();
-    _right.pack_start(_memLvSw);
+    _memSw.show_all_children();
+    _memSw.hide();
+    _right.pack_start(_memSw);
     _memLv.setMenu(&_memMenu);
 
     update();
@@ -95,10 +95,10 @@ void VirtualMachinePropertyView::onSelectionChanged()
     switch (key)
     {
     case GENERAL:
-        _selected = &_genLvSw;
+        _selected = &_genSw;
         break;
     case MEMORY:
-        _selected = &_memLvSw;
+        _selected = &_memSw;
         break;
     default:
         if (STORAGE <= key && key < STORAGE + MAX_STORAGES)

@@ -23,21 +23,19 @@ RefPtr<Notebook> StorageRepositoryNotebook::create(const RefPtr<StorageRepositor
 
 
 StorageRepositoryNotebook::StorageRepositoryNotebook(const RefPtr<StorageRepository>& sr)
-    : _srLv(_srLvSw.listView())
-    , _pbdLv(_pbdLvSw.listView())
-    , _sr(sr)
+    : _sr(sr)
 {
     Trace trace(StringBuffer().format("StorageRepositoryNotebook@%zx::ctor", this));
 
     _srLabel.set_label(gettext("Storage repository:"));
     _srLabel.set_alignment(0, 0.5); // h=left, v=center
     _srBox.pack_start(_srLabel, Gtk::PACK_SHRINK);
-    _srBox.pack_start(_srLvSw);
+    _srBox.pack_start(*Gtk::manage(_srLv.createScrolledWindow()));
 
     _pbdLabel.set_label(gettext("Physical block device:"));
     _pbdLabel.set_alignment(0, 0.5); // h=left, v=center
     _pbdBox.pack_start(_pbdLabel, Gtk::PACK_SHRINK);
-    _pbdBox.pack_start(_pbdLvSw);
+    _pbdBox.pack_start(*Gtk::manage(_pbdLv.createScrolledWindow()));
 
     _genBox.pack1(_srBox, true, true);
     _genBox.pack2(_pbdBox, true, true);

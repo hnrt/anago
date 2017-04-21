@@ -6,7 +6,7 @@
 
 
 #include "Base/RefPtr.h"
-#include "NameValueListViewSw.h"
+#include "NameValueListView.h"
 #include "Notebook.h"
 #include "VirtualDiskImageListViewSw.h"
 
@@ -36,13 +36,11 @@ namespace hnrt
 
         Gtk::VBox _srBox;
         Gtk::Label _srLabel;
-        NameValueListViewSw _srLvSw;
-        NameValueListView& _srLv;
+        NameValueListView _srLv;
 
         Gtk::VBox _pbdBox;
         Gtk::Label _pbdLabel;
-        NameValueListViewSw _pbdLvSw;
-        NameValueListView& _pbdLv;
+        NameValueListView _pbdLv;
 
         Gtk::VBox _vdiBox;
         VirtualDiskImageListViewSw _vdiSw;

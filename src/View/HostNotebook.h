@@ -10,7 +10,7 @@
 #include "HostMenu.h"
 #include "InputOutputGraph.h"
 #include "MemoryGraph.h"
-#include "NameValueListViewSw.h"
+#include "NameValueListView.h"
 #include "Notebook.h"
 #include "PatchListViewSw.h"
 
@@ -41,21 +41,17 @@ namespace hnrt
         void updatePerformaceStats();
 
         Gtk::VBox _genBox;
-        NameValueListViewSw _genLvSw;
-        NameValueListView& _genLv;
+        NameValueListView _genLv;
         HostMenu _genLvMenu;
 
         Gtk::VBox _cpuBox;
-        NameValueListViewSw _cpuLvSw;
-        NameValueListView& _cpuLv;
+        NameValueListView _cpuLv;
 
         Gtk::VBox _memBox;
-        NameValueListViewSw _memLvSw;
-        NameValueListView& _memLv;
+        NameValueListView _memLv;
 
         Gtk::VBox _swvBox;
-        NameValueListViewSw _swvLvSw;
-        NameValueListView& _swvLv;
+        NameValueListView _swvLv;
 
         Gtk::VBox _patBox;
         PatchListViewSw _patLvSw;
