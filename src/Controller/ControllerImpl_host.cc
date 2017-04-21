@@ -381,9 +381,10 @@ void ControllerImpl::changeHostName()
     {
         return;
     }
-    Glib::ustring label;
-    Glib::ustring description;
-    if (!View::instance().getName(*host, label, description))
+    XenPtr<xen_host_record> record = host->getRecord();
+    Glib::ustring label(record->name_label);
+    Glib::ustring description(record->name_description);
+    if (!View::instance().getName(gettext("Change host label/description"), label, description))
     {
         return;
     }

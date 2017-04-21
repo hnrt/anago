@@ -9,7 +9,6 @@
 #include "Logger/Trace.h"
 #include "Model/ConnectSpec.h"
 #include "Model/Model.h"
-#include "XenServer/Host.h"
 #include "XenServer/PerformanceMonitor.h"
 #include "XenServer/XenObject.h"
 #include "AboutDialog.h"
@@ -232,12 +231,11 @@ bool ViewImpl::confirmServersToShutdown(const std::list<Glib::ustring>& names, b
 }
 
 
-bool ViewImpl::getName(const Host& host, Glib::ustring& label, Glib::ustring& description)
+bool ViewImpl::getName(const char* title, Glib::ustring& label, Glib::ustring& description)
 {
-    XenPtr<xen_host_record> record = host.getRecord();
-    NameDialog dialog(_mainWindow, gettext("Change host label/description"));
-    dialog.setLabel(record->name_label);
-    dialog.setDescription(record->name_description);
+    NameDialog dialog(_mainWindow, title);
+    dialog.setLabel(label.c_str());
+    dialog.setDescription(description.c_str());
     int response = dialog.run();
     if (response == Gtk::RESPONSE_APPLY)
     {

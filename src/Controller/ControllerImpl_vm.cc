@@ -143,7 +143,21 @@ void ControllerImpl::hardRebootVm()
 
 void ControllerImpl::changeVmName()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    XenPtr<xen_vm_record> record = vm->getRecord();
+    Glib::ustring label(record->name_label);
+    Glib::ustring description(record->name_description);
+    if (!View::instance().getName(gettext("Change VM label/description"), label, description))
+    {
+        return;
+    }
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    vm->setName(label.c_str(), description.c_str());
 }
 
 
