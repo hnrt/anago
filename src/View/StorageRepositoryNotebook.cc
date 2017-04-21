@@ -41,7 +41,7 @@ StorageRepositoryNotebook::StorageRepositoryNotebook(const RefPtr<StorageReposit
     _genBox.pack2(_pbdBox, true, true);
     append_page(_genBox, Glib::ustring(gettext("Properties")));
 
-    _vdiBox.pack_start(_vdiSw);
+    _vdiBox.pack_start(*Gtk::manage(_vdiLv.createScrolledWindow()));
     append_page(_vdiBox, Glib::ustring(gettext("Virtual disk images")));
 
     show_all_children();
@@ -74,5 +74,5 @@ void StorageRepositoryNotebook::onSrUpdated(RefPtr<XenObject> object, int what)
         _pbdLv.clear();
     }
 
-    _vdiSw.listView().update(_sr->getSession(), srRecord->vdis);
+    _vdiLv.update(_sr->getSession(), srRecord->vdis);
 }

@@ -22,12 +22,13 @@ namespace hnrt
 
         enum Constants
         {
-            kAttachableOnly = (1 << 0),
+            ATTACHABLE_ONLY = (1 << 0),
         };
 
         VirtualDiskImageListView();
-        void update(Session&, const xen_vdi_record_opt_set*, int flags = 0);
+        void update(Session&, const xen_vdi_record_opt_set*, int = 0);
         Glib::ustring getSelected();
+        Gtk::ScrolledWindow* createScrolledWindow();
 
     protected:
 

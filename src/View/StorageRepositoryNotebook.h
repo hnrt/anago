@@ -8,7 +8,7 @@
 #include "Base/RefPtr.h"
 #include "NameValueListView.h"
 #include "Notebook.h"
-#include "VirtualDiskImageListViewSw.h"
+#include "VirtualDiskImageListView.h"
 
 
 namespace hnrt
@@ -43,7 +43,7 @@ namespace hnrt
         NameValueListView _pbdLv;
 
         Gtk::VBox _vdiBox;
-        VirtualDiskImageListViewSw _vdiSw;
+        VirtualDiskImageListView _vdiLv;
 
         RefPtr<StorageRepository> _sr;
 

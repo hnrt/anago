@@ -97,7 +97,7 @@ void VirtualDiskImageListView::update(Session& session, const xen_vdi_record_opt
                     }
                 }
             }
-            if ((flags & kAttachableOnly))
+            if ((flags & ATTACHABLE_ONLY))
             {
                 if (vmUUID.bytes() || vdiRecord->is_a_snapshot || !vdiRecord->managed)
                 {
@@ -195,4 +195,14 @@ Glib::ustring VirtualDiskImageListView::getSelected()
         refid = row[_record.colREFID];
     }
     return refid;
+}
+
+
+Gtk::ScrolledWindow* VirtualDiskImageListView::createScrolledWindow()
+{
+    Gtk::ScrolledWindow* pW = new Gtk::ScrolledWindow();
+    pW->add(*this);
+    pW->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+    pW->set_shadow_type(Gtk::SHADOW_IN);
+    return pW;
 }
