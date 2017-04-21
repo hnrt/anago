@@ -1,6 +1,9 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#define NO_TRACE
+
+
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
