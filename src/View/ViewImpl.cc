@@ -17,6 +17,7 @@
 #include "MemoryDialog.h"
 #include "NameDialog.h"
 #include "PixStore.h"
+#include "ShadowMemoryDialog.h"
 #include "ViewImpl.h"
 
 
@@ -294,4 +295,22 @@ bool ViewImpl::getMemorySettings(int64_t& staticMin, int64_t& staticMax, int64_t
     {
         return false;
     }
+}
+
+
+bool ViewImpl::getShadowMemorySettings(double& multiplier)
+{
+    ShadowMemoryDialog dialog(_mainWindow);
+    dialog.setMultiplier(multiplier);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        multiplier = dialog.getMultiplier();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
 }

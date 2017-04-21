@@ -198,7 +198,7 @@ void ControllerImpl::changeMemory()
     int64_t dynamicMax = record->memory_dynamic_max;
     while (View::instance().getMemorySettings(staticMin, staticMax, dynamicMin, dynamicMax))
     {
-        Logger::instance().trace("ControllerImpl::changeMemory: %zu,%zu,%zu,%zu",staticMin, staticMax, dynamicMin, dynamicMax);
+        //Logger::instance().trace("ControllerImpl::changeMemory: %zu,%zu,%zu,%zu",staticMin, staticMax, dynamicMin, dynamicMax);
         Session& session = vm->getSession();
         Session::Lock lock(session);
         if (vm->setMemory(staticMin, staticMax, dynamicMin, dynamicMax))
@@ -211,7 +211,22 @@ void ControllerImpl::changeMemory()
 
 void ControllerImpl::changeShadowMemory()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    XenPtr<xen_vm_record> record = vm->getRecord();
+    double multiplier = record->hvm_shadow_multiplier;
+    while (View::instance().getShadowMemorySettings(multiplier))
+    {
+        Session& session = vm->getSession();
+        Session::Lock lock(session);
+        if (vm->setShadowMemory(multiplier))
+        {
+            return;
+        }
+    }
 }
 
 

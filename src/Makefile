@@ -212,6 +212,7 @@ $(OBJDIR)/View/PixStore.o \
 $(OBJDIR)/View/PropertyHelper.o \
 $(OBJDIR)/View/ResourceHistoryGraph.o \
 $(OBJDIR)/View/SizeInBytesBox.o \
+$(OBJDIR)/View/ShadowMemoryDialog.o \
 $(OBJDIR)/View/SnapshotMenu.o \
 $(OBJDIR)/View/SnapshotTreeView.o \
 $(OBJDIR)/View/SnapshotView.o \

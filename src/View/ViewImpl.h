@@ -34,6 +34,7 @@ namespace hnrt
         virtual bool getName(const char*, Glib::ustring&, Glib::ustring&);
         virtual bool getCpuSettings(int64_t&, int64_t&, int&);
         virtual bool getMemorySettings(int64_t&, int64_t&, int64_t&, int64_t&);
+        virtual bool getShadowMemorySettings(double&);
 
     private:
 
