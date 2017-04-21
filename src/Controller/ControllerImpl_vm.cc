@@ -163,7 +163,24 @@ void ControllerImpl::changeVmName()
 
 void ControllerImpl::changeCpu()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    XenPtr<xen_vm_record> record = vm->getRecord();
+    int64_t vcpusMax = record->vcpus_max;
+    int64_t vcpusAtStartup = record->vcpus_at_startup;
+    int coresPerSocket = vm->getCoresPerSocket();
+    while (View::instance().getCpuSettings(vcpusMax, vcpusAtStartup, coresPerSocket))
+    {
+        Session& session = vm->getSession();
+        Session::Lock lock(session);
+        if (vm->setVcpu(vcpusMax, vcpusAtStartup, coresPerSocket))
+        {
+            return;
+        }
+    }
 }
 
 

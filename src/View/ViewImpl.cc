@@ -13,6 +13,7 @@
 #include "XenServer/XenObject.h"
 #include "AboutDialog.h"
 #include "ConnectDialog.h"
+#include "CpuDialog.h"
 #include "NameDialog.h"
 #include "PixStore.h"
 #include "ViewImpl.h"
@@ -248,4 +249,25 @@ bool ViewImpl::getName(const char* title, Glib::ustring& label, Glib::ustring& d
         return false;
     }
 
+}
+
+
+bool ViewImpl::getCpuSettings(int64_t& vcpusMax, int64_t& vcpusAtStartup, int& coresPerSocket)
+{
+    CpuDialog dialog(_mainWindow);
+    dialog.setVcpusMax(vcpusMax);
+    dialog.setVcpusAtStartup(vcpusAtStartup);
+    dialog.setCoresPerSocket(coresPerSocket);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        vcpusMax = dialog.getVcpusMax();
+        vcpusAtStartup = dialog.getVcpusAtStartup();
+        coresPerSocket = dialog.getCoresPerSocket();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
