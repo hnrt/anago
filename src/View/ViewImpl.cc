@@ -15,6 +15,7 @@
 #include "AddVmDialog.h"
 #include "ChangeCdDialog.h"
 #include "ConnectDialog.h"
+#include "CopyVmDialog.h"
 #include "CpuDialog.h"
 #include "MemoryDialog.h"
 #include "NameDialog.h"
@@ -362,6 +363,26 @@ bool ViewImpl::getVirtualMachineSpec(Session& session, VirtualMachineSpec& spec)
     if (response == Gtk::RESPONSE_APPLY)
     {
         dialog.getSpec(spec);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getVirtualMachineToCopy(Session& session, Glib::ustring& label, Glib::ustring& sr)
+{
+    CopyVmDialog dialog(_mainWindow, session, label.c_str(), sr.c_str());
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        label = dialog.getName();
+        if (dialog.isCopy())
+        {
+            sr = dialog.getSr();
+        }
         return true;
     }
     else

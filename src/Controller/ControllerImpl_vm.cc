@@ -186,7 +186,62 @@ void ControllerImpl::addVmInBackground(RefPtr<Host> host, VirtualMachineSpec spe
 
 void ControllerImpl::copyVm()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    Session& session = vm->getSession();
+    Glib::ustring label = vm->getRecord()->name_label;
+    Glib::ustring srREFID = vm->getPrimarySr();
+    if (!View::instance().getVirtualMachineToCopy(session, label, srREFID))
+    {
+        return;
+    }
+    if (srREFID.empty())
+    {
+        ThreadManager::instance().create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::cloneVmInBackground), vm, label), false, "CloneVm");
+    }
+    else
+    {
+        ThreadManager::instance().create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::copyVmInBackground), vm, label, srREFID), false, "CopyVm");
+    }
+}
+
+
+void ControllerImpl::cloneVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustring label)
+{
+    Trace trace("ControllerImpl::cloneVmInBackground");
+    vm->setBusy(true);
+    try
+    {
+        Session& session = vm->getSession();
+        Session::Lock lock(session);
+        vm->clone(label.c_str());
+    }
+    catch (...)
+    {
+        Logger::instance().error("%s: Unhandled exception caught.", trace.name().data());
+    }
+    vm->setBusy(false);
+}
+
+
+void ControllerImpl::copyVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustring label, Glib::ustring srREFID)
+{
+    Trace trace("ControllerImpl::copyVmInBackground");
+    vm->setBusy(true);
+    try
+    {
+        Session& session = vm->getSession();
+        Session::Lock lock(session);
+        vm->copy(label.c_str(), (xen_sr)(char*)srREFID.c_str());
+    }
+    catch (...)
+    {
+        Logger::instance().error("%s: Unhandled exception caught.", trace.name().data());
+    }
+    vm->setBusy(false);
 }
 
 

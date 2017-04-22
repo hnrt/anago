@@ -45,6 +45,7 @@ namespace hnrt
         virtual bool getVgaSettings(bool&, int&) = 0;
         virtual bool selectCd(const VirtualMachine&, Glib::ustring&, Glib::ustring&) = 0;
         virtual bool getVirtualMachineSpec(Session&, VirtualMachineSpec&) = 0;
+        virtual bool getVirtualMachineToCopy(Session&, Glib::ustring&, Glib::ustring&) = 0;
     };
 }
 

@@ -38,6 +38,7 @@ namespace hnrt
         virtual bool getVgaSettings(bool&, int&);
         virtual bool selectCd(const VirtualMachine&, Glib::ustring&, Glib::ustring&);
         virtual bool getVirtualMachineSpec(Session&, VirtualMachineSpec&);
+        virtual bool getVirtualMachineToCopy(Session&, Glib::ustring&, Glib::ustring&);
 
     private:
 

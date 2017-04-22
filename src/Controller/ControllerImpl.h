@@ -91,6 +91,8 @@ namespace hnrt
         void controlVm(bool (VirtualMachine::*memfunc)());
         void controlVm(bool (VirtualMachine::*memfunc)(bool), bool);
         void addVmInBackground(RefPtr<Host>, VirtualMachineSpec);
+        void cloneVmInBackground(RefPtr<VirtualMachine>, Glib::ustring);
+        void copyVmInBackground(RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring);
 
         bool _quitInProgress;
     };
