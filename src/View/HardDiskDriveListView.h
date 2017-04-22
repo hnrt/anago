@@ -18,7 +18,7 @@ namespace hnrt
     {
     public:
 
-        HardDiskDriveListView(Session&);
+        HardDiskDriveListView(const Session&);
         sigc::signal<void> signalChanged() { return _sigChanged; }
         void clear();
         void addValue(const HardDiskDriveSpec&);
@@ -51,7 +51,7 @@ namespace hnrt
         Record _record;
         Glib::RefPtr<Gtk::ListStore> _store;
         sigc::signal<void> _sigChanged;
-        Session& _session;
+        const Session& _session;
     };
 }
 

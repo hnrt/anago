@@ -12,7 +12,7 @@
 using namespace hnrt;
 
 
-HardDiskDriveListBox::HardDiskDriveListBox(Gtk::Window& parent, Session& session)
+HardDiskDriveListBox::HardDiskDriveListBox(Gtk::Window& parent, const Session& session)
     : _parent(parent)
     , _listView(session)
     , _session(session)

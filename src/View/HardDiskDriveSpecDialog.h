@@ -19,7 +19,7 @@ namespace hnrt
     {
     public:
 
-        HardDiskDriveSpecDialog(Gtk::Window&, Session&, const Glib::ustring&);
+        HardDiskDriveSpecDialog(Gtk::Window&, const Session&, const Glib::ustring&);
         void getValue(HardDiskDriveSpec&);
         void setValue(const HardDiskDriveSpec&);
 

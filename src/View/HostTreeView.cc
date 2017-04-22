@@ -1,6 +1,9 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#define NO_TRACE
+
+
 #include <stdio.h>
 #include <libintl.h>
 #include <stdexcept>
@@ -23,6 +26,7 @@ using namespace hnrt;
 
 HostTreeView::HostTreeView()
 {
+    TRACE("HostTreeView::ctor");
     _store = HostTreeStore::create();
     set_model(_store);
     set_headers_visible(false);
@@ -38,22 +42,24 @@ HostTreeView::HostTreeView()
 
 HostTreeView::~HostTreeView()
 {
+    TRACE("HostTreeView::dtor");
 }
 
 
 void HostTreeView::clear()
 {
+    TRACE("HostTreeView::clear");
     _store.clear();
 }
 
 
 void HostTreeView::onObjectCreated(RefPtr<XenObject> object, int what)
 {
-    Trace trace("HostTreeView::onObjectCreated");
+    TRACE("HostTreeView::onObjectCreated", "object={%s} what=%d", object->getName().c_str(), what);
     AddObject add = getAdd(object);
     if ((this->*add)(object))
     {
-        trace.put("add=true");
+        TRACEPUT("add=true");
         SignalManager::instance().xenObjectSignal(*object).connect(sigc::mem_fun(*this, &HostTreeView::onObjectUpdated));
         _signalNodeCreated.emit(object);
     }
@@ -62,6 +68,7 @@ void HostTreeView::onObjectCreated(RefPtr<XenObject> object, int what)
 
 void HostTreeView::onObjectUpdated(RefPtr<XenObject> object, int what)
 {
+    TRACE("HostTreeView::onObjectUpdated", "object={%s} what=%d", object->getName().c_str(), what);
     if (what == XenObject::DESTROYED)
     {
         remove(*object);
@@ -327,13 +334,15 @@ void HostTreeView::updateDisplayOrder()
 
 void HostTreeView::remove(const XenObject& object)
 {
+    TRACE("HostTreeView::remove");
     if (object.getType() == XenObject::HOST)
     {
         remove(object, _store->get_iter("0"));
     }
     else
     {
-        Gtk::TreeIter iter = findHost(object, false);
+        RefPtr<Host> host = object.getSession().getStore().getHost();
+        Gtk::TreeIter iter = findHost(*host, false);
         if (iter)
         {
             remove(object, iter->children().begin());
@@ -344,15 +353,18 @@ void HostTreeView::remove(const XenObject& object)
 
 void HostTreeView::remove(const XenObject& object, Gtk::TreeIter iter)
 {
+    TRACE("HostTreeView::remove");
     while (iter)
     {
         Gtk::TreeModel::Row row = *iter;
         const XenObject& object2 = *((RefPtr<XenObject>)row[_store->record().colXenObject]);
         if (&object == &object2)
         {
+            TRACEPUT("%s MATCH", object2.getName().c_str());
             _store->erase(iter);
             return;
         }
+        TRACEPUT("%s NOT MATCH", object2.getName().c_str());
         iter++;
     }
 }

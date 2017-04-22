@@ -15,7 +15,7 @@ namespace hnrt
     {
     public:
 
-        CopyVmDialog(Gtk::Window&, Session&, const char*, const char*);
+        CopyVmDialog(Gtk::Window&, const Session&, const char*, const char*);
         void select(const Glib::ustring&);
         Glib::ustring getName();
         bool isCopy();

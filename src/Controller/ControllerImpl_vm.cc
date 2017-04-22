@@ -13,7 +13,9 @@
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "XenServer/VirtualBlockDevice.h"
+#include "XenServer/VirtualDiskImage.h"
 #include "XenServer/VirtualMachine.h"
+#include "XenServer/XenObjectStore.h"
 #include "ControllerImpl.h"
 
 
@@ -247,7 +249,37 @@ void ControllerImpl::copyVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustring
 
 void ControllerImpl::deleteVm()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    std::list<Glib::ustring> disks;
+    if (!View::instance().getDisksToDelete(*vm, disks))
+    {
+        return;
+    }
+    ThreadManager::instance().create(sigc::bind<RefPtr<VirtualMachine>, std::list<Glib::ustring> >(sigc::mem_fun(*this, &ControllerImpl::deleteVmInBackground), vm, disks), false, "DeleteVm");
+}
+
+
+void ControllerImpl::deleteVmInBackground(RefPtr<VirtualMachine> vm, std::list<Glib::ustring> disks)
+{
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    if (!vm->destroy())
+    {
+        return;
+    }
+    XenObjectStore& store = session.getStore();
+    for (std::list<Glib::ustring>::const_iterator iter = disks.begin(); iter != disks.end(); iter++)
+    {
+        RefPtr<VirtualDiskImage> vdi = store.getVdi(*iter);
+        if (!vdi->destroy())
+        {
+            return;
+        }
+    }
 }
 
 

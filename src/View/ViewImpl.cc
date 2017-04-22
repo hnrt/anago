@@ -17,6 +17,7 @@
 #include "ConnectDialog.h"
 #include "CopyVmDialog.h"
 #include "CpuDialog.h"
+#include "DeleteVmDialog.h"
 #include "MemoryDialog.h"
 #include "NameDialog.h"
 #include "PixStore.h"
@@ -356,7 +357,7 @@ bool ViewImpl::selectCd(const VirtualMachine& vm, Glib::ustring& device, Glib::u
 }
 
 
-bool ViewImpl::getVirtualMachineSpec(Session& session, VirtualMachineSpec& spec)
+bool ViewImpl::getVirtualMachineSpec(const Session& session, VirtualMachineSpec& spec)
 {
     AddVmDialog dialog(_mainWindow, session);
     int response = dialog.run();
@@ -372,7 +373,7 @@ bool ViewImpl::getVirtualMachineSpec(Session& session, VirtualMachineSpec& spec)
 }
 
 
-bool ViewImpl::getVirtualMachineToCopy(Session& session, Glib::ustring& label, Glib::ustring& sr)
+bool ViewImpl::getVirtualMachineToCopy(const Session& session, Glib::ustring& label, Glib::ustring& sr)
 {
     CopyVmDialog dialog(_mainWindow, session, label.c_str(), sr.c_str());
     int response = dialog.run();
@@ -383,6 +384,22 @@ bool ViewImpl::getVirtualMachineToCopy(Session& session, Glib::ustring& label, G
         {
             sr = dialog.getSr();
         }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getDisksToDelete(const VirtualMachine& vm, std::list<Glib::ustring>& disks)
+{
+    DeleteVmDialog dialog(_mainWindow, vm);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        dialog.getDisks(disks);
         return true;
     }
     else

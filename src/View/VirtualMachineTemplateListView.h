@@ -17,7 +17,7 @@ namespace hnrt
     {
     public:
 
-        VirtualMachineTemplateListView(Session&);
+        VirtualMachineTemplateListView(const Session&);
         Glib::ustring getSelected() const;
         Gtk::ScrolledWindow* createScrolledWindow();
 
@@ -43,7 +43,7 @@ namespace hnrt
 
         VirtualMachineTemplateListView(const VirtualMachineTemplateListView&);
         void operator =(const VirtualMachineTemplateListView&);
-        void initStore(Session&);
+        void initStore(const Session&);
 
         Record _record;
         Glib::RefPtr<Gtk::ListStore> _store;

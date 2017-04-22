@@ -18,7 +18,7 @@ namespace hnrt
     {
     public:
 
-        StorageRepositoryComboBox(Session&);
+        StorageRepositoryComboBox(const Session&);
         virtual ~StorageRepositoryComboBox();
         void select(const Glib::ustring&);
         void selectDefault();
@@ -53,7 +53,7 @@ namespace hnrt
 
         Record _record;
         Glib::RefPtr<Gtk::ListStore> _store;
-        Session& _session;
+        const Session& _session;
     };
 }
 

@@ -14,7 +14,7 @@
 using namespace hnrt;
 
 
-HardDiskDriveListView::HardDiskDriveListView(Session& session)
+HardDiskDriveListView::HardDiskDriveListView(const Session& session)
     : _session(session)
 {
     _store = Gtk::ListStore::create(_record);

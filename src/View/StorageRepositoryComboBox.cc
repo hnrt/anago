@@ -13,7 +13,7 @@
 using namespace hnrt;
 
 
-StorageRepositoryComboBox::StorageRepositoryComboBox(Session& session)
+StorageRepositoryComboBox::StorageRepositoryComboBox(const Session& session)
     : _session(session)
 {
     _session.incRef();

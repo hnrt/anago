@@ -10,7 +10,7 @@
 using namespace hnrt;
 
 
-HardDiskDriveSpecDialog::HardDiskDriveSpecDialog(Gtk::Window &parent, Session& session, const Glib::ustring& title)
+HardDiskDriveSpecDialog::HardDiskDriveSpecDialog(Gtk::Window& parent, const Session& session, const Glib::ustring& title)
     : Gtk::Dialog(title, parent)
     , _srLabel(gettext("Storage:"))
     , _srComboBox(session)

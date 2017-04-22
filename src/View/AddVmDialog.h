@@ -21,7 +21,7 @@ namespace hnrt
     {
     public:
 
-        AddVmDialog(Gtk::Window&, Session&);
+        AddVmDialog(Gtk::Window&, const Session&);
         void getSpec(VirtualMachineSpec&);
 
     private:
@@ -59,7 +59,7 @@ namespace hnrt
         NetworkListView _nwLv;
         Gtk::ScrolledWindow& _nwSw;
 
-        Session& _session;
+        const Session& _session;
 
         Gtk::Button* _pCancelButton;
         Gtk::Button* _pApplyButton;

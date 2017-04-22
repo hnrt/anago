@@ -11,7 +11,7 @@
 using namespace hnrt;
 
 
-VirtualMachineTemplateListView::VirtualMachineTemplateListView(Session& session)
+VirtualMachineTemplateListView::VirtualMachineTemplateListView(const Session& session)
 {
     _store = Gtk::ListStore::create(_record);
     initStore(session);
@@ -26,7 +26,7 @@ VirtualMachineTemplateListView::VirtualMachineTemplateListView(Session& session)
 }
 
 
-void VirtualMachineTemplateListView::initStore(Session& session)
+void VirtualMachineTemplateListView::initStore(const Session& session)
 {
     std::list<RefPtr<VirtualMachine> > vmList;
     session.getStore().getList(vmList);

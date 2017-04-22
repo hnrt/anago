@@ -13,7 +13,7 @@
 using namespace hnrt;
 
 
-AddVmDialog::AddVmDialog(Gtk::Window& parent, Session& session)
+AddVmDialog::AddVmDialog(Gtk::Window& parent, const Session& session)
     : Gtk::Dialog(gettext("Add new VM"), parent)
     , _templateLv(session)
     , _teSw(*Gtk::manage(_templateLv.createScrolledWindow()))

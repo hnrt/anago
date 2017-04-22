@@ -18,7 +18,7 @@ namespace hnrt
     {
     public:
 
-        HardDiskDriveListBox(Gtk::Window&, Session&);
+        HardDiskDriveListBox(Gtk::Window&, const Session&);
         const HardDiskDriveListView& listView() const { return _listView; }
         HardDiskDriveListView& listView() { return _listView; }
 
@@ -38,7 +38,7 @@ namespace hnrt
         Gtk::Button _addButton;
         Gtk::Button _editButton;
         Gtk::Button _removeButton;
-        Session& _session;
+        const Session& _session;
     };
 }
 

@@ -37,8 +37,9 @@ namespace hnrt
         virtual bool getShadowMemorySettings(double&);
         virtual bool getVgaSettings(bool&, int&);
         virtual bool selectCd(const VirtualMachine&, Glib::ustring&, Glib::ustring&);
-        virtual bool getVirtualMachineSpec(Session&, VirtualMachineSpec&);
-        virtual bool getVirtualMachineToCopy(Session&, Glib::ustring&, Glib::ustring&);
+        virtual bool getVirtualMachineSpec(const Session&, VirtualMachineSpec&);
+        virtual bool getVirtualMachineToCopy(const Session&, Glib::ustring&, Glib::ustring&);
+        virtual bool getDisksToDelete(const VirtualMachine&, std::list<Glib::ustring>&);
 
     private:
 
