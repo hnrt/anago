@@ -15,6 +15,7 @@ namespace hnrt
 {
     class Host;
     class PerformanceMonitor;
+    class ThreadManager;
     class VirtualMachine;
     class XenObject;
 
@@ -95,6 +96,7 @@ namespace hnrt
         void copyVmInBackground(RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring);
         void deleteVmInBackground(RefPtr<VirtualMachine>, std::list<Glib::ustring>);
 
+        ThreadManager& _tm;
         bool _quitInProgress;
     };
 }

@@ -41,7 +41,7 @@ void ControllerImpl::connectAtStartup()
         ConnectSpec& cs = session.getConnectSpec();
         if (cs.autoConnect)
         {
-            ThreadManager::instance().create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::connectInBackground), host), false, "Connect");
+            _tm.create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::connectInBackground), host), false, "Connect");
         }
     }
 }
@@ -111,7 +111,7 @@ void ControllerImpl::connect()
             busyHosts.push_back(cs.hostname);
             continue;
         }
-        ThreadManager::instance().create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::connectInBackground), host), false, "Connect");
+        _tm.create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::connectInBackground), host), false, "Connect");
     }
     if (busyHosts.size())
     {
@@ -314,7 +314,7 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
         }
     }
     session.setMonitoring(true);
-    Glib::Thread* pThead = ThreadManager::instance().create(sigc::bind<RefPtr<PerformanceMonitor> >(sigc::mem_fun(*this, &ControllerImpl::performanceMonitorInBackground), performanceMonitor), true, "PerformanceMonitor");
+    Glib::Thread* pThead = _tm.create(sigc::bind<RefPtr<PerformanceMonitor> >(sigc::mem_fun(*this, &ControllerImpl::performanceMonitorInBackground), performanceMonitor), true, "PerformanceMonitor");
     XenEventMonitor eventMonitor;
     eventMonitor.run(session);
     performanceMonitor->terminate();
@@ -356,7 +356,7 @@ void ControllerImpl::disconnect()
 
 void ControllerImpl::disconnect(const RefPtr<Host>& host)
 {
-    ThreadManager::instance().create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false, "Disconnect");
+    _tm.create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false, "Disconnect");
 }
 
 
@@ -446,7 +446,7 @@ void ControllerImpl::shutdownHosts()
     }
     for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
     {
-        ThreadManager::instance().create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::shutdownHostInBackground), *iter), false, "ShutdownHost");
+        _tm.create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::shutdownHostInBackground), *iter), false, "ShutdownHost");
     }
 }
 
@@ -477,7 +477,7 @@ void ControllerImpl::restartHosts()
     }
     for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
     {
-        ThreadManager::instance().create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::restartHostInBackground), *iter), false, "RestartHost");
+        _tm.create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::restartHostInBackground), *iter), false, "RestartHost");
     }
 }
 

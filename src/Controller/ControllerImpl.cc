@@ -20,7 +20,8 @@ using namespace hnrt;
 
 
 ControllerImpl::ControllerImpl()
-    : _quitInProgress(false)
+    : _tm(ThreadManager::instance())
+    , _quitInProgress(false)
 {
     Trace trace("ControllerImpl::ctor");
 
@@ -114,7 +115,7 @@ bool ControllerImpl::quit2()
         }
     }
     hosts.clear();
-    int backgroundCount = ThreadManager::instance().count();
+    int backgroundCount = _tm.count();
     if (busyCount || backgroundCount)
     {
         trace.put("busy=%d background=%d", busyCount, backgroundCount);

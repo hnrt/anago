@@ -152,7 +152,7 @@ void ControllerImpl::addVm()
     {
         return;
     }
-    ThreadManager::instance().create(sigc::bind<RefPtr<Host>, VirtualMachineSpec>(sigc::mem_fun(*this, &ControllerImpl::addVmInBackground), host, spec), false, "AddVm");
+    _tm.create(sigc::bind<RefPtr<Host>, VirtualMachineSpec>(sigc::mem_fun(*this, &ControllerImpl::addVmInBackground), host, spec), false, "AddVm");
 }
 
 
@@ -202,11 +202,11 @@ void ControllerImpl::copyVm()
     }
     if (srREFID.empty())
     {
-        ThreadManager::instance().create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::cloneVmInBackground), vm, label), false, "CloneVm");
+        _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::cloneVmInBackground), vm, label), false, "CloneVm");
     }
     else
     {
-        ThreadManager::instance().create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::copyVmInBackground), vm, label, srREFID), false, "CopyVm");
+        _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::copyVmInBackground), vm, label, srREFID), false, "CopyVm");
     }
 }
 
@@ -259,7 +259,7 @@ void ControllerImpl::deleteVm()
     {
         return;
     }
-    ThreadManager::instance().create(sigc::bind<RefPtr<VirtualMachine>, std::list<Glib::ustring> >(sigc::mem_fun(*this, &ControllerImpl::deleteVmInBackground), vm, disks), false, "DeleteVm");
+    _tm.create(sigc::bind<RefPtr<VirtualMachine>, std::list<Glib::ustring> >(sigc::mem_fun(*this, &ControllerImpl::deleteVmInBackground), vm, disks), false, "DeleteVm");
 }
 
 
