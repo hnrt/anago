@@ -11,7 +11,9 @@
 
 namespace hnrt
 {
+    class Session;
     class VirtualMachine;
+    class VirtualMachineSpec;
     struct ConnectSpec;
 
     class View
@@ -42,6 +44,7 @@ namespace hnrt
         virtual bool getShadowMemorySettings(double&) = 0;
         virtual bool getVgaSettings(bool&, int&) = 0;
         virtual bool selectCd(const VirtualMachine&, Glib::ustring&, Glib::ustring&) = 0;
+        virtual bool getVirtualMachineSpec(Session&, VirtualMachineSpec&) = 0;
     };
 }
 

@@ -13,6 +13,8 @@
 namespace hnrt
 {
     class StringBuffer;
+    struct HardDiskDriveSpec;
+    struct VirtualMachineSpec;
 
     struct XenServer
     {
@@ -37,6 +39,10 @@ namespace hnrt
         static int match(const xen_string_string_map*, const char* key, const char* value1);
         static int match(const xen_string_string_map*, const char* key, const char* value1, const char* value2);
         static const char* getText(enum xen_vbd_type);
+        static bool createVirtualMachine(xen_session*, const VirtualMachineSpec&, xen_vm*);
+        static bool createHdd(xen_session*, xen_vm, int, const HardDiskDriveSpec&);
+        static bool createCd(xen_session*, xen_vm, int, xen_vdi);
+        static bool createNic(xen_session*, xen_vm, int, xen_network);
 
 #define XenPtrFree(type) static void free(type* p) { if (p) type##_free(p); }
 

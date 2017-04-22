@@ -10,6 +10,7 @@
 #include "Net/Console.h"
 #include "Thread/ThreadManager.h"
 #include "View/View.h"
+#include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "XenServer/VirtualBlockDevice.h"
 #include "XenServer/VirtualMachine.h"
@@ -138,7 +139,48 @@ void ControllerImpl::sendCtrlAltDelete()
 
 void ControllerImpl::addVm()
 {
-    //TODO: IMPLEMENT
+    RefPtr<Host> host = Model::instance().getSelectedHost();
+    if (!host || host->isBusy() || !host->getSession().isConnected())
+    {
+        return;
+    }
+    Session& session = host->getSession();
+    VirtualMachineSpec spec;
+    if (!View::instance().getVirtualMachineSpec(session, spec))
+    {
+        return;
+    }
+    ThreadManager::instance().create(sigc::bind<RefPtr<Host>, VirtualMachineSpec>(sigc::mem_fun(*this, &ControllerImpl::addVmInBackground), host, spec), false, "AddVm");
+}
+
+
+void ControllerImpl::addVmInBackground(RefPtr<Host> host, VirtualMachineSpec spec)
+{
+    Trace trace("ControllerImpl::addVmInBackground");
+    host->setBusy(true);
+    try
+    {
+        Session& session = host->getSession();
+        Session::Lock lock(session);
+        XenRef<xen_vm, xen_vm_free_t> vm;
+        if (XenServer::createVirtualMachine(session, spec, &vm))
+        {
+            XenPtr<xen_vm_record> vmRecord;
+            if (xen_vm_get_record(session, vmRecord.address(), vm))
+            {
+                VirtualMachine::create(session, vm, vmRecord);
+            }
+            else
+            {
+                Logger::instance().error("%s: Getting VM record failed.", trace.name().data());
+            }
+        }
+    }
+    catch (...)
+    {
+        Logger::instance().error("%s: Unhandled exception caught.", trace.name().data());
+    }
+    host->setBusy(false);
 }
 
 

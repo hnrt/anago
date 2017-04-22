@@ -19,6 +19,7 @@ namespace hnrt
         Trace(const char*, const char*, ...);
         ~Trace();
         void put(const char*, ...);
+        const Glib::ustring& name() const { return _name; }
 
     private:
 

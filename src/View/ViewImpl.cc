@@ -12,6 +12,7 @@
 #include "XenServer/PerformanceMonitor.h"
 #include "XenServer/VirtualMachine.h"
 #include "AboutDialog.h"
+#include "AddVmDialog.h"
 #include "ChangeCdDialog.h"
 #include "ConnectDialog.h"
 #include "CpuDialog.h"
@@ -345,6 +346,22 @@ bool ViewImpl::selectCd(const VirtualMachine& vm, Glib::ustring& device, Glib::u
     {
         device = dialog.getDevice();
         disc = dialog.getImage();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getVirtualMachineSpec(Session& session, VirtualMachineSpec& spec)
+{
+    AddVmDialog dialog(_mainWindow, session);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        dialog.getSpec(spec);
         return true;
     }
     else

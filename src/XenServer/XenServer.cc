@@ -6,8 +6,12 @@
 #include <string.h>
 #include <new>
 #include "Base/StringBuffer.h"
+#include "Logger/Trace.h"
 #include "Util/Util.h"
 #include "Constants.h"
+#include "HardDiskDriveSpec.h"
+#include "Macros.h"
+#include "VirtualMachineSpec.h"
 #include "XenPtr.h"
 #include "XenRef.h"
 #include "XenServer.h"
@@ -519,4 +523,289 @@ const char* XenServer::getText(enum xen_vbd_type type)
     case XEN_VBD_TYPE_DISK: return gettext("Disk");
     default: return gettext("Unknown");
     }
+}
+
+
+bool XenServer::createVirtualMachine(xen_session* session, const VirtualMachineSpec& spec, xen_vm* vmReturn)
+{
+    Trace trace("XenServer::createVirtualMachine");
+
+    trace.put("xen_vm_clone(%s,%s)", spec.templateREFID.data(), spec.name.data());
+
+    if (!xen_vm_clone(session, vmReturn, (xen_vm)(char*)spec.templateREFID.data(), (char*)spec.name.data()))
+    {
+        Logger::instance().error("%s: Vm clone failed.", trace.name().data());
+        return false;
+    }
+    xen_vm& vm = *vmReturn;
+
+    trace.put("xen_vm_set_is_a_template(%s,false)", (char*)vm);
+
+    if (!xen_vm_set_is_a_template(session, vm, false))
+    {
+        Logger::instance().error("%s: Resetting template flag failed.", trace.name().data());
+        return false;
+    }
+
+    trace.put("xen_vm_set_name_description(%s,%s)", (char*)vm, spec.desc.data());
+
+    if (!xen_vm_set_name_description(session, vm, (char*)spec.desc.data()))
+    {
+        Logger::instance().error("%s: Setting description failed.", trace.name().data());
+        return false;
+    }
+
+    int device = 0;
+    for (std::list<HardDiskDriveSpec>::const_iterator iter = spec.hddList.begin(); iter != spec.hddList.end(); iter++)
+    {
+        if (!createHdd(session, vm, device, *iter))
+        {
+            return false;
+        }
+        device++;
+    }
+
+    if (device < 3)
+    {
+        device = 3;
+    }
+
+    if (!createCd(session, vm, device, (xen_vdi)(char*)spec.cdREFID.data()))
+    {
+        return false;
+    }
+
+    char disks[] = { "disks" };
+
+    trace.put("xen_vm_remove_from_other_config(%s,%s)", (char*)vm, disks);
+
+    if (!xen_vm_remove_from_other_config(session, vm, disks))
+    {
+        xen_session_clear_error(session);
+    }
+
+    char installrepository[] = { "install-repository" };
+    char cdrom[] = { "cdrom" };
+
+    trace.put("xen_vm_add_to_other_config(%s,%s,%s)", (char*)vm, installrepository, cdrom);
+
+    if (!xen_vm_add_to_other_config(session, vm, installrepository, cdrom))
+    {
+        xen_session_clear_error(session);
+    }
+
+    device = 0;
+
+    for (std::list<Glib::ustring>::const_iterator iter = spec.nwList.begin(); iter != spec.nwList.end(); iter++)
+    {
+        if (!createNic(session, vm, device, (xen_network)(char*)iter->data()))
+        {
+            return false;
+        }
+        device++;
+    }
+
+    return true;
+}
+
+
+bool XenServer::createHdd(xen_session* session, xen_vm vm, int device, const HardDiskDriveSpec& spec)
+{
+    Trace trace("XenServer::createHdd", "vm=%s device=%d", (char*)vm, device);
+
+    StringBuffer label;
+    if (spec.name.empty())
+    {
+        label.format(gettext("Hard disk drive %d"), device);
+    }
+    else
+    {
+        label.assign(spec.name.data());
+    }
+
+    StringBuffer description;
+    if (spec.description.empty())
+    {
+        description.assign(gettext("Created by Anago"));
+    }
+    else
+    {
+        description.assign(spec.description.data());
+    }
+
+    xen_sr_record_opt srRecordOpt = {0};
+    srRecordOpt.u.handle = (xen_sr)spec.srREFID.data();
+
+    xen_vdi_record vdiRecord = {0};
+    vdiRecord.name_label = label.ptr();
+    vdiRecord.name_description = description.ptr();
+    vdiRecord.sr = &srRecordOpt;
+    vdiRecord.virtual_size = spec.size;
+    vdiRecord.type = XEN_VDI_TYPE_SYSTEM;
+    vdiRecord.sharable = false;
+    vdiRecord.read_only = false;
+    vdiRecord.other_config = xen_string_string_map_alloc(0);
+
+    trace.put("xen_vdi_create(%zu)", spec.size);
+
+    XenRef<xen_vdi, xen_vdi_free_t> vdi;
+    bool result = xen_vdi_create(session, &vdi, &vdiRecord);
+
+    xen_string_string_map_free(vdiRecord.other_config);
+
+    if (!result)
+    {
+        Logger::instance().error("%s: VDI create failed.", trace.name().data());
+        return false;
+    }
+
+    StringBuffer userdevice;
+
+    xen_vm_record_opt vmRecordOpt = {0};
+    vmRecordOpt.u.handle = vm;
+
+    xen_vdi_record_opt vdiRecordOpt = {0};
+    vdiRecordOpt.u.handle = vdi;
+
+    xen_vbd_record vbdRecord = {0};
+    vbdRecord.vm = &vmRecordOpt;
+    vbdRecord.vdi = &vdiRecordOpt;
+    vbdRecord.userdevice = userdevice.format("%d", device).ptr();
+    vbdRecord.type = XEN_VBD_TYPE_DISK;
+    vbdRecord.mode = XEN_VBD_MODE_RW;
+    vbdRecord.bootable = true;
+    vbdRecord.qos_algorithm_params = xen_string_string_map_alloc(0);
+    vbdRecord.other_config = xen_string_string_map_alloc(0);
+
+    trace.put("xen_vbd_create");
+
+    XenRef<xen_vbd, xen_vbd_free_t> vbd;
+    result = xen_vbd_create(session, &vbd, &vbdRecord);
+
+    xen_string_string_map_free(vbdRecord.qos_algorithm_params);
+    xen_string_string_map_free(vbdRecord.other_config);
+
+    if (!result)
+    {
+        Logger::instance().error("%s: VBD create failed.", trace.name().data());
+        return false;
+    }
+
+    trace.put("xen_vm_get_uuid", spec.size);
+
+    char* tmp = NULL;
+    if (!xen_vm_get_uuid(session, &tmp, vm))
+    {
+        Logger::instance().error("%s: VM UUID get failed.", trace.name().data());
+        return false;
+    }
+    StringBuffer uuid;
+    uuid = tmp;
+    xen_uuid_free(tmp);
+
+    static char vmhint[] = { "vmhint" };
+
+    trace.put("xen_vdi_remove_from_sm_config(vmhint)");
+
+    if (!xen_vdi_remove_from_sm_config(session, vdi, vmhint))
+    {
+        Logger::instance().error("%s: vmhint remove failed.", trace.name().data());
+        return false;
+    }
+
+    trace.put("xen_vdi_add_to_sm_config(vmhint)");
+
+    if (!xen_vdi_add_to_sm_config(session, vdi, vmhint, uuid.ptr()))
+    {
+        Logger::instance().error("%s: vmhint add failed.", trace.name().data());
+        return false;
+    }
+
+    return true;
+}
+
+
+bool XenServer::createCd(xen_session* session, xen_vm vm, int device, xen_vdi vdi)
+{
+    Trace trace("XenServer::createCd", "vm=%s device=%d vdi=%s", (char*)vm, device, (char*)vdi);
+
+    StringBuffer userdevice;
+    userdevice.format("%d", device);
+
+    xen_vm_record_opt vmRecordOpt = {0};
+    vmRecordOpt.u.handle = vm;
+
+    xen_vdi_record_opt vdiRecordOpt = {0};
+    vdiRecordOpt.u.handle = vdi;
+
+    xen_vbd_record vbdRecord = {0};
+    vbdRecord.vm = &vmRecordOpt;
+    vbdRecord.vdi = IS_NULLREF(vdi) ? NULL : &vdiRecordOpt;
+    vbdRecord.userdevice = userdevice.ptr();
+    vbdRecord.type = XEN_VBD_TYPE_CD;
+    vbdRecord.mode = XEN_VBD_MODE_RO;
+    vbdRecord.bootable = true;
+    vbdRecord.empty = IS_NULLREF(vdi) ? true : false;
+    vbdRecord.qos_algorithm_params = xen_string_string_map_alloc(0);
+    vbdRecord.other_config = xen_string_string_map_alloc(0);
+
+    trace.put("xen_vbd_create");
+
+    XenRef<xen_vbd, xen_vbd_free_t> vbd;
+    bool result = xen_vbd_create(session, &vbd, &vbdRecord);
+
+    xen_string_string_map_free(vbdRecord.qos_algorithm_params);
+    xen_string_string_map_free(vbdRecord.other_config);
+
+    if (!result)
+    {
+        Logger::instance().error("%s: VBD (CD device) create failed.", trace.name().data());
+        return false;
+    }
+
+    return true;
+}
+
+
+bool XenServer::createNic(xen_session* session, xen_vm vm, int device, xen_network nw)
+{
+    Trace trace("XenServer::createNic", "vm=%s device=%d nw=%s", (char*)vm, device, (char*)nw);
+
+    StringBuffer deviceString;
+    deviceString.format("%d", device);
+
+    xen_vm_record_opt vmRecordOpt = {0};
+    vmRecordOpt.u.handle = vm;
+
+    xen_network_record_opt nwRecordOpt = {0};
+    nwRecordOpt.u.handle = nw;
+
+    xen_vif_record vifRecord = {0};
+    vifRecord.vm = &vmRecordOpt;
+    vifRecord.network = &nwRecordOpt;
+    vifRecord.device = deviceString.ptr();
+    vifRecord.mac_autogenerated = true;
+    vifRecord.locking_mode = XEN_VIF_LOCKING_MODE_NETWORK_DEFAULT;
+    vifRecord.qos_algorithm_params = xen_string_string_map_alloc(0);
+    vifRecord.other_config = xen_string_string_map_alloc(0);
+    vifRecord.ipv4_allowed = xen_string_set_alloc(0);
+    vifRecord.ipv6_allowed = xen_string_set_alloc(0);
+
+    trace.put("xen_vif_create");
+
+    XenRef<xen_vif, xen_vif_free_t> vif;
+    bool result = xen_vif_create(session, &vif, &vifRecord);
+
+    xen_string_string_map_free(vifRecord.qos_algorithm_params);
+    xen_string_string_map_free(vifRecord.other_config);
+    xen_string_set_free(vifRecord.ipv4_allowed);
+    xen_string_set_free(vifRecord.ipv6_allowed);
+
+    if (!result)
+    {
+        Logger::instance().error("%s: VIF create failed.", trace.name().data());
+        return false;
+    }
+
+    return true;
 }

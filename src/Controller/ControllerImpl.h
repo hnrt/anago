@@ -7,6 +7,7 @@
 
 #include <sigc++/sigc++.h>
 #include "Base/RefPtr.h"
+#include "XenServer/VirtualMachineSpec.h"
 #include "Controller.h"
 
 
@@ -89,6 +90,7 @@ namespace hnrt
         void restartHostInBackground(RefPtr<Host>);
         void controlVm(bool (VirtualMachine::*memfunc)());
         void controlVm(bool (VirtualMachine::*memfunc)(bool), bool);
+        void addVmInBackground(RefPtr<Host>, VirtualMachineSpec);
 
         bool _quitInProgress;
     };
