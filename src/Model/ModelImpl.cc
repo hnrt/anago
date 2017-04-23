@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "App/Constants.h"
+#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Net/Console.h"
 #include "Net/PingAgent.h"
@@ -425,4 +426,66 @@ void ModelImpl::setConsoleScale(const Glib::ustring& uuid, bool value)
 {
     Glib::RecMutex::Lock lock(_mutex);
     getConsoleInfo(uuid).scale = value;
+}
+
+
+Glib::ustring ModelImpl::getExportVmPath(const VirtualMachine& vm)
+{
+    StringBuffer path;
+    if (_exportVmPath.empty())
+    {
+        path = getenv("HOME");
+        path += "/";
+    }
+    else
+    {
+        Glib::ustring::size_type pos = _exportVmPath.rfind('/');
+        if (pos == Glib::ustring::npos)
+        {
+            path = "./";
+        }
+        else
+        {
+            path.assign(_exportVmPath.c_str(), pos + 1);
+        }
+    }
+    Glib::ustring name = vm.getName();
+    if (name.empty())
+    {
+        path += "No Name";
+    }
+    else
+    {
+        for (const char* s = name.c_str(); *s; s++)
+        {
+            if (*s == '/')
+            {
+                path += "\xEF\xBC\x8F"; // fullwidth solidus U+FF0F
+            }
+            else
+            {
+                path += *s;
+            }
+        }
+    }
+    path += ".xva";
+    return Glib::ustring(path);
+}
+
+
+void ModelImpl::setExportVmPath(const Glib::ustring& path)
+{
+    _exportVmPath = path;
+}
+
+
+bool ModelImpl::getExportVmVerify()
+{
+    return _exportVmVerify;
+}
+
+
+void ModelImpl::setExportVmVerify(bool value)
+{
+    _exportVmVerify = value;
 }

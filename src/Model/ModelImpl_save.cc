@@ -73,6 +73,14 @@ void ModelImpl::save()
             }
             object1->add("consoles", array4);
 
+            RefPtr<Json::Object> object5(new Json::Object());
+            if (!_exportVmPath.empty())
+            {
+                object5->add("path", _exportVmPath.c_str());
+                object5->add("verify", _exportVmVerify);
+            }
+            object1->add("export", object5);
+
             RefPtr<Json::Value> root(new Json::Value(object1));
 
             Json json;

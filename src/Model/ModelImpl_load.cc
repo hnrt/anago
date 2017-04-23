@@ -184,4 +184,20 @@ void ModelImpl::loadV1(const Json& json)
             }
         }
     }
+
+    value1 = object1->get("export");
+    if (value1.ptr() && value1->type() == Json::OBJECT)
+    {
+        RefPtr<Json::Object> object2 = value1->object();
+        RefPtr<Json::Value> valuePath = object2->get("path");
+        RefPtr<Json::Value> valueVerify = object2->get("verify");
+        if (valuePath.ptr() && valuePath->type() == Json::STRING)
+        {
+            _exportVmPath = valuePath->string();
+        }
+        if (valueVerify.ptr() && valueVerify->type() == Json::BOOLEAN)
+        {
+            _exportVmVerify = valueVerify->boolean();
+        }
+    }
 }

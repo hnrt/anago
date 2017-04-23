@@ -64,6 +64,11 @@ namespace hnrt
         virtual bool getConsoleScale(const Glib::ustring&);
         virtual void setConsoleScale(const Glib::ustring&, bool);
 
+        virtual Glib::ustring getExportVmPath(const VirtualMachine&);
+        virtual void setExportVmPath(const Glib::ustring&);
+        virtual bool getExportVmVerify();
+        virtual void setExportVmVerify(bool);
+
     private:
 
         ModelImpl(const ModelImpl&);
@@ -82,6 +87,8 @@ namespace hnrt
         int _width;
         int _height;
         int _pane1Width;
+        Glib::ustring _exportVmPath;
+        bool _exportVmVerify;
     };
 }
 

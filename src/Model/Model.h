@@ -67,6 +67,11 @@ namespace hnrt
         virtual void setConsoleEnabled(const Glib::ustring&, bool) = 0;
         virtual bool getConsoleScale(const Glib::ustring&) = 0;
         virtual void setConsoleScale(const Glib::ustring&, bool) = 0;
+
+        virtual Glib::ustring getExportVmPath(const VirtualMachine&) = 0;
+        virtual void setExportVmPath(const Glib::ustring&) = 0;
+        virtual bool getExportVmVerify() = 0;
+        virtual void setExportVmVerify(bool) = 0;
     };
 }
 
