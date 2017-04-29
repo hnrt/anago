@@ -68,6 +68,8 @@ namespace hnrt
         virtual void setExportVmPath(const Glib::ustring&);
         virtual bool getExportVmVerify();
         virtual void setExportVmVerify(bool);
+        virtual Glib::ustring getImportVmPath();
+        virtual void setImportVmPath(const Glib::ustring&);
 
     private:
 
@@ -89,6 +91,7 @@ namespace hnrt
         int _pane1Width;
         Glib::ustring _exportVmPath;
         bool _exportVmVerify;
+        Glib::ustring _importVmPath;
     };
 }
 

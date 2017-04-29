@@ -20,7 +20,7 @@ namespace hnrt
         static RefPtr<File> create(const char*, const char*, XenObject&);
 
         virtual ~VirtualMachineArchive();
-        virtual bool validate(int&, bool&);
+        virtual bool validate(volatile bool&);
 
     protected:
 

@@ -1,6 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include <errno.h>
 #include <libintl.h>
 #include <stdexcept>
 #include <sys/types.h>
@@ -19,6 +20,7 @@
 #include "XenServer/VirtualDiskImage.h"
 #include "XenServer/VirtualMachine.h"
 #include "XenServer/VirtualMachineExporter.h"
+#include "XenServer/VirtualMachineImporter.h"
 #include "XenServer/XenObjectStore.h"
 #include "ControllerImpl.h"
 
@@ -328,7 +330,7 @@ void ControllerImpl::exportVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustri
 {
     Model::instance().setExportVmPath(path);
     Model::instance().setExportVmVerify(verify);
-    RefPtr<VirtualMachineExporter> exporter = VirtualMachineExporter::create(*vm);
+    RefPtr<VirtualMachineExporter> exporter = VirtualMachineExporter::create(vm);
     exporter->emit(XenObject::CREATED);
     exporter->run(path.c_str(), verify);
     exporter->emit(XenObject::DESTROYED);
@@ -337,7 +339,45 @@ void ControllerImpl::exportVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustri
 
 void ControllerImpl::importVm()
 {
-    //TODO: IMPLEMENT
+    RefPtr<Host> host = Model::instance().getSelectedHost();
+    if (!host || host->isBusy() || !host->getSession().isConnected())
+    {
+        return;
+    }
+    Glib::ustring path = Model::instance().getImportVmPath();
+    while (View::instance().getImportVmPath(path))
+    {
+        struct stat statinfo = { 0 };
+        if (stat(path.c_str(), &statinfo))
+        {
+            StringBuffer message;
+            message.format(errno == ENOENT ? gettext("The file you just chose is not found.\n\n%s") :
+                           gettext("The file you just chose cannot be read.\n\n%s"),
+                           path.c_str());
+            View::instance().showWarning(Glib::ustring(message));
+        }
+        else if (S_ISREG(statinfo.st_mode))
+        {
+            _tm.create(sigc::bind<RefPtr<Host>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::importVmInBackground), host, path), false, "ImportVm");
+            return;
+        }
+        else
+        {
+            StringBuffer message;
+            message.format(gettext("The file you just chose isn't a regular file.\n\n%s"), path.c_str());
+            View::instance().showWarning(Glib::ustring(message));
+        }
+    }
+}
+
+
+void ControllerImpl::importVmInBackground(RefPtr<Host> host, Glib::ustring path)
+{
+    Model::instance().setImportVmPath(path);
+    RefPtr<VirtualMachineImporter> importer = VirtualMachineImporter::create(host->getSession());
+    importer->emit(XenObject::CREATED);
+    importer->run(path.c_str());
+    importer->emit(XenObject::DESTROYED);
 }
 
 

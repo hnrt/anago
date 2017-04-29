@@ -257,17 +257,13 @@ bool FileImpl::write(const void* ptr, size_t len)
 }
 
 
-bool FileImpl::validate(int& percent, bool& abortFlag)
+bool FileImpl::validate(volatile bool& abortFlag)
 {
-    percent = 0;
-
     if (!_fp)
     {
         _error = EBADF;
         return false;
     }
-
-    size_t nbytesExpected = size();
 
     char buf[8192];
     size_t len;
@@ -281,35 +277,26 @@ bool FileImpl::validate(int& percent, bool& abortFlag)
         }
 
         len = read(buf, sizeof(buf));
-
-        percent = 100 * _nbytes / nbytesExpected;
-
         if (len < sizeof(buf))
         {
             break;
         }
     }
 
-    return percent == 100 ? true : false;
+    return _nbytes == size();
 }
 
 
-bool FileImpl::validate(int* percent, bool* abortFlag)
+bool FileImpl::validate(volatile bool* abortFlag)
 {
-    int dummy = 0;
-    bool dummyFlag = false;
-
-    if (!percent)
-    {
-        percent = &dummy;
-    }
+    volatile bool dummyFlag = false;
 
     if (!abortFlag)
     {
         abortFlag = &dummyFlag;
     }
 
-    return validate(*percent, *abortFlag);
+    return validate(*abortFlag);
 }
 
 

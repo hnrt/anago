@@ -185,6 +185,7 @@ void ModelImpl::loadV1(const Json& json)
         }
     }
 
+#if 0
     value1 = object1->get("export");
     if (value1.ptr() && value1->type() == Json::OBJECT)
     {
@@ -200,4 +201,10 @@ void ModelImpl::loadV1(const Json& json)
             _exportVmVerify = valueVerify->boolean();
         }
     }
+#else
+    json.getString("export.path", _exportVmPath);
+    json.getBoolean("export.verify", _exportVmVerify);
+#endif
+
+    json.getString("import.path", _importVmPath);
 }

@@ -1,53 +1,39 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
-#define NO_TRACE
+//#define NO_TRACE
 
 
+#include <glibmm.h>
 #include <curl/curl.h>
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
-#include "Util/UUID.h"
-#include "View/View.h"
 #include "Session.h"
 #include "VirtualMachine.h"
 #include "VirtualMachineArchive.h"
 #include "VirtualMachineExporter.h"
-#include "XenRef.h"
 
 
 using namespace hnrt;
 
 
-RefPtr<VirtualMachineExporter> VirtualMachineExporter::create(VirtualMachine& vm)
+RefPtr<VirtualMachineExporter> VirtualMachineExporter::create(RefPtr<VirtualMachine> vm)
 {
     return RefPtr<VirtualMachineExporter>(new VirtualMachineExporter(vm));
 }
 
 
-VirtualMachineExporter::VirtualMachineExporter(VirtualMachine& vm)
-    : XenObject(VM_EXPORTER, vm.getSession(), NULL, UUID::generate().c_str(), "VirtualMachineExporter")
-    , _vm(vm)
+VirtualMachineExporter::VirtualMachineExporter(RefPtr<VirtualMachine> vm)
+    : VirtualMachinePorter(VM_EXPORTER, vm->getSession(), "VirtualMachineExporter")
 {
-    TRACE(StringBuffer().format("VirtualMachineExporter::ctor(%s)", _vm.getName().c_str()));
-    init();
+    TRACE("VirtualMachineExporter::ctor", "vm=\"%s\"", vm->getName().c_str());
+    _vm = vm;
 }
 
 
 VirtualMachineExporter::~VirtualMachineExporter()
 {
-    TRACE(StringBuffer().format("VirtualMachineExporter::dtor(%s)", _vm.getName().c_str()));
-    fini();
-}
-
-
-void VirtualMachineExporter::init()
-{
-}
-
-
-void VirtualMachineExporter::fini()
-{
+    TRACE("VirtualMachineExporter::dtor");
 }
 
 
@@ -61,18 +47,11 @@ static size_t receive(void* ptr, size_t size, size_t nmemb, VirtualMachineExport
 
 void VirtualMachineExporter::run(const char* path, bool verify)
 {
-    TRACE(StringBuffer().format("VirtualMachineExporter::run(%s)", _vm.getName().c_str()), "path=\"%s\" verify=%d", path, verify);
+    TRACE(StringBuffer().format("VirtualMachineExporter::run(%s)", _vm->getName().c_str()), "path=\"%s\" verify=%d", path, verify);
 
     XenObject::Busy busy(&_session);
 
-    {
-        Glib::Mutex::Lock lock(_mutex);
-        _xva = VirtualMachineArchive::create(path, "w", *this);
-        _state = VirtualMachineOperationState::EXPORT_INPROGRESS;
-        _verified = 0;
-        _abort = false;
-        _lastUpdated = 0;
-    }
+    open(path, verify);
 
     XenRef<xen_task, xen_task_free_t> task;
 
@@ -87,11 +66,12 @@ void VirtualMachineExporter::run(const char* path, bool verify)
 
         char exportString[] = { "export" };
         StringBuffer desc;
-        desc.format("export from=%s", _vm.getREFID().c_str());
+        desc.format("export from=%s", _vm->getREFID().c_str());
         if (!xen_task_create(_session, &task, exportString, desc.ptr()))
         {
             throw "xen_task_create";
         }
+        _taskId = (const char*)(xen_task)task;
 
         if (!_xva->open())
         {
@@ -109,7 +89,7 @@ void VirtualMachineExporter::run(const char* path, bool verify)
         StringBuffer url;
         ConnectSpec cs = _session.getConnectSpec();
         url.format("http://%s/export?session_id=%s&task_id=%s&ref=%s",
-                   cs.hostname.c_str(), _session->session_id, (const char*)(xen_task)task, _vm.getREFID().c_str());
+                   cs.hostname.c_str(), _session->session_id, _taskId.c_str(), _vm->getREFID().c_str());
 
         TRACEPUT("url=%s", url.str());
 
@@ -126,9 +106,8 @@ void VirtualMachineExporter::run(const char* path, bool verify)
 
         _xva->close();
 
-        if (_state == VirtualMachineOperationState::EXPORT_CANCELED)
+        if (_state != VirtualMachineOperationState::EXPORT_INPROGRESS)
         {
-            emit(XenObject::EXPORT_CANCELED);
             goto done;
         }
 
@@ -146,19 +125,19 @@ void VirtualMachineExporter::run(const char* path, bool verify)
             _state = VirtualMachineOperationState::EXPORT_VERIFY_INPROGRESS;
             if (!_xva->open(NULL, "r"))
             {
-                Logger::instance().warn("%s\t%'zu bytes exported, but cannot be opened for reading.", _xva->path(), _xva->nbytes());
+                Logger::instance().warn("%s: %'zu bytes exported, but cannot be opened for reading.", _xva->path(), _xva->nbytes());
                 _state = VirtualMachineOperationState::EXPORT_VERIFY_FAILURE;
                 emit(XenObject::VERIFY_FAILED);
             }
-            else if (!_xva->validate(_verified, (bool&)_abort))
+            else if (!_xva->validate(_abort))
             {
-                Logger::instance().warn("%s\t%'zu bytes exported, but checksum mismatched at %d%%.", _xva->path(), _xva->nbytes(), _verified);
+                Logger::instance().warn("%s: %'zu bytes exported, but checksum mismatched at %'zu bytes.", _xva->path(), _xva->size(), _xva->nbytes());
                 _state = VirtualMachineOperationState::EXPORT_VERIFY_FAILURE;
                 emit(XenObject::VERIFY_FAILED);
             }
             else
             {
-                Logger::instance().info("%s\t%'zu bytes exported and verified.", _xva->path(), _xva->nbytes());
+                Logger::instance().info("%s: %'zu bytes exported and verified.", _xva->path(), _xva->nbytes());
                 _state = VirtualMachineOperationState::EXPORT_VERIFY_SUCCESS;
                 emit(XenObject::VERIFIED);
             }
@@ -190,10 +169,23 @@ done:
         xen_task_destroy(_session, task);
     }
 
-    {
-        Glib::Mutex::Lock lock(_mutex);
-        _xva.reset();
-    }
+    close();
+}
+
+
+void VirtualMachineExporter::open(const char* path, bool verify)
+{
+    Glib::Mutex::Lock lock(_mutex);
+    VirtualMachinePorter::open(path, "w", VirtualMachineOperationState::EXPORT_PENDING);
+    _vm->setBusy(true);
+    _verify = verify;
+}
+
+
+void VirtualMachineExporter::close()
+{
+    Glib::Mutex::Lock lock(_mutex);
+    VirtualMachinePorter::close();
 }
 
 
@@ -204,67 +196,31 @@ bool VirtualMachineExporter::parse(void* ptr, size_t len)
     if (_abort)
     {
         _state = VirtualMachineOperationState::EXPORT_CANCELED;
+        emit(XenObject::EXPORT_CANCELED);
         return false;
     }
 
     if (len)
     {
-        if (!_xva->write(ptr, len))
+        if (_xva->write(ptr, len))
         {
+            TRACEPUT("total=%'zu", _xva->nbytes());
+            _state = VirtualMachineOperationState::EXPORT_INPROGRESS;
+            time_t now = time(NULL);
+            if (_lastUpdated < now)
+            {
+                _lastUpdated = now;
+                emit(XenObject::EXPORTING);
+            }
+        }
+        else
+        {
+            TRACEPUT("write failed.");
             _state = VirtualMachineOperationState::EXPORT_FAILURE;
             emit(XenObject::EXPORT_FAILED);
             return false;
         }
-        TRACEPUT("total=%'zu", _xva->nbytes());
-        time_t now = time(NULL);
-        if (_lastUpdated < now)
-        {
-            _lastUpdated = now;
-            emit(XenObject::EXPORTING);
-        }
     }
 
     return true;
-}
-
-
-Glib::ustring VirtualMachineExporter::path()
-{
-    Glib::Mutex::Lock lock(_mutex);
-    return _xva ? _xva->path() : Glib::ustring();
-}
-
-
-int64_t VirtualMachineExporter::size()
-{
-    Glib::Mutex::Lock lock(_mutex);
-    return _xva ? _xva->size() : -1;
-}
-
-
-int64_t VirtualMachineExporter::nbytes()
-{
-    Glib::Mutex::Lock lock(_mutex);
-    return _xva ? _xva->nbytes() : -1;
-}
-
-
-int VirtualMachineExporter::percent()
-{
-    Glib::Mutex::Lock lock(_mutex);
-    if (_xva)
-    {
-        int64_t size = _xva->size();
-        int64_t nbytes = _xva->nbytes();
-        int percent = -1;
-        if (size)
-        {
-            percent = (int)(((nbytes * 1000) / size + 5) / 10);
-        }
-        return percent;
-    }
-    else
-    {
-        return -1;
-    }
 }

@@ -55,6 +55,7 @@ namespace hnrt
             VM_METRICS,
             VM_GUEST_METRICS,
             VM_EXPORTER,
+            VM_IMPORTER,
         };
 
         enum Notification
@@ -81,6 +82,11 @@ namespace hnrt
             EXPORTED,
             EXPORT_FAILED,
             EXPORT_CANCELED,
+            IMPORT_PENDING,
+            IMPORTING,
+            IMPORTED,
+            IMPORT_FAILED,
+            IMPORT_CANCELED,
             VERIFY_PENDING,
             VERIFYING,
             VERIFIED,

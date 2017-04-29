@@ -71,10 +71,8 @@ VirtualMachineArchive::~VirtualMachineArchive()
 }
 
 
-bool VirtualMachineArchive::validate(int& percent, bool& abortFlag)
+bool VirtualMachineArchive::validate(volatile bool& abortFlag)
 {
-    percent = 0;
-
     time_t lastUpdated = 0;
 
     if (!_fp)
@@ -82,8 +80,6 @@ bool VirtualMachineArchive::validate(int& percent, bool& abortFlag)
         _error = EBADF;
         return false;
     }
-
-    size_t nbytesExpected = size();
 
     char buf[512 * 16];
     size_t len;
@@ -109,7 +105,6 @@ bool VirtualMachineArchive::validate(int& percent, bool& abortFlag)
         }
 
         len = read(buf, 512);
-        percent = 100 * _nbytes / nbytesExpected;
         if (len != 512)
         {
             if (!ferror(_fp))
@@ -164,7 +159,6 @@ bool VirtualMachineArchive::validate(int& percent, bool& abortFlag)
             }
 
             len = read(buf, 512);
-            percent = 100 * _nbytes / nbytesExpected;
             if (len != 512)
             {
                 if (!ferror(_fp))
@@ -203,7 +197,6 @@ bool VirtualMachineArchive::validate(int& percent, bool& abortFlag)
 
             size_t readLen = dataLen >= sizeof(buf) ? sizeof(buf) : (dataLen / 512) * 512;
             len = read(buf, readLen);
-            percent = 100 * _nbytes / nbytesExpected;
             if (len != readLen)
             {
                 if (!ferror(_fp))
@@ -232,7 +225,6 @@ bool VirtualMachineArchive::validate(int& percent, bool& abortFlag)
             }
 
             len = read(buf, 512);
-            percent = 100 * _nbytes / nbytesExpected;
             if (len != 512)
             {
                 if (!ferror(_fp))
@@ -281,7 +273,6 @@ bool VirtualMachineArchive::validate(int& percent, bool& abortFlag)
     }
 
     len = read(buf, 512);
-    percent = 100 * _nbytes / nbytesExpected;
     if (len != 512)
     {
         if (!ferror(_fp))

@@ -44,6 +44,7 @@ namespace hnrt
         virtual bool getVirtualMachineToCopy(const Session&, Glib::ustring&, Glib::ustring&);
         virtual bool getDisksToDelete(const VirtualMachine&, std::list<Glib::ustring>&);
         virtual bool getExportVmPath(Glib::ustring&, bool&);
+        virtual bool getImportVmPath(Glib::ustring&);
 
     private:
 

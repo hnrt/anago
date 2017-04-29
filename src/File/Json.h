@@ -136,6 +136,9 @@ namespace hnrt
         virtual void set(const RefPtr<Value>& value) { _root = value; }
         virtual void load(FILE*);
         virtual void save(FILE*);
+        virtual bool getString(const char*, Glib::ustring&) const;
+        virtual bool getInteger(const char*, long&) const;
+        virtual bool getBoolean(const char*, bool&) const;
 
     protected:
 

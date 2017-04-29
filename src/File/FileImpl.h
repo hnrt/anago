@@ -28,8 +28,8 @@ namespace hnrt
         virtual void rewind();
         virtual size_t read(void*, size_t);
         virtual bool write(const void*, size_t);
-        virtual bool validate(int&, bool&);
-        virtual bool validate(int* = 0, bool* = 0);
+        virtual bool validate(volatile bool&);
+        virtual bool validate(volatile bool* = 0);
         virtual const char* path() const { return _path; }
         virtual const char* mode() const { return _mode; }
         virtual int error() const { return _error; }

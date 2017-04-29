@@ -2,6 +2,7 @@
 
 
 #include <stdio.h>
+#include <string.h>
 #include "JsonParser.h"
 #include "JsonWriter.h"
 
@@ -31,6 +32,159 @@ void Json::save(FILE* fp)
 {
     JsonWriter writer(fp, *this);
     writer.write();
+}
+
+
+static Glib::ustring GetKey(const char* path, const char** next)
+{
+    Glib::ustring key;
+    const char* dot = strchr(path, '.');
+    if (dot)
+    {
+        key.assign(path, dot - path);
+        *next = dot + 1;
+    }
+    else
+    {
+        key = path;
+        *next = path + strlen(path);
+    }
+    return key;
+}
+
+
+bool Json::getString(const char* path, Glib::ustring& retval) const
+{
+    RefPtr<Value> value = _root;
+    while (value)
+    {
+        const char* next = NULL;
+        Glib::ustring key = GetKey(path, &next);
+        if (key.empty())
+        {
+            return false;
+        }
+        else if (value->type() == OBJECT)
+        {
+            RefPtr<Object> object = value->object();
+            if (!object)
+            {
+                return false;
+            }
+            value = object->get(key.c_str());
+            if (!*next)
+            {
+                if (value && value->type() == STRING)
+                {
+                    retval = value->string();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                path = next;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return false;
+}
+
+
+bool Json::getInteger(const char* path, long& retval) const
+{
+    RefPtr<Value> value = _root;
+    while (value)
+    {
+        const char* next = NULL;
+        Glib::ustring key = GetKey(path, &next);
+        if (key.empty())
+        {
+            return false;
+        }
+        else if (value->type() == OBJECT)
+        {
+            RefPtr<Object> object = value->object();
+            if (!object)
+            {
+                return false;
+            }
+            value = object->get(key.c_str());
+            if (!*next)
+            {
+                if (value && value->type() == NUMBER)
+                {
+                    retval = value->integer();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                path = next;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return false;
+}
+
+
+bool Json::getBoolean(const char* path, bool& retval) const
+{
+    RefPtr<Value> value = _root;
+    while (value)
+    {
+        const char* next = NULL;
+        Glib::ustring key = GetKey(path, &next);
+        if (key.empty())
+        {
+            return false;
+        }
+        else if (value->type() == OBJECT)
+        {
+            RefPtr<Object> object = value->object();
+            if (!object)
+            {
+                return false;
+            }
+            value = object->get(key.c_str());
+            if (!*next)
+            {
+                if (value && value->type() == BOOLEAN)
+                {
+                    retval = value->boolean();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                path = next;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return false;
 }
 
 

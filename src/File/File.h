@@ -35,8 +35,8 @@ namespace hnrt
         virtual void rewind() = 0;
         virtual size_t read(void*, size_t) = 0;
         virtual bool write(const void*, size_t) = 0;
-        virtual bool validate(int&, bool&) = 0;
-        virtual bool validate(int* = 0, bool* = 0) = 0;
+        virtual bool validate(volatile bool&) = 0;
+        virtual bool validate(volatile bool* = 0) = 0;
         virtual const char* path() const = 0;
         virtual const char* mode() const = 0;
         virtual int error() const = 0;

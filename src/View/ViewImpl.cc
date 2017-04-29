@@ -19,6 +19,7 @@
 #include "CpuDialog.h"
 #include "DeleteVmDialog.h"
 #include "ExportVmDialog.h"
+#include "ImportVmDialog.h"
 #include "MemoryDialog.h"
 #include "NameDialog.h"
 #include "PixStore.h"
@@ -438,6 +439,23 @@ bool ViewImpl::getExportVmPath(Glib::ustring& path, bool& verify)
     {
         path = dialog.getPath();
         verify = dialog.getVerify();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getImportVmPath(Glib::ustring& path)
+{
+    ImportVmDialog dialog(_mainWindow);
+    dialog.setPath(path);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_OK)
+    {
+        path = dialog.getPath();
         return true;
     }
     else

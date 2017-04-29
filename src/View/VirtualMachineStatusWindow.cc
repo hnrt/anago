@@ -1,6 +1,9 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+//#define NO_TRACE
+
+
 #include <stdlib.h>
 #include <string.h>
 #include <libintl.h>
@@ -10,6 +13,7 @@
 #include "Controller/SignalManager.h"
 #include "XenServer/VirtualMachine.h"
 #include "XenServer/VirtualMachineExporter.h"
+#include "XenServer/VirtualMachineImporter.h"
 #include "PixStore.h"
 #include "VirtualMachineStatusWindow.h"
 
@@ -71,7 +75,10 @@ VirtualMachineStatusWindow::~VirtualMachineStatusWindow()
 
 void VirtualMachineStatusWindow::onObjectCreated(RefPtr<XenObject> object, int what)
 {
-    if (object->getType() == XenObject::VM_EXPORTER)
+    switch (object->getType())
+    {
+    case XenObject::VM_EXPORTER:
+    case XenObject::VM_IMPORTER:
     {
         SignalManager::instance().xenObjectSignal(*object).connect(sigc::mem_fun(*this, &VirtualMachineStatusWindow::onObjectUpdated));
         _listView.add(object);
@@ -81,6 +88,10 @@ void VirtualMachineStatusWindow::onObjectCreated(RefPtr<XenObject> object, int w
         {
             _timeout = Glib::signal_timeout().connect(sigc::mem_fun(*this, &VirtualMachineStatusWindow::onTimedOut), 1000);
         }
+        break;
+    }
+    default:
+        break;
     }
 }
 
@@ -368,6 +379,14 @@ Glib::ustring VirtualMachineStatusWindow::ListView::cancel(Gtk::TreeIter iter)
             updateTime(row, time(NULL));
             uuid = row[_record.colId];
         }
+        else if (object->getType() == XenObject::VM_IMPORTER)
+        {
+            VirtualMachineImporter& importer = (VirtualMachineImporter&)*object;
+            importer.abort();
+            updateState(row, state);
+            updateTime(row, time(NULL));
+            uuid = row[_record.colId];
+        }
     }
     return uuid;
 }
@@ -392,13 +411,23 @@ void VirtualMachineStatusWindow::ListView::update(Gtk::TreeModel::Row& row)
     VirtualMachineOperationState state;
     int percent = -1;
     time_t currentTime = time(NULL);
-    if (object->getType() == XenObject::VM_EXPORTER)
+    switch (object->getType())
+    {
+    case XenObject::VM_EXPORTER:
     {
         VirtualMachineExporter& exporter = (VirtualMachineExporter&)*object;
-        name = exporter.vm().getName();
+        RefPtr<VirtualMachine> vm = exporter.vm();
+        if (vm)
+        {
+            name = vm->getName();
+        }
         if (path.empty())
         {
-            row[_record.colPath] = exporter.path();
+            const char* p = exporter.path();
+            if (p)
+            {
+                row[_record.colPath] = Glib::ustring(p);
+            }
         }
         state = exporter.state();
         if (state == VirtualMachineOperationState::EXPORT_VERIFY_INPROGRESS ||
@@ -410,10 +439,42 @@ void VirtualMachineStatusWindow::ListView::update(Gtk::TreeModel::Row& row)
         {
             size = exporter.nbytes();
         }
+        break;
+    }
+    case XenObject::VM_IMPORTER:
+    {
+        VirtualMachineImporter& importer = (VirtualMachineImporter&)*object;
+        RefPtr<VirtualMachine> vm = importer.vm();
+        if (vm)
+        {
+            name = vm->getName();
+        }
+        if (path.empty())
+        {
+            const char* p = importer.path();
+            if (p)
+            {
+                row[_record.colPath] = Glib::ustring(p);
+            }
+        }
+        if (!(int64_t)row[_record.colSize])
+        {
+            size = importer.size();
+        }
+        state = importer.state();
+        percent = importer.percent();
+        break;
+    }
+    default:
+        break;
     }
     row[_record.colName] = name;
     if (!((VirtualMachineOperationState)row[_record.colState]).isCanceling() || state.isInactive())
     {
+        if (size >= 0)
+        {
+            updateSize(row, size);
+        }
         if (state == VirtualMachineOperationState::IMPORT_INPROGRESS ||
             state == VirtualMachineOperationState::IMPORT_PENDING ||
             state == VirtualMachineOperationState::EXPORT_VERIFY_INPROGRESS ||
@@ -425,10 +486,6 @@ void VirtualMachineStatusWindow::ListView::update(Gtk::TreeModel::Row& row)
         }
         else
         {
-            if (size >= 0)
-            {
-                updateSize(row, size);
-            }
             updateState(row, state);
         }
     }
@@ -510,18 +567,29 @@ void VirtualMachineStatusWindow::ListView::updateState(Gtk::TreeModel::Row& row,
     }
     row[_record.colDisplayState] = Glib::ustring(displayState.str());
     RefPtr<XenObject> object  = row[_record.colOperator];
-    if (object->getType() == XenObject::VM_EXPORTER)
+    switch (object->getType())
     {
-        VirtualMachineExporter& exporter = (VirtualMachineExporter&)*object;
-        if (state.isActive())
+    case XenObject::VM_EXPORTER:
+    case XenObject::VM_IMPORTER:
+    {
+        VirtualMachinePorter& porter = (VirtualMachinePorter&)*object;
+        RefPtr<VirtualMachine> vm = porter.vm();
+        if (vm)
         {
-            exporter.vm().setDisplayStatus(displayState);
+            if (state.isActive())
+            {
+                vm->setDisplayStatus(displayState);
+            }
+            else
+            {
+                XenPtr<xen_vm_record> record = vm->getRecord();
+                vm->setDisplayStatus(XenServer::getPowerStateText(record->power_state));
+            }
         }
-        else
-        {
-            XenPtr<xen_vm_record> record = exporter.vm().getRecord();
-            exporter.vm().setDisplayStatus(XenServer::getPowerStateText(record->power_state));
-        }
+        break;
+    }
+    default:
+        break;
     }
 }
 

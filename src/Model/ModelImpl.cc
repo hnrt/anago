@@ -489,3 +489,15 @@ void ModelImpl::setExportVmVerify(bool value)
 {
     _exportVmVerify = value;
 }
+
+
+Glib::ustring ModelImpl::getImportVmPath()
+{
+    return _importVmPath;
+}
+
+
+void ModelImpl::setImportVmPath(const Glib::ustring& path)
+{
+    _importVmPath = path;
+}
