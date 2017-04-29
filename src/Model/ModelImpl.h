@@ -7,13 +7,13 @@
 
 #include <glibmm.h>
 #include "Logger/Logger.h"
+#include "File/Json.h"
 #include "ConsoleInfo.h"
 #include "Model.h"
 
 
 namespace hnrt
 {
-    class Json;
     class Host;
 
     class ModelImpl
@@ -76,6 +76,8 @@ namespace hnrt
         ModelImpl(const ModelImpl&);
         void operator =(const ModelImpl&);
         void loadV1(const Json&);
+        void loadV1Server(const Json&, const RefPtr<Json::Value>&);
+        void loadV1Console(const Json&, const RefPtr<Json::Value>&);
         ConsoleInfo& getConsoleInfo(const Glib::ustring&);
 
         Glib::ustring _path;

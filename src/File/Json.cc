@@ -55,7 +55,13 @@ static Glib::ustring GetKey(const char* path, const char** next)
 
 bool Json::getString(const char* path, Glib::ustring& retval) const
 {
-    RefPtr<Value> value = _root;
+    return getString(_root, path, retval);
+}
+
+
+bool Json::getString(const RefPtr<Value>& root, const char* path, Glib::ustring& retval) const
+{
+    RefPtr<Value> value = root;
     while (value)
     {
         const char* next = NULL;
@@ -100,7 +106,13 @@ bool Json::getString(const char* path, Glib::ustring& retval) const
 
 bool Json::getInteger(const char* path, long& retval) const
 {
-    RefPtr<Value> value = _root;
+    return getInteger(_root, path, retval);
+}
+
+
+bool Json::getInteger(const RefPtr<Value>& root, const char* path, long& retval) const
+{
+    RefPtr<Value> value = root;
     while (value)
     {
         const char* next = NULL;
@@ -143,9 +155,66 @@ bool Json::getInteger(const char* path, long& retval) const
 }
 
 
+bool Json::getInteger(const char* path, int& retval) const
+{
+    return getInteger(_root, path, retval);
+}
+
+
+bool Json::getInteger(const RefPtr<Value>& root, const char* path, int& retval) const
+{
+    RefPtr<Value> value = root;
+    while (value)
+    {
+        const char* next = NULL;
+        Glib::ustring key = GetKey(path, &next);
+        if (key.empty())
+        {
+            return false;
+        }
+        else if (value->type() == OBJECT)
+        {
+            RefPtr<Object> object = value->object();
+            if (!object)
+            {
+                return false;
+            }
+            value = object->get(key.c_str());
+            if (!*next)
+            {
+                if (value && value->type() == NUMBER)
+                {
+                    retval = (int)value->integer();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                path = next;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return false;
+}
+
+
 bool Json::getBoolean(const char* path, bool& retval) const
 {
-    RefPtr<Value> value = _root;
+    return getBoolean(_root, path, retval);
+}
+
+
+bool Json::getBoolean(const RefPtr<Value>& root, const char* path, bool& retval) const
+{
+    RefPtr<Value> value = root;
     while (value)
     {
         const char* next = NULL;
@@ -173,6 +242,59 @@ bool Json::getBoolean(const char* path, bool& retval) const
                 {
                     return false;
                 }
+            }
+            else
+            {
+                path = next;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return false;
+}
+
+
+bool Json::getArray(const char* path, const sigc::slot2<void, const Json&, const RefPtr<Value>&>& slot) const
+{
+    return getArray(_root, path, slot);
+}
+
+
+bool Json::getArray(const RefPtr<Value>& root, const char* path, const sigc::slot2<void, const Json&, const RefPtr<Value>&>& slot) const
+{
+    RefPtr<Value> value = root;
+    while (value)
+    {
+        const char* next = NULL;
+        Glib::ustring key = GetKey(path, &next);
+        if (key.empty())
+        {
+            return false;
+        }
+        else if (value->type() == OBJECT)
+        {
+            RefPtr<Object> object = value->object();
+            if (!object)
+            {
+                return false;
+            }
+            value = object->get(key.c_str());
+            if (!*next)
+            {
+                if (value && value->type() == ARRAY)
+                {
+                    const Json::Array& array = value->array();
+                    for (Json::Array::size_type index = 0; index < array.size(); index++)
+                    {
+                        RefPtr<Value> value2 = array[index];
+                        slot(*this, value2);
+                    }
+                    return true;
+                }
+                return false;
             }
             else
             {

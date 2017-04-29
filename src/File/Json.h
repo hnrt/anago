@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <glibmm.h>
+#include <sigc++/sigc++.h>
 #include <vector>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
@@ -137,8 +138,15 @@ namespace hnrt
         virtual void load(FILE*);
         virtual void save(FILE*);
         virtual bool getString(const char*, Glib::ustring&) const;
+        virtual bool getString(const RefPtr<Value>&, const char*, Glib::ustring&) const;
         virtual bool getInteger(const char*, long&) const;
+        virtual bool getInteger(const RefPtr<Value>&, const char*, long&) const;
+        virtual bool getInteger(const char*, int&) const;
+        virtual bool getInteger(const RefPtr<Value>&, const char*, int&) const;
         virtual bool getBoolean(const char*, bool&) const;
+        virtual bool getBoolean(const RefPtr<Value>&, const char*, bool&) const;
+        virtual bool getArray(const char*, const sigc::slot2<void, const Json&, const RefPtr<Value>&>&) const;
+        virtual bool getArray(const RefPtr<Value>&, const char*, const sigc::slot2<void, const Json&, const RefPtr<Value>&>&) const;
 
     protected:
 

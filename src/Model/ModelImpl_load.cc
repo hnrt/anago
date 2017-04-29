@@ -46,18 +46,13 @@ void ModelImpl::load()
         {
             Json json;
             json.load(fp);
-            RefPtr<Json::Value> root = json.root();
-            if (root.ptr() && root->type() == Json::OBJECT)
+            int version = 0;
+            if (json.getInteger("version", version))
             {
-                RefPtr<Json::Object> object1 = root->object();
-                RefPtr<Json::Value> valueVersion = object1->get("version");
-                if (valueVersion.ptr() && valueVersion->type() == Json::NUMBER)
+                trace.put("version=%d", version);
+                if (version == 1)
                 {
-                    trace.put("version=%ld", valueVersion->integer());
-                    if (valueVersion->integer() == 1L)
-                    {
-                        loadV1(json);
-                    }
+                    loadV1(json);
                 }
             }
         }
@@ -84,127 +79,52 @@ void ModelImpl::loadV1(const Json& json)
 {
     Trace trace("ModelImpl::loadV1");
 
-    RefPtr<Json::Object> object1 = json.root()->object();
+    json.getInteger("UI.width", _width);
+    json.getInteger("UI.height", _height);
+    json.getInteger("UI.pane1_width", _pane1Width);
 
-    RefPtr<Json::Value> value1 = object1->get("UI");
-    if (value1.ptr() && value1->type() == Json::OBJECT)
-    {
-        RefPtr<Json::Object> object2 = value1->object();
-        RefPtr<Json::Value> value2 = object2->get("width");
-        if (value2.ptr() && value2->type() == Json::NUMBER)
-        {
-            trace.put("width=%ld", value2->integer());
-            setWidth((int)value2->integer());
-        }
-        value2 = object2->get("height");
-        if (value2.ptr() && value2->type() == Json::NUMBER)
-        {
-            trace.put("height=%ld", value2->integer());
-            setHeight((int)value2->integer());
-        }
-        value2 = object2->get("pane1_width");
-        if (value2.ptr() && value2->type() == Json::NUMBER)
-        {
-            trace.put("pane1_width=%ld", value2->integer());
-            setPane1Width((int)value2->integer());
-        }
-    }
+    json.getArray("servers", sigc::mem_fun(*this, &ModelImpl::loadV1Server));
 
-    value1 = object1->get("servers");
-    if (value1.ptr() && value1->type() == Json::ARRAY)
-    {
-        const Json::Array& array = value1->array();
-        for (Json::Array::size_type index = 0; index < array.size(); index++)
-        {
-            RefPtr<Json::Value> value2 = array[index];
-            if (value2.ptr() && value2->type() == Json::OBJECT)
-            {
-                RefPtr<Json::Object> object3 = value2->object();
-                RefPtr<Json::Value> valueUuid = object3->get("uuid");
-                RefPtr<Json::Value> valueDisp = object3->get("display_name");
-                RefPtr<Json::Value> valueHost = object3->get("host");
-                RefPtr<Json::Value> valueUser = object3->get("user");
-                RefPtr<Json::Value> valuePass = object3->get("password");
-                RefPtr<Json::Value> valueLast = object3->get("last_access");
-                RefPtr<Json::Value> valueAuto = object3->get("auto_connect");
-                RefPtr<Json::Value> valueMac = object3->get("mac");
-                RefPtr<Json::Value> valueOrder = object3->get("display_order");
-                if (valueUuid.ptr() && valueUuid->type() == Json::STRING
-                    && valueDisp.ptr() && valueDisp->type() == Json::STRING
-                    && valueHost.ptr() && valueHost->type() == Json::STRING
-                    && valueUser.ptr() && valueUser->type() == Json::STRING
-                    && valuePass.ptr() && valuePass->type() == Json::STRING
-                    && valueLast.ptr() && valueLast->type() == Json::NUMBER
-                    && valueAuto.ptr() && valueAuto->type() == Json::BOOLEAN
-                    && valueMac.ptr() && valueMac->type() == Json::STRING
-                    && valueOrder.ptr() && valueOrder->type() == Json::NUMBER)
-                {
-                    ConnectSpec cs;
-                    cs.uuid = valueUuid->string();
-                    cs.displayname = valueDisp->string();
-                    cs.hostname = valueHost->string();
-                    cs.username = valueUser->string();
-                    cs.password = valuePass->string();
-                    cs.lastAccess = valueLast->integer();
-                    cs.autoConnect = valueAuto->boolean();
-                    cs.mac.parse(valueMac->string().c_str());
-                    cs.displayOrder = (int)valueOrder->integer();
-                    add(cs);
-                }
-            }
-        }
-    }
+    json.getArray("consoles", sigc::mem_fun(*this, &ModelImpl::loadV1Console));
 
-    value1 = object1->get("consoles");
-    if (value1.ptr() && value1->type() == Json::ARRAY)
-    {
-        const Json::Array& array = value1->array();
-        for (Json::Array::size_type index = 0; index < array.size(); index++)
-        {
-            RefPtr<Json::Value> value2 = array[index];
-            if (value2.ptr() && value2->type() == Json::OBJECT)
-            {
-                RefPtr<Json::Object> object3 = value2->object();
-                RefPtr<Json::Value> valueUuid = object3->get("uuid");
-                RefPtr<Json::Value> valueEnabled = object3->get("enabled");
-                RefPtr<Json::Value> valueScale = object3->get("scale");
-                if (valueUuid.ptr() && valueUuid->type() == Json::STRING)
-                {
-                    ConsoleInfo info(valueUuid->string());
-                    if (valueEnabled.ptr() && valueEnabled->type() == Json::BOOLEAN)
-                    {
-                        info.enabled = valueEnabled->boolean();
-                    }
-                    if (valueScale.ptr() && valueScale->type() == Json::BOOLEAN)
-                    {
-                        info.scale = valueScale->boolean();
-                    }
-                    _consoleMap.insert(ConsoleEntry(info.uuid, info));
-                }
-            }
-        }
-    }
-
-#if 0
-    value1 = object1->get("export");
-    if (value1.ptr() && value1->type() == Json::OBJECT)
-    {
-        RefPtr<Json::Object> object2 = value1->object();
-        RefPtr<Json::Value> valuePath = object2->get("path");
-        RefPtr<Json::Value> valueVerify = object2->get("verify");
-        if (valuePath.ptr() && valuePath->type() == Json::STRING)
-        {
-            _exportVmPath = valuePath->string();
-        }
-        if (valueVerify.ptr() && valueVerify->type() == Json::BOOLEAN)
-        {
-            _exportVmVerify = valueVerify->boolean();
-        }
-    }
-#else
     json.getString("export.path", _exportVmPath);
     json.getBoolean("export.verify", _exportVmVerify);
-#endif
-
     json.getString("import.path", _importVmPath);
+}
+
+
+void ModelImpl::loadV1Server(const Json& json, const RefPtr<Json::Value>& value)
+{
+    Trace trace("ModelImpl::loadV1Server");
+
+    ConnectSpec cs;
+    Glib::ustring mac;
+    if (json.getString(value, "uuid", cs.uuid) &&
+        json.getString(value, "display_name", cs.displayname) &&
+        json.getString(value, "host", cs.hostname) &&
+        json.getString(value, "user", cs.username) &&
+        json.getString(value, "password", cs.password) &&
+        json.getInteger(value, "last_access", cs.lastAccess) &&
+        json.getBoolean(value, "auto_connect", cs.autoConnect) &&
+        json.getString(value, "mac", mac) &&
+        json.getInteger(value, "display_order", cs.displayOrder))
+    {
+        cs.mac.parse(mac.c_str());
+        add(cs);
+    }
+}
+
+
+void ModelImpl::loadV1Console(const Json& json, const RefPtr<Json::Value>& value)
+{
+    Trace trace("ModelImpl::loadV1Console");
+
+    Glib::ustring uuid;
+    if (json.getString(value, "uuid", uuid))
+    {
+        ConsoleInfo info(uuid);
+        json.getBoolean(value, "enabled", info.enabled);
+        json.getBoolean(value, "scale", info.scale);
+        _consoleMap.insert(ConsoleEntry(info.uuid, info));
+    }
 }
