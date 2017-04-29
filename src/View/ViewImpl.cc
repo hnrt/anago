@@ -18,6 +18,7 @@
 #include "CopyVmDialog.h"
 #include "CpuDialog.h"
 #include "DeleteVmDialog.h"
+#include "ExportVmDialog.h"
 #include "MemoryDialog.h"
 #include "NameDialog.h"
 #include "PixStore.h"
@@ -31,6 +32,8 @@ using namespace hnrt;
 
 ViewImpl::ViewImpl()
     : _displayName("Anago")
+    , _mainWindow()
+    , _statusWindow(_mainWindow)
 {
     Trace trace("ViewImpl::ctor");
     Gdk::VisualType vt = Gdk::Visual::get_best_type();
@@ -130,6 +133,22 @@ void ViewImpl::showWarning(const Glib::ustring& message)
 void ViewImpl::showError(const Glib::ustring& message)
 {
     showMessageDialog(message, Gtk::MESSAGE_ERROR);
+}
+
+
+bool ViewImpl::askYesNo(const Glib::ustring& message)
+{
+    Gtk::MessageDialog dialog(_mainWindow, message, false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_YES_NO);
+    dialog.set_title(_displayName);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_YES)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
@@ -400,6 +419,25 @@ bool ViewImpl::getDisksToDelete(const VirtualMachine& vm, std::list<Glib::ustrin
     if (response == Gtk::RESPONSE_APPLY)
     {
         dialog.getDisks(disks);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getExportVmPath(Glib::ustring& path, bool& verify)
+{
+    ExportVmDialog dialog(_mainWindow);
+    dialog.setPath(path);
+    dialog.setVerify(verify);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_OK)
+    {
+        path = dialog.getPath();
+        verify = dialog.getVerify();
         return true;
     }
     else

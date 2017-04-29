@@ -27,6 +27,7 @@ namespace hnrt
 
         virtual const Glib::ustring& getDisplayName() = 0;
         virtual Gtk::Window& getWindow() = 0;
+        virtual Gtk::Window& getStatusWindow() = 0;
         virtual void load() = 0;
         virtual void save() = 0;
         virtual void clear() = 0;
@@ -34,6 +35,7 @@ namespace hnrt
         virtual void showInfo(const Glib::ustring&) = 0;
         virtual void showWarning(const Glib::ustring&) = 0;
         virtual void showError(const Glib::ustring&) = 0;
+        virtual bool askYesNo(const Glib::ustring&) = 0;
         virtual bool getConnectSpec(ConnectSpec&) = 0;
         virtual bool confirmServerToRemove(const char*) = 0;
         virtual void showBusyServers(const std::list<Glib::ustring>&) = 0;
@@ -47,6 +49,7 @@ namespace hnrt
         virtual bool getVirtualMachineSpec(const Session&, VirtualMachineSpec&) = 0;
         virtual bool getVirtualMachineToCopy(const Session&, Glib::ustring&, Glib::ustring&) = 0;
         virtual bool getDisksToDelete(const VirtualMachine&, std::list<Glib::ustring>&) = 0;
+        virtual bool getExportVmPath(Glib::ustring&, bool&) = 0;
     };
 }
 

@@ -3,6 +3,9 @@
 
 #include <libintl.h>
 #include <stdexcept>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
@@ -15,6 +18,7 @@
 #include "XenServer/VirtualBlockDevice.h"
 #include "XenServer/VirtualDiskImage.h"
 #include "XenServer/VirtualMachine.h"
+#include "XenServer/VirtualMachineExporter.h"
 #include "XenServer/XenObjectStore.h"
 #include "ControllerImpl.h"
 
@@ -285,7 +289,49 @@ void ControllerImpl::deleteVmInBackground(RefPtr<VirtualMachine> vm, std::list<G
 
 void ControllerImpl::exportVm()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    Glib::ustring path = Model::instance().getExportVmPath(*vm);
+    bool verify = Model::instance().getExportVmVerify();
+    while (View::instance().getExportVmPath(path, verify))
+    {
+        struct stat statinfo = { 0 };
+        if (stat(path.c_str(), &statinfo))
+        {
+        doIt:
+            _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, bool>(sigc::mem_fun(*this, &ControllerImpl::exportVmInBackground), vm, path, verify), false, "ExportVm");
+            return;
+        }
+        else if (S_ISREG(statinfo.st_mode))
+        {
+            StringBuffer message;
+            message.format(gettext("The file you just chose already exists.\n\n%s\n\nDo you really wish to overwrite?"), path.c_str());
+            if (View::instance().askYesNo(Glib::ustring(message)))
+            {
+                goto doIt;
+            }
+        }
+        else
+        {
+            StringBuffer message;
+            message.format(gettext("The file you just chose isn't a regular file.\n\n%s"), path.c_str());
+            View::instance().showWarning(Glib::ustring(message));
+        }
+    }
+}
+
+
+void ControllerImpl::exportVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustring path, bool verify)
+{
+    Model::instance().setExportVmPath(path);
+    Model::instance().setExportVmVerify(verify);
+    RefPtr<VirtualMachineExporter> exporter = VirtualMachineExporter::create(*vm);
+    exporter->emit(XenObject::CREATED);
+    exporter->run(path.c_str(), verify);
+    exporter->emit(XenObject::DESTROYED);
 }
 
 

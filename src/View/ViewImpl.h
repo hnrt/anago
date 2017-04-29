@@ -7,6 +7,7 @@
 
 #include "MainWindow.h"
 #include "View.h"
+#include "VirtualMachineStatusWindow.h"
 
 
 namespace hnrt
@@ -20,6 +21,7 @@ namespace hnrt
         ~ViewImpl();
         virtual const Glib::ustring& getDisplayName() { return _displayName; }
         virtual Gtk::Window& getWindow() { return _mainWindow; }
+        virtual Gtk::Window& getStatusWindow() { return _statusWindow; }
         virtual void load();
         virtual void save();
         virtual void clear();
@@ -27,6 +29,7 @@ namespace hnrt
         virtual void showInfo(const Glib::ustring&);
         virtual void showWarning(const Glib::ustring&);
         virtual void showError(const Glib::ustring&);
+        virtual bool askYesNo(const Glib::ustring&);
         virtual bool getConnectSpec(ConnectSpec&);
         virtual bool confirmServerToRemove(const char*);
         virtual void showBusyServers(const std::list<Glib::ustring>&);
@@ -40,6 +43,7 @@ namespace hnrt
         virtual bool getVirtualMachineSpec(const Session&, VirtualMachineSpec&);
         virtual bool getVirtualMachineToCopy(const Session&, Glib::ustring&, Glib::ustring&);
         virtual bool getDisksToDelete(const VirtualMachine&, std::list<Glib::ustring>&);
+        virtual bool getExportVmPath(Glib::ustring&, bool&);
 
     private:
 
@@ -49,6 +53,7 @@ namespace hnrt
 
         Glib::ustring _displayName;
         MainWindow _mainWindow;
+        VirtualMachineStatusWindow _statusWindow;
     };
 }
 

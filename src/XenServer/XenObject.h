@@ -54,6 +54,7 @@ namespace hnrt
             VM,
             VM_METRICS,
             VM_GUEST_METRICS,
+            VM_EXPORTER,
         };
 
         enum Notification
@@ -75,6 +76,16 @@ namespace hnrt
             TASK_ON_CANCELLED,
             TASK_IN_PROGRESS,
             PERFORMANCE_STATS_UPDATED,
+            EXPORT_PENDING,
+            EXPORTING,
+            EXPORTED,
+            EXPORT_FAILED,
+            EXPORT_CANCELED,
+            VERIFY_PENDING,
+            VERIFYING,
+            VERIFIED,
+            VERIFY_FAILED,
+            VERIFY_CANCELED,
             ERROR,
             DESTROYED = 511,
             NOTIFICATION_MIN = CREATED,
@@ -90,11 +101,11 @@ namespace hnrt
         Glib::ustring getUUID() const { return _uuid; }
         Glib::ustring getName() const;
         virtual void setName(const char*);
-        Glib::ustring getDisplayStatus() const;
+        virtual Glib::ustring getDisplayStatus() const;
         virtual void setDisplayStatus(const char*);
-        bool isBusy() const { return _busyCount > 0; }
+        virtual bool isBusy() const { return _busyCount > 0; }
         virtual int setBusy(bool = true);
-        void emit(Notification);
+        virtual void emit(Notification);
 
         class Busy
         {

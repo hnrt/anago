@@ -1,6 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "XenServer/XenObject.h"
 #include "PixStore.h"
 #include "ViewImpl.h"
 

@@ -105,7 +105,11 @@ bool ControllerImpl::quit2()
         else
         {
             Session& session = host->getSession();
-            if (session.isConnected())
+            if (session.isBusy())
+            {
+                busyCount++;
+            }
+            else if (session.isConnected())
             {
                 if (session.disconnect())
                 {
@@ -123,6 +127,7 @@ bool ControllerImpl::quit2()
     }
     else
     {
+        View::instance().getStatusWindow().hide();
         View::instance().getWindow().hide();
         return false; // done
     }
@@ -206,7 +211,7 @@ void ControllerImpl::onXenTaskUpdated(RefPtr<XenObject> object, int what)
 
 void ControllerImpl::openVmStatusWindow()
 {
-    //TODO: IMPLEMENT
+    View::instance().getStatusWindow().show();
 }
 
 
