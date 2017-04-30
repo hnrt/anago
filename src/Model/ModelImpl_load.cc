@@ -47,7 +47,7 @@ void ModelImpl::load()
             Json json;
             json.load(fp);
             int version = 0;
-            if (json.getInteger("version", version))
+            if (json.getInt("version", version))
             {
                 trace.put("version=%d", version);
                 if (version == 1)
@@ -79,9 +79,9 @@ void ModelImpl::loadV1(const Json& json)
 {
     Trace trace("ModelImpl::loadV1");
 
-    json.getInteger("UI.width", _width);
-    json.getInteger("UI.height", _height);
-    json.getInteger("UI.pane1_width", _pane1Width);
+    json.getInt("UI.width", _width);
+    json.getInt("UI.height", _height);
+    json.getInt("UI.pane1_width", _pane1Width);
 
     json.getArray("servers", sigc::mem_fun(*this, &ModelImpl::loadV1Server));
 
@@ -104,10 +104,10 @@ void ModelImpl::loadV1Server(const Json& json, const RefPtr<Json::Value>& value)
         json.getString(value, "host", cs.hostname) &&
         json.getString(value, "user", cs.username) &&
         json.getString(value, "password", cs.password) &&
-        json.getInteger(value, "last_access", cs.lastAccess) &&
+        json.getLong(value, "last_access", cs.lastAccess) &&
         json.getBoolean(value, "auto_connect", cs.autoConnect) &&
         json.getString(value, "mac", mac) &&
-        json.getInteger(value, "display_order", cs.displayOrder))
+        json.getInt(value, "display_order", cs.displayOrder))
     {
         cs.mac.parse(mac.c_str());
         add(cs);

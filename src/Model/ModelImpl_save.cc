@@ -31,60 +31,43 @@ void ModelImpl::save()
         }
         try
         {
-            RefPtr<Json::Object> object1(new Json::Object());
-            object1->add("version", 1L);
-
-            RefPtr<Json::Object> object2(new Json::Object());
-            object2->add("width", (long)getWidth());
-            object2->add("height", (long)getHeight());
-            object2->add("pane1_width", (long)getPane1Width());
-            object1->add("UI", object2);
-
-            Json::Array array3;
+            Json json;
+            json.setInt("version", 1);
+            json.setInt("UI.width", _width);
+            json.setInt("UI.height", _height);
+            json.setInt("UI.pane1_width", _pane1Width);
+            Json::Array& array1 = json.addArray("servers");
             std::list<RefPtr<Host> > hosts;
             get(hosts);
             for (std::list<RefPtr<Host> >::const_iterator iter = hosts.begin(); iter != hosts.end(); iter++)
             {
                 const Session& session = (*iter)->getSession();
                 const ConnectSpec& cs = session.getConnectSpec();
-                RefPtr<Json::Object> object3(new Json::Object());
-                object3->add("uuid", cs.uuid.c_str());
-                object3->add("display_name", cs.displayname.c_str());
-                object3->add("host", cs.hostname.c_str());
-                object3->add("user", cs.username.c_str());
-                object3->add("password", cs.password.c_str());
-                object3->add("last_access", cs.lastAccess);
-                object3->add("auto_connect", cs.autoConnect);
-                object3->add("mac", cs.mac.toString().c_str());
-                object3->add("display_order", (long)cs.displayOrder);
-                array3.push_back(RefPtr<Json::Value>(new Json::Value(object3)));
+                RefPtr<Json::Object> object(new Json::Object());
+                object->add("uuid", cs.uuid.c_str());
+                object->add("display_name", cs.displayname.c_str());
+                object->add("host", cs.hostname.c_str());
+                object->add("user", cs.username.c_str());
+                object->add("password", cs.password.c_str());
+                object->add("last_access", cs.lastAccess);
+                object->add("auto_connect", cs.autoConnect);
+                object->add("mac", cs.mac.toString().c_str());
+                object->add("display_order", (long)cs.displayOrder);
+                array1.push_back(RefPtr<Json::Value>(new Json::Value(object)));
             }
-            object1->add("servers", array3);
-
-            Json::Array array4;
+            Json::Array& array2 = json.addArray("consoles");
             for (ConsoleMap::const_iterator iter = _consoleMap.begin(); iter != _consoleMap.end(); iter++)
             {
                 const ConsoleInfo& info = iter->second;
-                RefPtr<Json::Object> object4(new Json::Object());
-                object4->add("uuid", info.uuid.c_str());
-                object4->add("enabled", info.enabled);
-                object4->add("scale", info.scale);
-                array4.push_back(RefPtr<Json::Value>(new Json::Value(object4)));
+                RefPtr<Json::Object> object(new Json::Object());
+                object->add("uuid", info.uuid.c_str());
+                object->add("enabled", info.enabled);
+                object->add("scale", info.scale);
+                array2.push_back(RefPtr<Json::Value>(new Json::Value(object)));
             }
-            object1->add("consoles", array4);
-
-            RefPtr<Json::Object> object5(new Json::Object());
-            if (!_exportVmPath.empty())
-            {
-                object5->add("path", _exportVmPath.c_str());
-                object5->add("verify", _exportVmVerify);
-            }
-            object1->add("export", object5);
-
-            RefPtr<Json::Value> root(new Json::Value(object1));
-
-            Json json;
-            json.set(root);
+            json.setString("export.path", _exportVmPath);
+            json.setBoolean("export.verify", _exportVmVerify);
+            json.setString("import.path", _importVmPath);
             json.save(fp);
         }
         catch (Glib::ustring msg)

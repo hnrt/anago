@@ -70,7 +70,8 @@ namespace hnrt
             void add(const char*, bool);
             void add(const char*, const RefPtr<Object>&);
             void add(const char*, const Array&);
-            const RefPtr<Value> get(const char*) const;
+            const RefPtr<Value>& get(const char*) const;
+            RefPtr<Value>& get(const char*);
 
         private:
 
@@ -86,23 +87,28 @@ namespace hnrt
         public:
 
             Value();
+            Value(Type);
             Value(Type, const char*);
+            Value(const Glib::ustring&);
             Value(const char*);
             Value(long);
+            Value(int);
             Value(double);
             Value(bool);
             Value(const RefPtr<Object>&);
             Value(const Array&);
             ~Value();
             Type type() const { return _type; }
-            const Glib::ustring& string() const { return _string; }
+            const Glib::ustring& string() const;
             bool isInteger() const;
             bool isFloatingPoint() const;
             long integer() const;
             double floatingPoint() const;
             bool boolean() const;
-            const RefPtr<Object>& object() const { return _object; }
-            const Array& array() const { return _array; }
+            const RefPtr<Object>& object() const;
+            RefPtr<Object>& object();
+            const Array& array() const;
+            Array& array();
 
         private:
 
@@ -117,10 +123,12 @@ namespace hnrt
         {
         public:
 
+            Member(const Glib::ustring&);
             Member(const Glib::ustring&, const RefPtr<Value>&);
             ~Member();
             const Glib::ustring& key() const { return _key; }
             const RefPtr<Value>& value() const { return _value; }
+            RefPtr<Value>& value() { return _value; }
 
         private:
 
@@ -132,21 +140,31 @@ namespace hnrt
         };
 
         Json();
-        virtual ~Json();
-        virtual const RefPtr<Value>& root() const { return _root; }
-        virtual void set(const RefPtr<Value>& value) { _root = value; }
-        virtual void load(FILE*);
-        virtual void save(FILE*);
-        virtual bool getString(const char*, Glib::ustring&) const;
-        virtual bool getString(const RefPtr<Value>&, const char*, Glib::ustring&) const;
-        virtual bool getInteger(const char*, long&) const;
-        virtual bool getInteger(const RefPtr<Value>&, const char*, long&) const;
-        virtual bool getInteger(const char*, int&) const;
-        virtual bool getInteger(const RefPtr<Value>&, const char*, int&) const;
-        virtual bool getBoolean(const char*, bool&) const;
-        virtual bool getBoolean(const RefPtr<Value>&, const char*, bool&) const;
-        virtual bool getArray(const char*, const sigc::slot2<void, const Json&, const RefPtr<Value>&>&) const;
-        virtual bool getArray(const RefPtr<Value>&, const char*, const sigc::slot2<void, const Json&, const RefPtr<Value>&>&) const;
+        ~Json();
+        const RefPtr<Value>& root() const { return _root; }
+        void set(const RefPtr<Value>& value) { _root = value; }
+        void load(FILE*);
+        void save(FILE*);
+        bool getString(const char*, Glib::ustring&) const;
+        bool getString(const RefPtr<Value>&, const char*, Glib::ustring&) const;
+        bool getLong(const char*, long&) const;
+        bool getLong(const RefPtr<Value>&, const char*, long&) const;
+        bool getInt(const char*, int&) const;
+        bool getInt(const RefPtr<Value>&, const char*, int&) const;
+        bool getBoolean(const char*, bool&) const;
+        bool getBoolean(const RefPtr<Value>&, const char*, bool&) const;
+        bool getArray(const char*, const sigc::slot2<void, const Json&, const RefPtr<Value>&>&) const;
+        bool getArray(const RefPtr<Value>&, const char*, const sigc::slot2<void, const Json&, const RefPtr<Value>&>&) const;
+        void setString(const char*, const Glib::ustring&);
+        void setString(RefPtr<Value>&, const char*, const Glib::ustring&);
+        void setLong(const char*, long);
+        void setLong(RefPtr<Value>&, const char*, long);
+        void setInt(const char*, int);
+        void setInt(RefPtr<Value>&, const char*, int);
+        void setBoolean(const char*, bool);
+        void setBoolean(RefPtr<Value>&, const char*, bool);
+        Array& addArray(const char*);
+        Array& addArray(RefPtr<Value>&, const char*);
 
     protected:
 
