@@ -32,11 +32,11 @@ void ModelImpl::save()
         try
         {
             Json json;
-            json.setInt("version", 1);
-            json.setInt("UI.width", _width);
-            json.setInt("UI.height", _height);
-            json.setInt("UI.pane1_width", _pane1Width);
-            Json::Array& array1 = json.addArray("servers");
+            json.set("version", 1);
+            json.set("UI.width", _width);
+            json.set("UI.height", _height);
+            json.set("UI.pane1_width", _pane1Width);
+            Json::Array& array1 = json.setArray("servers");
             std::list<RefPtr<Host> > hosts;
             get(hosts);
             for (std::list<RefPtr<Host> >::const_iterator iter = hosts.begin(); iter != hosts.end(); iter++)
@@ -55,7 +55,7 @@ void ModelImpl::save()
                 object->add("display_order", (long)cs.displayOrder);
                 array1.push_back(RefPtr<Json::Value>(new Json::Value(object)));
             }
-            Json::Array& array2 = json.addArray("consoles");
+            Json::Array& array2 = json.setArray("consoles");
             for (ConsoleMap::const_iterator iter = _consoleMap.begin(); iter != _consoleMap.end(); iter++)
             {
                 const ConsoleInfo& info = iter->second;
@@ -65,9 +65,9 @@ void ModelImpl::save()
                 object->add("scale", info.scale);
                 array2.push_back(RefPtr<Json::Value>(new Json::Value(object)));
             }
-            json.setString("export.path", _exportVmPath);
-            json.setBoolean("export.verify", _exportVmVerify);
-            json.setString("import.path", _importVmPath);
+            json.set("export.path", _exportVmPath);
+            json.set("export.verify", _exportVmVerify);
+            json.set("import.path", _importVmPath);
             json.save(fp);
         }
         catch (Glib::ustring msg)

@@ -76,8 +76,8 @@ namespace hnrt
         ModelImpl(const ModelImpl&);
         void operator =(const ModelImpl&);
         void loadV1(const Json&);
-        void loadV1Server(const Json&, const RefPtr<Json::Value>&);
-        void loadV1Console(const Json&, const RefPtr<Json::Value>&);
+        void loadV1Server(const RefPtr<Json::Value>&);
+        void loadV1Console(const RefPtr<Json::Value>&);
         ConsoleInfo& getConsoleInfo(const Glib::ustring&);
 
         Glib::ustring _path;

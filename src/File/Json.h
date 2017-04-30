@@ -109,6 +109,16 @@ namespace hnrt
             RefPtr<Object>& object();
             const Array& array() const;
             Array& array();
+            bool get(const char*, Glib::ustring&) const;
+            bool get(const char*, long&) const;
+            bool get(const char*, int&) const;
+            bool get(const char*, bool&) const;
+            bool get(const char*, const sigc::slot1<void, const RefPtr<Value>&>&) const;
+            void set(const char*, const Glib::ustring&);
+            void set(const char*, long);
+            void set(const char*, int);
+            void set(const char*, bool);
+            Array& setArray(const char*);
 
         private:
 
@@ -145,26 +155,16 @@ namespace hnrt
         void set(const RefPtr<Value>& value) { _root = value; }
         void load(FILE*);
         void save(FILE*);
-        bool getString(const char*, Glib::ustring&) const;
-        bool getString(const RefPtr<Value>&, const char*, Glib::ustring&) const;
-        bool getLong(const char*, long&) const;
-        bool getLong(const RefPtr<Value>&, const char*, long&) const;
-        bool getInt(const char*, int&) const;
-        bool getInt(const RefPtr<Value>&, const char*, int&) const;
-        bool getBoolean(const char*, bool&) const;
-        bool getBoolean(const RefPtr<Value>&, const char*, bool&) const;
-        bool getArray(const char*, const sigc::slot2<void, const Json&, const RefPtr<Value>&>&) const;
-        bool getArray(const RefPtr<Value>&, const char*, const sigc::slot2<void, const Json&, const RefPtr<Value>&>&) const;
-        void setString(const char*, const Glib::ustring&);
-        void setString(RefPtr<Value>&, const char*, const Glib::ustring&);
-        void setLong(const char*, long);
-        void setLong(RefPtr<Value>&, const char*, long);
-        void setInt(const char*, int);
-        void setInt(RefPtr<Value>&, const char*, int);
-        void setBoolean(const char*, bool);
-        void setBoolean(RefPtr<Value>&, const char*, bool);
-        Array& addArray(const char*);
-        Array& addArray(RefPtr<Value>&, const char*);
+        bool get(const char*, Glib::ustring&) const;
+        bool get(const char*, long&) const;
+        bool get(const char*, int&) const;
+        bool get(const char*, bool&) const;
+        bool get(const char*, const sigc::slot1<void, const RefPtr<Value>&>&) const;
+        void set(const char*, const Glib::ustring&);
+        void set(const char*, long);
+        void set(const char*, int);
+        void set(const char*, bool);
+        Array& setArray(const char*);
 
     protected:
 
