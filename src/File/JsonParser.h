@@ -5,6 +5,7 @@
 #define HNRT_JSON_PARSER_H
 
 
+#include <map>
 #include "JsonLexer.h"
 
 
@@ -14,25 +15,24 @@ namespace hnrt
     {
     public:
 
-        JsonParser(JsonLexer&, Json&);
-        void run();
+        JsonParser(JsonLexer&);
+        RefPtr<Json> run();
 
     private:
 
-        typedef bool (JsonParser::*ParseValue)(RefPtr<Json::Value>&);
+        typedef bool (JsonParser::*ParseValue)(RefPtr<Json>&);
         typedef std::map<int, ParseValue> ParseValueMap;
 
         JsonParser(const JsonParser&);
         void operator =(const JsonParser&);
-        bool parseValue(RefPtr<Json::Value>&);
-        bool parseImmediateValue(RefPtr<Json::Value>&);
-        bool parseString(RefPtr<Json::Value>&);
-        bool parseObject(RefPtr<Json::Value>&);
+        bool parseValue(RefPtr<Json>&);
+        bool parseImmediateValue(RefPtr<Json>&);
+        bool parseString(RefPtr<Json>&);
+        bool parseObject(RefPtr<Json>&);
         bool parseMember(RefPtr<Json::Member>&);
-        bool parseArray(RefPtr<Json::Value>&);
+        bool parseArray(RefPtr<Json>&);
 
         JsonLexer& _lex;
-        Json& _doc;
         ParseValueMap _map;
     };
 }

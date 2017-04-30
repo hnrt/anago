@@ -7,9 +7,8 @@
 using namespace hnrt;
 
 
-JsonWriter::JsonWriter(FILE* fp, const Json& doc)
+JsonWriter::JsonWriter(FILE* fp)
     : _fp(fp)
-    , _doc(doc)
 {
     _map.insert(WriteValueMap::value_type(Json::NULLVALUE, &JsonWriter::writeNull));
     _map.insert(WriteValueMap::value_type(Json::BOOLEAN, &JsonWriter::writeBoolean));
@@ -20,14 +19,14 @@ JsonWriter::JsonWriter(FILE* fp, const Json& doc)
 }
 
 
-void JsonWriter::write()
+void JsonWriter::write(const RefPtr<Json>& doc)
 {
-    writeValue(_doc.root(), 0);
+    writeValue(doc, 0);
     putc('\n', _fp);
 }
 
 
-void JsonWriter::writeValue(const RefPtr<Json::Value>& value, int level)
+void JsonWriter::writeValue(const RefPtr<Json>& value, int level)
 {
     WriteValueMap::const_iterator iter = _map.find(value->type());
     if (iter != _map.end())
@@ -42,19 +41,19 @@ void JsonWriter::writeValue(const RefPtr<Json::Value>& value, int level)
 }
 
 
-void JsonWriter::writeNull(const RefPtr<Json::Value>& value, int level)
+void JsonWriter::writeNull(const RefPtr<Json>& value, int level)
 {
     fputs("null", _fp);
 }
 
 
-void JsonWriter::writeBoolean(const RefPtr<Json::Value>& value, int level)
+void JsonWriter::writeBoolean(const RefPtr<Json>& value, int level)
 {
     fputs(value->boolean() ? "true" : "false", _fp);
 }
 
 
-void JsonWriter::writeString(const RefPtr<Json::Value>& value, int level)
+void JsonWriter::writeString(const RefPtr<Json>& value, int level)
 {
     putc('\"', _fp);
     for (const char* s = value->string().c_str(); *s; s++)
@@ -99,16 +98,16 @@ void JsonWriter::writeString(const RefPtr<Json::Value>& value, int level)
 }
 
 
-void JsonWriter::writeNumber(const RefPtr<Json::Value>& value, int level)
+void JsonWriter::writeNumber(const RefPtr<Json>& value, int level)
 {
     fputs(value->string().c_str(), _fp);
 }
 
 
-void JsonWriter::writeObject(const RefPtr<Json::Value>& value, int level)
+void JsonWriter::writeObject(const RefPtr<Json>& value, int level)
 {
     putc(Json::BEGIN_OBJECT, _fp);
-    const Json::MemberArray& members = value->object()->members();
+    const Json::MemberArray& members = value->members();
     if (members.size())
     {
         putc('\n', _fp);
@@ -139,7 +138,7 @@ void JsonWriter::writeMember(const RefPtr<Json::Member>& member, int level)
 }
 
 
-void JsonWriter::writeArray(const RefPtr<Json::Value>& value, int level)
+void JsonWriter::writeArray(const RefPtr<Json>& value, int level)
 {
     putc(Json::BEGIN_ARRAY, _fp);
     const Json::Array& array = value->array();

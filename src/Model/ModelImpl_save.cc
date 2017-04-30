@@ -31,44 +31,30 @@ void ModelImpl::save()
         }
         try
         {
-            Json json;
-            json.set("version", 1);
-            json.set("UI.width", _width);
-            json.set("UI.height", _height);
-            json.set("UI.pane1_width", _pane1Width);
-            Json::Array& array1 = json.setArray("servers");
+            RefPtr<Json> json = Json::create(Json::OBJECT);
+            json->set("version", 1);
+            json->set("UI.width", _width);
+            json->set("UI.height", _height);
+            json->set("UI.pane1_width", _pane1Width);
+            Json::Array& array1 = json->setArray("servers");
             std::list<RefPtr<Host> > hosts;
             get(hosts);
             for (std::list<RefPtr<Host> >::const_iterator iter = hosts.begin(); iter != hosts.end(); iter++)
             {
                 const Session& session = (*iter)->getSession();
                 const ConnectSpec& cs = session.getConnectSpec();
-                RefPtr<Json::Object> object(new Json::Object());
-                object->add("uuid", cs.uuid.c_str());
-                object->add("display_name", cs.displayname.c_str());
-                object->add("host", cs.hostname.c_str());
-                object->add("user", cs.username.c_str());
-                object->add("password", cs.password.c_str());
-                object->add("last_access", cs.lastAccess);
-                object->add("auto_connect", cs.autoConnect);
-                object->add("mac", cs.mac.toString().c_str());
-                object->add("display_order", (long)cs.displayOrder);
-                array1.push_back(RefPtr<Json::Value>(new Json::Value(object)));
+                array1.push_back(cs.toJson());
             }
-            Json::Array& array2 = json.setArray("consoles");
+            Json::Array& array2 = json->setArray("consoles");
             for (ConsoleMap::const_iterator iter = _consoleMap.begin(); iter != _consoleMap.end(); iter++)
             {
                 const ConsoleInfo& info = iter->second;
-                RefPtr<Json::Object> object(new Json::Object());
-                object->add("uuid", info.uuid.c_str());
-                object->add("enabled", info.enabled);
-                object->add("scale", info.scale);
-                array2.push_back(RefPtr<Json::Value>(new Json::Value(object)));
+                array2.push_back(info.toJson());
             }
-            json.set("export.path", _exportVmPath);
-            json.set("export.verify", _exportVmVerify);
-            json.set("import.path", _importVmPath);
-            json.save(fp);
+            json->set("export.path", _exportVmPath);
+            json->set("export.verify", _exportVmVerify);
+            json->set("import.path", _importVmPath);
+            json->save(fp);
         }
         catch (Glib::ustring msg)
         {

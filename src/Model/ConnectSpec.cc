@@ -6,6 +6,7 @@
 #include <string.h>
 #include <limits.h>
 #include "Base/StringBuffer.h"
+#include "File/Json.h"
 #include "Util/Base64.h"
 #include "Util/Scrambler.h"
 #include "Util/UUID.h"
@@ -43,213 +44,18 @@ ConnectSpec::ConnectSpec(const ConnectSpec& src)
 }
 
 
-ConnectSpec& ConnectSpec::operator =(const ConnectSpec& rhs)
+ConnectSpec& ConnectSpec::operator =(const ConnectSpec& src)
 {
-    uuid = rhs.uuid;
-    displayname = rhs.displayname;
-    hostname = rhs.hostname;
-    username = rhs.username;
-    password = rhs.password;
-    lastAccess = rhs.lastAccess;
-    autoConnect = rhs.autoConnect;
-    mac = rhs.mac;
-    displayOrder = rhs.displayOrder;
+    uuid = src.uuid;
+    displayname = src.displayname;
+    hostname = src.hostname;
+    username = src.username;
+    password = src.password;
+    lastAccess = src.lastAccess;
+    autoConnect = src.autoConnect;
+    mac = src.mac;
+    displayOrder = src.displayOrder;
     return *this;
-}
-
-
-Glib::ustring ConnectSpec::toString() const
-{
-    return Glib::ustring::compose("%1,%2,%3,%4,%5,%6,%7,%8,%9",
-                                  uuid,
-                                  displayname,
-                                  hostname,
-                                  username,
-                                  password,
-                                  lastAccess,
-                                  autoConnect ? 1 : 0,
-                                  mac.toString(),
-                                  displayOrder);
-}
-
-
-bool ConnectSpec::parse(int version, const char* s, ConnectSpec& cs)
-{
-    const char *t = strchr(s, ',');
-    if (version >= 2)
-    {
-        if (t)
-        {
-            cs.uuid.assign(s, t - s);
-            s = t + 1;
-        }
-        else
-        {
-            cs.uuid = s;
-            fprintf(stderr, "Error: Missing display host name.\n");
-            return false;
-        }
-
-        t = strchr(s, ',');
-        if (t)
-        {
-            cs.displayname.assign(s, t - s);
-            s = t + 1;
-        }
-        else
-        {
-            cs.displayname = s;
-            fprintf(stderr, "Error: Missing host name.\n");
-            return false;
-        }
-
-        t = strchr(s, ',');
-        if (t)
-        {
-            cs.hostname.assign(s, t - s);
-            s = t + 1;
-        }
-        else
-        {
-            cs.hostname = s;
-            fprintf(stderr, "Error: Missing user name.\n");
-            return false;
-        }
-    }
-    else
-    {
-        if (t)
-        {
-            cs.uuid.assign(s, t - s);
-            s = t + 1;
-        }
-        else
-        {
-            cs.uuid = s;
-            fprintf(stderr, "Error: Missing host name.\n");
-            return false;
-        }
-
-        t = strchr(s, ',');
-        if (t)
-        {
-            cs.displayname = cs.hostname.assign(s, t - s);
-            s = t + 1;
-        }
-        else
-        {
-            cs.displayname = cs.hostname = s;
-            fprintf(stderr, "Error: Missing user name.\n");
-            return false;
-        }
-    }
-
-    t = strchr(s, ',');
-    if (t)
-    {
-        cs.username.assign(s, t - s);
-        s = t + 1;
-    }
-    else
-    {
-        cs.username = s;
-        fprintf(stderr, "Error: Missing password.\n");
-        return false;
-    }
-
-    t = strchr(s, ',');
-    if (t)
-    {
-        cs.password.assign(s, t - s);
-        s = t + 1;
-    }
-    else
-    {
-        cs.password = s;
-        fprintf(stderr, "Error: Missing last access.\n");
-        return false;
-    }
-
-    cs.lastAccess = strtol(s, (char**)&t, 10);
-    if (s < t && *t == ',')
-    {
-        s = t + 1;
-    }
-    else
-    {
-        fprintf(stderr, "Error: Malformed last access.\n");
-        return false;
-    }
-
-    if (version < 3)
-    {
-        cs.autoConnect = strtol(s, (char**)&t, 0) ? true : false;
-        if (s < t && (*t == ',' || *t == '\0'))
-        {
-            if (*t == ',')
-            {
-                s = t + 1;
-            }
-            else
-            {
-                return true;
-            }
-        }
-        else
-        {
-            fprintf(stderr, "Error: Malformed auto connect.\n");
-            return false;
-        }
-
-        if (cs.mac.parse(s))
-        {
-            return true;
-        }
-        else
-        {
-            fprintf(stderr, "Error: Malformed MAC address.\n");
-            return false;
-        }
-    }
-
-    cs.autoConnect = strtol(s, (char**)&t, 0) ? true : false;
-    if (s < t && *t == ',')
-    {
-        s = t + 1;
-    }
-    else
-    {
-        fprintf(stderr, "Error: Malformed auto connect.\n");
-        return false;
-    }
-
-    t = strchr(s, ',');
-    if (t)
-    {
-        Glib::ustring x(s, t - s);
-        if (!cs.mac.parse(x.c_str()))
-        {
-            fprintf(stderr, "Error: Malformed MAC address.\n");
-            return false;
-        }
-        s = t + 1;
-    }
-    else
-    {
-        fprintf(stderr, "Error: Missing display order.\n");
-        return false;
-    }
-
-    cs.displayOrder = strtol(s, (char**)&t, 0);
-    if (s < t && *t == '\0')
-    {
-        return true;
-    }
-    else
-    {
-        fprintf(stderr, "Error: Malformed display order.\n");
-        return false;
-    }
 }
 
 
@@ -272,4 +78,43 @@ Glib::ustring ConnectSpec::getBasicAuthString() const
     d2.clear();
     d1.clear();
     return Glib::ustring(auth);
+}
+
+
+bool ConnectSpec::fromJson(const RefPtr<Json>& value)
+{
+    Glib::ustring tmp;
+    if (value->get("uuid", uuid) &&
+        value->get("display_name", displayname) &&
+        value->get("host", hostname) &&
+        value->get("user", username) &&
+        value->get("password", password) &&
+        value->get("last_access", lastAccess) &&
+        value->get("auto_connect", autoConnect) &&
+        value->get("mac", tmp) &&
+        value->get("display_order", displayOrder))
+    {
+        mac.parse(tmp.c_str());
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+RefPtr<Json> ConnectSpec::toJson() const
+{
+    RefPtr<Json> value = Json::create(Json::OBJECT);
+    value->set("uuid", uuid);
+    value->set("display_name", displayname);
+    value->set("host", hostname);
+    value->set("user", username);
+    value->set("password", password);
+    value->set("last_access", lastAccess);
+    value->set("auto_connect", autoConnect);
+    value->set("mac", mac.toString());
+    value->set("display_order", displayOrder);
+    return value;
 }

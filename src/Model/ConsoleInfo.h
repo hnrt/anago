@@ -13,6 +13,7 @@
 namespace hnrt
 {
     class Console;
+    class Json;
 
     struct ConsoleInfo
     {
@@ -21,18 +22,21 @@ namespace hnrt
         bool scale;
         RefPtr<Console> console;
 
+        ConsoleInfo();
         ConsoleInfo(const Glib::ustring&);
         ConsoleInfo(const ConsoleInfo&);
         inline void operator =(const ConsoleInfo&);
         void assign(const ConsoleInfo&);
+        bool fromJson(const RefPtr<Json>&);
+        RefPtr<Json> toJson() const;
     };
 
     typedef std::map<Glib::ustring, ConsoleInfo> ConsoleMap;
     typedef std::pair<Glib::ustring, ConsoleInfo> ConsoleEntry;
 
-    inline void ConsoleInfo::operator =(const ConsoleInfo& rhs)
+    inline void ConsoleInfo::operator =(const ConsoleInfo& src)
     {
-        assign(rhs);
+        assign(src);
     }
 }
 

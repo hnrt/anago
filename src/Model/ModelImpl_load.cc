@@ -44,10 +44,9 @@ void ModelImpl::load()
         }
         try
         {
-            Json json;
-            json.load(fp);
+            RefPtr<Json> json = Json::load(fp);
             int version = 0;
-            if (json.get("version", version))
+            if (json->get("version", version))
             {
                 trace.put("version=%d", version);
                 if (version == 1)
@@ -75,56 +74,43 @@ void ModelImpl::load()
 }
 
 
-void ModelImpl::loadV1(const Json& json)
+void ModelImpl::loadV1(const RefPtr<Json>& json)
 {
     Trace trace("ModelImpl::loadV1");
 
-    json.get("UI.width", _width);
-    json.get("UI.height", _height);
-    json.get("UI.pane1_width", _pane1Width);
+    json->get("UI.width", _width);
+    json->get("UI.height", _height);
+    json->get("UI.pane1_width", _pane1Width);
 
-    json.get("servers", sigc::mem_fun(*this, &ModelImpl::loadV1Server));
+    json->get("servers", sigc::mem_fun(*this, &ModelImpl::loadV1Server));
 
-    json.get("consoles", sigc::mem_fun(*this, &ModelImpl::loadV1Console));
+    json->get("consoles", sigc::mem_fun(*this, &ModelImpl::loadV1Console));
 
-    json.get("export.path", _exportVmPath);
-    json.get("export.verify", _exportVmVerify);
-    json.get("import.path", _importVmPath);
+    json->get("export.path", _exportVmPath);
+    json->get("export.verify", _exportVmVerify);
+    json->get("import.path", _importVmPath);
 }
 
 
-void ModelImpl::loadV1Server(const RefPtr<Json::Value>& value)
+void ModelImpl::loadV1Server(const RefPtr<Json>& value)
 {
     Trace trace("ModelImpl::loadV1Server");
 
     ConnectSpec cs;
-    Glib::ustring mac;
-    if (value->get("uuid", cs.uuid) &&
-        value->get("display_name", cs.displayname) &&
-        value->get("host", cs.hostname) &&
-        value->get("user", cs.username) &&
-        value->get("password", cs.password) &&
-        value->get("last_access", cs.lastAccess) &&
-        value->get("auto_connect", cs.autoConnect) &&
-        value->get("mac", mac) &&
-        value->get("display_order", cs.displayOrder))
+    if (cs.fromJson(value))
     {
-        cs.mac.parse(mac.c_str());
         add(cs);
     }
 }
 
 
-void ModelImpl::loadV1Console(const RefPtr<Json::Value>& value)
+void ModelImpl::loadV1Console(const RefPtr<Json>& value)
 {
     Trace trace("ModelImpl::loadV1Console");
 
-    Glib::ustring uuid;
-    if (value->get("uuid", uuid))
+    ConsoleInfo info;
+    if (info.fromJson(value))
     {
-        ConsoleInfo info(uuid);
-        value->get("enabled", info.enabled);
-        value->get("scale", info.scale);
         _consoleMap.insert(ConsoleEntry(info.uuid, info));
     }
 }

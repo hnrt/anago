@@ -2,6 +2,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdexcept>
 #include "JsonParser.h"
@@ -11,7 +12,7 @@
 using namespace hnrt;
 
 
-static const RefPtr<Json::Value> s_NullValue;
+static const RefPtr<Json> s_NullValue;
 
 
 static inline Glib::ustring GetKey(const char* path, const char** next)
@@ -42,7 +43,71 @@ static inline Glib::ustring GetKey(const char* path, const char** next)
 //////////////////////////////////////////////////////////////////////
 
 
+RefPtr<Json> Json::load(FILE* fp)
+{
+    JsonLexer lexer(fp);
+    JsonParser parser(lexer);
+    return parser.run();
+}
+
+
 Json::Json()
+    : _type(NULLVALUE)
+{
+}
+
+
+Json::Json(Type type)
+    : _type(type)
+{
+}
+
+
+Json::Json(Type type, const char* value)
+    : _type(type)
+    , _string(value ? value : "")
+{
+}
+
+
+Json::Json(const Glib::ustring& value)
+    : _type(STRING)
+    , _string(value)
+{
+}
+
+
+Json::Json(const char* value)
+    : _type(STRING)
+    , _string(value ? value : "")
+{
+}
+
+
+Json::Json(long value)
+    : _type(NUMBER)
+    , _string(Glib::ustring::compose("%1", value))
+{
+}
+
+
+Json::Json(int value)
+    : _type(NUMBER)
+    , _string(Glib::ustring::compose("%1", value))
+{
+}
+
+
+Json::Json(double value)
+    : _type(NUMBER)
+    , _string(Glib::ustring::compose("%1", value))
+{
+}
+
+
+Json::Json(bool value)
+    : _type(BOOLEAN)
+    , _string(value ? "true" : "false")
 {
 }
 
@@ -52,324 +117,40 @@ Json::~Json()
 }
 
 
-void Json::load(FILE* fp)
-{
-    JsonLexer lexer(fp);
-    JsonParser parser(lexer, *this);
-    parser.run();
-}
-
-
 void Json::save(FILE* fp)
 {
-    JsonWriter writer(fp, *this);
-    writer.write();
+    JsonWriter writer(fp);
+    writer.write(RefPtr<Json>(this, 1));
 }
 
 
-bool Json::get(const char* path, Glib::ustring& retval) const
+void Json::add(const RefPtr<Member>& member)
 {
-    if (_root)
+    if (_type == OBJECT)
     {
-        return _root->get(path, retval);
+        _members.push_back(member);
     }
     else
     {
-        return false;
+        throw std::runtime_error("Json::add(OBJECT): Bad type.");
     }
 }
 
 
-bool Json::get(const char* path, long& retval) const
+void Json::add(const RefPtr<Json>& element)
 {
-    if (_root)
+    if (_type == ARRAY)
     {
-        return _root->get(path, retval);
+        _array.push_back(element);
     }
     else
     {
-        return false;
+        throw std::runtime_error("Json::add(ARRAY): Bad type.");
     }
 }
 
 
-bool Json::get(const char* path, int& retval) const
-{
-    if (_root)
-    {
-        return _root->get(path, retval);
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
-bool Json::get(const char* path, bool& retval) const
-{
-    if (_root)
-    {
-        return _root->get(path, retval);
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
-bool Json::get(const char* path, const sigc::slot1<void, const RefPtr<Value>&>& slot) const
-{
-    if (_root)
-    {
-        return _root->get(path, slot);
-    }
-    else
-    {
-        return false;
-    }
-}
-
-
-void Json::set(const char* path, const Glib::ustring& setval)
-{
-    if (!_root)
-    {
-        _root = RefPtr<Value>(new Value);
-    }
-    _root->set(path, setval);
-}
-
-
-void Json::set(const char* path, long setval)
-{
-    if (!_root)
-    {
-        _root = RefPtr<Value>(new Value);
-    }
-    _root->set(path, setval);
-}
-
-
-void Json::set(const char* path, int setval)
-{
-    if (!_root)
-    {
-        _root = RefPtr<Value>(new Value);
-    }
-    _root->set(path, setval);
-}
-
-
-void Json::set(const char* path, bool setval)
-{
-    if (!_root)
-    {
-        _root = RefPtr<Value>(new Value);
-    }
-    _root->set(path, setval);
-}
-
-
-Json::Array& Json::setArray(const char* path)
-{
-    if (!_root)
-    {
-        _root = RefPtr<Value>(new Value);
-    }
-    return _root->setArray(path);
-}
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// O B J E C T
-//
-//////////////////////////////////////////////////////////////////////
-
-
-Json::Object::Object()
-{
-}
-
-
-Json::Object::Object(const MemberArray& members)
-{
-    for (MemberArray::const_iterator iter = members.begin(); iter != members.end(); iter++)
-    {
-        _members.push_back(*iter);
-    }
-}
-
-
-Json::Object::~Object()
-{
-}
-
-
-void Json::Object::add(const char* key)
-{
-    _members.push_back(RefPtr<Member>(new Member(Glib::ustring(key), RefPtr<Value>(new Value()))));
-}
-
-
-void Json::Object::add(const char* key, const char* value)
-{
-    _members.push_back(RefPtr<Member>(new Member(Glib::ustring(key), RefPtr<Value>(new Value(value)))));
-}
-
-
-void Json::Object::add(const char* key, long value)
-{
-    _members.push_back(RefPtr<Member>(new Member(Glib::ustring(key), RefPtr<Value>(new Value(value)))));
-}
-
-
-void Json::Object::add(const char* key, double value)
-{
-    _members.push_back(RefPtr<Member>(new Member(Glib::ustring(key), RefPtr<Value>(new Value(value)))));
-}
-
-
-void Json::Object::add(const char* key, bool value)
-{
-    _members.push_back(RefPtr<Member>(new Member(Glib::ustring(key), RefPtr<Value>(new Value(value)))));
-}
-
-
-void Json::Object::add(const char* key, const RefPtr<Object>& value)
-{
-    _members.push_back(RefPtr<Member>(new Member(Glib::ustring(key), RefPtr<Value>(new Value(value)))));
-}
-
-
-void Json::Object::add(const char* key, const Array& value)
-{
-    _members.push_back(RefPtr<Member>(new Member(Glib::ustring(key), RefPtr<Value>(new Value(value)))));
-}
-
-
-const RefPtr<Json::Value>& Json::Object::get(const char* key) const
-{
-    for (MemberArray::size_type index = 0; index < _members.size(); index++)
-    {
-        const RefPtr<Member>& member = _members[index];
-        if (member->key() == key)
-        {
-            return member->value();
-        }
-    }
-    return s_NullValue;
-}
-
-
-RefPtr<Json::Value>& Json::Object::get(const char* key)
-{
-    for (MemberArray::size_type index = 0; index < _members.size(); index++)
-    {
-        RefPtr<Member>& member = _members[index];
-        if (member->key() == key)
-        {
-            return member->value();
-        }
-    }
-    add(key);
-    return _members.back()->value();
-}
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// V A L U E
-//
-//////////////////////////////////////////////////////////////////////
-
-
-Json::Value::Value()
-    : _type(NULLVALUE)
-{
-}
-
-
-Json::Value::Value(Type type)
-    : _type(type)
-{
-}
-
-
-Json::Value::Value(Type type, const char* value)
-    : _type(type)
-    , _string(value ? value : "")
-{
-}
-
-
-Json::Value::Value(const Glib::ustring& value)
-    : _type(STRING)
-    , _string(value)
-{
-}
-
-
-Json::Value::Value(const char* value)
-    : _type(STRING)
-    , _string(value ? value : "")
-{
-}
-
-
-Json::Value::Value(long value)
-    : _type(NUMBER)
-    , _string(Glib::ustring::compose("%1", value))
-{
-}
-
-
-Json::Value::Value(int value)
-    : _type(NUMBER)
-    , _string(Glib::ustring::compose("%1", value))
-{
-}
-
-
-Json::Value::Value(double value)
-    : _type(NUMBER)
-    , _string(Glib::ustring::compose("%1", value))
-{
-}
-
-
-Json::Value::Value(bool value)
-    : _type(BOOLEAN)
-    , _string(value ? "true" : "false")
-{
-}
-
-
-Json::Value::Value(const RefPtr<Object>& value)
-    : _type(OBJECT)
-    , _object(value)
-{
-}
-
-
-Json::Value::Value(const Array& value)
-    : _type(ARRAY)
-{
-    for (Array::const_iterator iter = value.begin(); iter != value.end(); iter++)
-    {
-        _array.push_back(*iter);
-    }
-}
-
-
-Json::Value::~Value()
-{
-}
-
-
-const Glib::ustring& Json::Value::string() const
+const Glib::ustring& Json::string() const
 {
     if (_type == STRING || _type == NUMBER || _type == BOOLEAN)
     {
@@ -377,24 +158,24 @@ const Glib::ustring& Json::Value::string() const
     }
     else
     {
-        throw std::runtime_error("Json::Value::string: Bad type.");
+        throw std::runtime_error("Json::string: Bad type.");
     }
 }
 
 
-bool Json::Value::isInteger() const
+bool Json::isInteger() const
 {
-    return _type == NUMBER && _string.find('.') <= 0;
+    return _type == NUMBER && _string.find('.') == Glib::ustring::npos;
 }
 
 
-bool Json::Value::isFloatingPoint() const
+bool Json::isFloatingPoint() const
 {
-    return _type == NUMBER && _string.find('.') > 0;
+    return _type == NUMBER && _string.find('.') != Glib::ustring::npos;
 }
 
 
-long Json::Value::integer() const
+long Json::integer() const
 {
     if (_type == NUMBER)
     {
@@ -402,12 +183,12 @@ long Json::Value::integer() const
     }
     else
     {
-        throw std::runtime_error("Json::Value::integer: Bad type.");
+        throw std::runtime_error("Json::integer: Bad type.");
     }
 }
 
 
-double Json::Value::floatingPoint() const
+double Json::floatingPoint() const
 {
     if (_type == NUMBER)
     {
@@ -415,12 +196,12 @@ double Json::Value::floatingPoint() const
     }
     else
     {
-        throw std::runtime_error("Json::Value::floatingPoint: Bad type.");
+        throw std::runtime_error("Json::floatingPoint: Bad type.");
     }
 }
 
 
-bool Json::Value::boolean() const
+bool Json::boolean() const
 {
     if (_type == BOOLEAN)
     {
@@ -434,43 +215,30 @@ bool Json::Value::boolean() const
         }
         else
         {
-            throw std::runtime_error("Json::Value::boolean: Bad value.");
+            throw std::runtime_error("Json::boolean: Bad value.");
         }
     }
     else
     {
-        throw std::runtime_error("Json::Value::boolean: Bad type.");
+        throw std::runtime_error("Json::boolean: Bad type.");
     }
 }
 
 
-const RefPtr<Json::Object>& Json::Value::object() const
+const Json::MemberArray& Json::members() const
 {
     if (_type == OBJECT)
     {
-        return _object;
+        return _members;
     }
     else
     {
-        throw std::runtime_error("Json::Value::object: Bad type.");
+        throw std::runtime_error("Json::members: Bad type.");
     }
 }
 
 
-RefPtr<Json::Object>& Json::Value::object()
-{
-    if (_type == OBJECT)
-    {
-        return _object;
-    }
-    else
-    {
-        throw std::runtime_error("Json::Value::object: Bad type.");
-    }
-}
-
-
-const Json::Array& Json::Value::array() const
+const Json::Array& Json::array() const
 {
     if (_type == ARRAY)
     {
@@ -478,12 +246,12 @@ const Json::Array& Json::Value::array() const
     }
     else
     {
-        throw std::runtime_error("Json::Value::array: Bad type.");
+        throw std::runtime_error("Json::array: Bad type.");
     }
 }
 
 
-Json::Array& Json::Value::array()
+Json::Array& Json::array()
 {
     if (_type == ARRAY)
     {
@@ -491,33 +259,208 @@ Json::Array& Json::Value::array()
     }
     else
     {
-        throw std::runtime_error("Json::Value::array: Bad type.");
+        throw std::runtime_error("Json::array: Bad type.");
     }
 }
 
 
-bool Json::Value::get(const char* path, Glib::ustring& retval) const
+const RefPtr<Json>& Json::find(const Glib::ustring& key) const
+{
+    for (MemberArray::size_type index = 0; index < _members.size(); index++)
+    {
+        const RefPtr<Member>& member = _members[index];
+        if (member->key() == key)
+        {
+            return member->value();
+        }
+    }
+    return s_NullValue;
+}
+
+
+RefPtr<Json>& Json::find(const Glib::ustring& key)
+{
+    for (MemberArray::size_type index = 0; index < _members.size(); index++)
+    {
+        RefPtr<Member>& member = _members[index];
+        if (member->key() == key)
+        {
+            return member->value();
+        }
+    }
+    _members.push_back(Member::create(key));
+    return _members.back()->value();
+}
+
+
+bool Json::get(const char* path, Glib::ustring& retval) const
 {
     const char* next = NULL;
     Glib::ustring key = GetKey(path, &next);
-    if (!key.empty())
+    if (key.empty())
     {
-        if (_type == OBJECT)
+        if (_type == STRING)
         {
-            if (_object)
+            retval = _string;
+            return true;
+        }
+    }
+    else if (_type == OBJECT)
+    {
+        RefPtr<Json> value = find(key);
+        if (value)
+        {
+            if (next)
             {
-                RefPtr<Value> value = _object->get(key.c_str());
-                if (value)
+                return value->get(next, retval);
+            }
+            else if (value->_type == STRING)
+            {
+                retval = value->_string;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+bool Json::get(const char* path, long& retval) const
+{
+    const char* next = NULL;
+    Glib::ustring key = GetKey(path, &next);
+    if (key.empty())
+    {
+        if (_type == NUMBER)
+        {
+            retval = strtol(_string.c_str(), NULL, 10);
+            return true;
+        }
+    }
+    else if (_type == OBJECT)
+    {
+        RefPtr<Json> value = find(key);
+        if (value)
+        {
+            if (next)
+            {
+                return value->get(next, retval);
+            }
+            else if (value->_type == NUMBER)
+            {
+                retval = strtol(value->_string.c_str(), NULL, 10);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+bool Json::get(const char* path, int& retval) const
+{
+    const char* next = NULL;
+    Glib::ustring key = GetKey(path, &next);
+    if (key.empty())
+    {
+        if (_type == NUMBER)
+        {
+            retval = (int)strtol(_string.c_str(), NULL, 10);
+            return true;
+        }
+    }
+    else if (_type == OBJECT)
+    {
+        RefPtr<Json> value = find(key);
+        if (value)
+        {
+            if (next)
+            {
+                return value->get(next, retval);
+            }
+            else if (value->_type == NUMBER)
+            {
+                retval = (int)strtol(value->_string.c_str(), NULL, 10);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+bool Json::get(const char* path, double& retval) const
+{
+    const char* next = NULL;
+    Glib::ustring key = GetKey(path, &next);
+    if (key.empty())
+    {
+        if (_type == NUMBER)
+        {
+            retval = strtod(_string.c_str(), NULL);
+            return true;
+        }
+    }
+    else if (_type == OBJECT)
+    {
+        RefPtr<Json> value = find(key);
+        if (value)
+        {
+            if (next)
+            {
+                return value->get(next, retval);
+            }
+            else if (value->_type == NUMBER)
+            {
+                retval = strtod(value->_string.c_str(), NULL);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+bool Json::get(const char* path, bool& retval) const
+{
+    const char* next = NULL;
+    Glib::ustring key = GetKey(path, &next);
+    if (key.empty())
+    {
+        if (_type == BOOLEAN)
+        {
+            if (_string == "true")
+            {
+                retval = true;
+                return true;
+            }
+            else if (_string == "false")
+            {
+                retval = false;
+                return true;
+            }
+        }
+    }
+    else if (_type == OBJECT)
+    {
+        RefPtr<Json> value = find(key);
+        if (value)
+        {
+            if (next)
+            {
+                return value->get(next, retval);
+            }
+            else if (value->_type == BOOLEAN)
+            {
+                if (value->_string == "true")
                 {
-                    if (next)
-                    {
-                        return value->get(next, retval);
-                    }
-                    else if (value->_type == STRING)
-                    {
-                        retval = value->_string;
-                        return true;
-                    }
+                    retval = true;
+                    return true;
+                }
+                else if (value->_string == "false")
+                {
+                    retval = false;
+                    return true;
                 }
             }
         }
@@ -526,29 +469,37 @@ bool Json::Value::get(const char* path, Glib::ustring& retval) const
 }
 
 
-bool Json::Value::get(const char* path, long& retval) const
+bool Json::get(const char* path, const sigc::slot1<void, const RefPtr<Json>&>& slot) const
 {
     const char* next = NULL;
     Glib::ustring key = GetKey(path, &next);
-    if (!key.empty())
+    if (key.empty())
     {
-        if (_type == OBJECT)
+        if (_type == ARRAY)
         {
-            if (_object)
+            for (Json::Array::size_type index = 0; index < _array.size(); index++)
             {
-                RefPtr<Value> value = _object->get(key.c_str());
-                if (value)
+                slot(_array[index]);
+            }
+            return true;
+        }
+    }
+    else if (_type == OBJECT)
+    {
+        RefPtr<Json> value = find(key);
+        if (value)
+        {
+            if (next)
+            {
+                return value->get(next, slot);
+            }
+            else if (value->_type == ARRAY)
+            {
+                for (Json::Array::size_type index = 0; index < value->_array.size(); index++)
                 {
-                    if (next)
-                    {
-                        return value->get(next, retval);
-                    }
-                    else if (value->_type == NUMBER)
-                    {
-                        retval = value->integer();
-                        return true;
-                    }
+                    slot(value->_array[index]);
                 }
+                return true;
             }
         }
     }
@@ -556,101 +507,7 @@ bool Json::Value::get(const char* path, long& retval) const
 }
 
 
-bool Json::Value::get(const char* path, int& retval) const
-{
-    const char* next = NULL;
-    Glib::ustring key = GetKey(path, &next);
-    if (!key.empty())
-    {
-        if (_type == OBJECT)
-        {
-            if (_object)
-            {
-                RefPtr<Value> value = _object->get(key.c_str());
-                if (value)
-                {
-                    if (next)
-                    {
-                        return value->get(next, retval);
-                    }
-                    else if (value->_type == NUMBER)
-                    {
-                        retval = (int)value->integer();
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    return false;
-}
-
-
-bool Json::Value::get(const char* path, bool& retval) const
-{
-    const char* next = NULL;
-    Glib::ustring key = GetKey(path, &next);
-    if (!key.empty())
-    {
-        if (_type == OBJECT)
-        {
-            if (_object)
-            {
-                RefPtr<Value> value = _object->get(key.c_str());
-                if (value)
-                {
-                    if (next)
-                    {
-                        return value->get(next, retval);
-                    }
-                    else if (value->_type == BOOLEAN)
-                    {
-                        retval = value->boolean();
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    return false;
-}
-
-
-bool Json::Value::get(const char* path, const sigc::slot1<void, const RefPtr<Value>&>& slot) const
-{
-    const char* next = NULL;
-    Glib::ustring key = GetKey(path, &next);
-    if (!key.empty())
-    {
-        if (_type == OBJECT)
-        {
-            if (_object)
-            {
-                RefPtr<Value> value = _object->get(key.c_str());
-                if (value)
-                {
-                    if (next)
-                    {
-                        return value->get(next, slot);
-                    }
-                    else if (value->_type == ARRAY)
-                    {
-                        const Json::Array& array = value->_array;
-                        for (Json::Array::size_type index = 0; index < array.size(); index++)
-                        {
-                            slot(array[index]);
-                        }
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    return false;
-}
-
-
-void Json::Value::set(const char* path, const Glib::ustring& setval)
+void Json::set(const char* path, const Glib::ustring& setval)
 {
     const char* next = NULL;
     Glib::ustring key = GetKey(path, &next);
@@ -659,27 +516,30 @@ void Json::Value::set(const char* path, const Glib::ustring& setval)
         _type = STRING;
         _string = setval;
     }
-    else
+    else if (_type == OBJECT)
     {
-        if (_type != OBJECT || !_object)
-        {
-            _type = OBJECT;
-            _object = RefPtr<Object>(new Object);
-        }
-        RefPtr<Value>& value = _object->get(key.c_str());
+        RefPtr<Json>& value = find(key);
         if (next)
         {
+            if (!value)
+            {
+                value = Json::create(OBJECT);
+            }
             value->set(next, setval);
         }
         else
         {
-            value = RefPtr<Value>(new Value(setval));
+            value = Json::create(setval);
         }
+    }
+    else
+    {
+        throw std::runtime_error("Json::set(string): Bad type.");
     }
 }
 
 
-void Json::Value::set(const char* path, long setval)
+void Json::set(const char* path, long setval)
 {
     const char* next = NULL;
     Glib::ustring key = GetKey(path, &next);
@@ -688,27 +548,30 @@ void Json::Value::set(const char* path, long setval)
         _type = NUMBER;
         _string = Glib::ustring::compose("%1", setval);
     }
-    else
+    else if (_type == OBJECT)
     {
-        if (_type != OBJECT || !_object)
-        {
-            _type = OBJECT;
-            _object = RefPtr<Object>(new Object);
-        }
-        RefPtr<Value>& value = _object->get(key.c_str());
+        RefPtr<Json>& value = find(key);
         if (next)
         {
+            if (!value)
+            {
+                value = Json::create(OBJECT);
+            }
             value->set(next, setval);
         }
         else
         {
-            value = RefPtr<Value>(new Value(setval));
+            value = Json::create(setval);
         }
+    }
+    else
+    {
+        throw std::runtime_error("Json::set(long): Bad type.");
     }
 }
 
 
-void Json::Value::set(const char* path, int setval)
+void Json::set(const char* path, int setval)
 {
     const char* next = NULL;
     Glib::ustring key = GetKey(path, &next);
@@ -717,27 +580,62 @@ void Json::Value::set(const char* path, int setval)
         _type = NUMBER;
         _string = Glib::ustring::compose("%1", setval);
     }
-    else
+    else if (_type == OBJECT)
     {
-        if (_type != OBJECT || !_object)
-        {
-            _type = OBJECT;
-            _object = RefPtr<Object>(new Object);
-        }
-        RefPtr<Value>& value = _object->get(key.c_str());
+        RefPtr<Json>& value = find(key);
         if (next)
         {
+            if (!value)
+            {
+                value = Json::create(OBJECT);
+            }
             value->set(next, setval);
         }
         else
         {
-            value = RefPtr<Value>(new Value(setval));
+            value = Json::create(setval);
         }
+    }
+    else
+    {
+        throw std::runtime_error("Json::set(int): Bad type.");
     }
 }
 
 
-void Json::Value::set(const char* path, bool setval)
+void Json::set(const char* path, double setval)
+{
+    const char* next = NULL;
+    Glib::ustring key = GetKey(path, &next);
+    if (key.empty())
+    {
+        _type = NUMBER;
+        _string = Glib::ustring::compose("%1", setval);
+    }
+    else if (_type == OBJECT)
+    {
+        RefPtr<Json>& value = find(key);
+        if (next)
+        {
+            if (!value)
+            {
+                value = Json::create(OBJECT);
+            }
+            value->set(next, setval);
+        }
+        else
+        {
+            value = Json::create(setval);
+        }
+    }
+    else
+    {
+        throw std::runtime_error("Json::set(double): Bad type.");
+    }
+}
+
+
+void Json::set(const char* path, bool setval)
 {
     const char* next = NULL;
     Glib::ustring key = GetKey(path, &next);
@@ -746,83 +644,57 @@ void Json::Value::set(const char* path, bool setval)
         _type = BOOLEAN;
         _string = setval ? "true" : "false";
     }
-    else
+    else if (_type == OBJECT)
     {
-        if (_type != OBJECT || !_object)
-        {
-            _type = OBJECT;
-            _object = RefPtr<Object>(new Object);
-        }
-        RefPtr<Value>& value = _object->get(key.c_str());
+        RefPtr<Json>& value = find(key);
         if (next)
         {
+            if (!value)
+            {
+                value = Json::create(OBJECT);
+            }
             value->set(next, setval);
         }
         else
         {
-            value = RefPtr<Value>(new Value(setval));
+            value = Json::create(setval);
         }
+    }
+    else
+    {
+        throw std::runtime_error("Json::set(bool): Bad type.");
     }
 }
 
 
-Json::Array& Json::Value::setArray(const char* path)
+Json::Array& Json::setArray(const char* path)
 {
     const char* next = NULL;
     Glib::ustring key = GetKey(path, &next);
     if (key.empty())
     {
-        if (_type != ARRAY)
-        {
-            _type = ARRAY;
-        }
+        _type = ARRAY;
         return _array;
     }
-    else
+    else if (_type == OBJECT)
     {
-        if (_type != OBJECT || !_object)
-        {
-            _type = OBJECT;
-            _object = RefPtr<Object>(new Object);
-        }
-        RefPtr<Value>& value = _object->get(key.c_str());
+        RefPtr<Json>& value = find(key);
         if (next)
         {
+            if (!value)
+            {
+                value = Json::create(OBJECT);
+            }
             return value->setArray(next);
         }
         else
         {
-            if (value->_type != ARRAY)
-            {
-                value->_type = ARRAY;
-            }
+            value = Json::create(ARRAY);
             return value->_array;
         }
     }
-}
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// M E M B E R
-//
-//////////////////////////////////////////////////////////////////////
-
-
-Json::Member::Member(const Glib::ustring& key)
-    : _key(key)
-    , _value()
-{
-}
-
-
-Json::Member::Member(const Glib::ustring& key, const RefPtr<Value>& value)
-    : _key(key)
-    , _value(value)
-{
-}
-
-
-Json::Member::~Member()
-{
+    else
+    {
+        throw std::runtime_error("Json::setArray: Bad type.");
+    }
 }

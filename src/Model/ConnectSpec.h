@@ -6,11 +6,14 @@
 
 
 #include <glibmm/ustring.h>
+#include "Base/RefPtr.h"
 #include "Net/MacAddress.h"
 
 
 namespace hnrt
 {
+    class Json;
+
     struct ConnectSpec
     {
         Glib::ustring uuid;
@@ -26,10 +29,10 @@ namespace hnrt
         ConnectSpec();
         ConnectSpec(const ConnectSpec&);
         ConnectSpec& operator =(const ConnectSpec&);
-        Glib::ustring toString() const;
-        static bool parse(int, const char*, ConnectSpec&);
         Glib::ustring descramblePassword() const;
         Glib::ustring getBasicAuthString() const;
+        bool fromJson(const RefPtr<Json>&);
+        RefPtr<Json> toJson() const;
     };
 }
 

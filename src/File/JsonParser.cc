@@ -7,9 +7,8 @@
 using namespace hnrt;
 
 
-JsonParser::JsonParser(JsonLexer& lex, Json& doc)
+JsonParser::JsonParser(JsonLexer& lex)
     : _lex(lex)
-    , _doc(doc)
 {
     _map.insert(ParseValueMap::value_type(Json::NULLVALUE, &JsonParser::parseImmediateValue));
     _map.insert(ParseValueMap::value_type(Json::BOOLEAN, &JsonParser::parseImmediateValue));
@@ -20,17 +19,17 @@ JsonParser::JsonParser(JsonLexer& lex, Json& doc)
 }
 
 
-void JsonParser::run()
+RefPtr<Json> JsonParser::run()
 {
+    RefPtr<Json> doc;
+
     _lex.next();
 
-    RefPtr<Json::Value> value;
-
-    if (parseValue(value))
+    if (parseValue(doc))
     {
-        if (value->type() == Json::OBJECT || value->type() == Json::ARRAY)
+        if (doc->type() == Json::OBJECT || doc->type() == Json::ARRAY)
         {
-            _doc.set(value);
+            //OK
         }
         else
         {
@@ -46,10 +45,12 @@ void JsonParser::run()
     {
         throw Glib::ustring::compose("Line %1: Parse failed.", _lex.line());
     }
+
+    return doc;
 }
 
 
-bool JsonParser::parseValue(RefPtr<Json::Value>& value)
+bool JsonParser::parseValue(RefPtr<Json>& value)
 {
     ParseValueMap::const_iterator iter = _map.find(_lex.sym());
     if (iter != _map.end())
@@ -64,15 +65,15 @@ bool JsonParser::parseValue(RefPtr<Json::Value>& value)
 }
 
 
-bool JsonParser::parseImmediateValue(RefPtr<Json::Value>& value)
+bool JsonParser::parseImmediateValue(RefPtr<Json>& value)
 {
-    value = RefPtr<Json::Value>(new Json::Value((Json::Type)_lex.sym(), _lex.str()));
+    value = Json::create((Json::Type)_lex.sym(), _lex.str());
     _lex.next();
     return true;
 }
 
 
-bool JsonParser::parseObject(RefPtr<Json::Value>& value)
+bool JsonParser::parseObject(RefPtr<Json>& value)
 {
     if (_lex.sym() == Json::BEGIN_OBJECT)
     {
@@ -83,19 +84,19 @@ bool JsonParser::parseObject(RefPtr<Json::Value>& value)
         return false;
     }
 
-    Json::MemberArray members;
+    value = Json::create(Json::OBJECT);
 
     RefPtr<Json::Member> member;
 
     if (parseMember(member))
     {
-        members.push_back(member);
+        value->add(member);
         while (_lex.sym() == Json::VALUE_SEPARATOR)
         {
             _lex.next();
             if (parseMember(member))
             {
-                members.push_back(member);
+                value->add(member);
             }
             else
             {
@@ -106,7 +107,6 @@ bool JsonParser::parseObject(RefPtr<Json::Value>& value)
 
     if (_lex.sym() == Json::END_OBJECT)
     {
-        value = RefPtr<Json::Value>(new Json::Value(RefPtr<Json::Object>(new Json::Object(members))));
         _lex.next();
         return true;
     }
@@ -140,11 +140,11 @@ bool JsonParser::parseMember(RefPtr<Json::Member>& member)
         throw Glib::ustring::compose("Line %1: Parse member failed: Missing name-separator.", _lex.line());
     }
 
-    RefPtr<Json::Value> value;
+    RefPtr<Json> value;
 
     if (parseValue(value))
     {
-        member = RefPtr<Json::Member>(new Json::Member(key, value));
+        member = Json::Member::create(key, value);
         return true;
     }
     else
@@ -154,7 +154,7 @@ bool JsonParser::parseMember(RefPtr<Json::Member>& member)
 }
 
 
-bool JsonParser::parseArray(RefPtr<Json::Value>& value)
+bool JsonParser::parseArray(RefPtr<Json>& value)
 {
     if (_lex.sym() == Json::BEGIN_ARRAY)
     {
@@ -165,19 +165,19 @@ bool JsonParser::parseArray(RefPtr<Json::Value>& value)
         return false;
     }
 
-    Json::Array elements;
+    value = Json::create(Json::ARRAY);
 
-    RefPtr<Json::Value> element;
+    RefPtr<Json> element;
 
     if (parseValue(element))
     {
-        elements.push_back(element);
+        value->add(element);
         while (_lex.sym() == Json::VALUE_SEPARATOR)
         {
             _lex.next();
             if (parseValue(element))
             {
-                elements.push_back(element);
+                value->add(element);
             }
             else
             {
@@ -188,7 +188,6 @@ bool JsonParser::parseArray(RefPtr<Json::Value>& value)
 
     if (_lex.sym() == Json::END_ARRAY)
     {
-        value = RefPtr<Json::Value>(new Json::Value(elements));
         _lex.next();
         return true;
     }

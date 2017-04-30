@@ -15,6 +15,7 @@
 namespace hnrt
 {
     class Host;
+    struct ConnectSpec;
 
     class ModelImpl
         : public Model
@@ -75,9 +76,9 @@ namespace hnrt
 
         ModelImpl(const ModelImpl&);
         void operator =(const ModelImpl&);
-        void loadV1(const Json&);
-        void loadV1Server(const RefPtr<Json::Value>&);
-        void loadV1Console(const RefPtr<Json::Value>&);
+        void loadV1(const RefPtr<Json>&);
+        void loadV1Server(const RefPtr<Json>&);
+        void loadV1Console(const RefPtr<Json>&);
         ConsoleInfo& getConsoleInfo(const Glib::ustring&);
 
         Glib::ustring _path;
