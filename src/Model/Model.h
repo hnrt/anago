@@ -74,6 +74,8 @@ namespace hnrt
         virtual void setExportVmVerify(bool) = 0;
         virtual Glib::ustring getImportVmPath() = 0;
         virtual void setImportVmPath(const Glib::ustring&) = 0;
+        virtual Glib::ustring getVerifyVmPath() = 0;
+        virtual void setVerifyVmPath(const Glib::ustring&) = 0;
     };
 }
 

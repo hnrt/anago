@@ -97,6 +97,7 @@ namespace hnrt
         void deleteVmInBackground(RefPtr<VirtualMachine>, std::list<Glib::ustring>);
         void exportVmInBackground(RefPtr<VirtualMachine>, Glib::ustring, bool);
         void importVmInBackground(RefPtr<Host>, Glib::ustring);
+        void verifyVmInBackground(Glib::ustring);
 
         ThreadManager& _tm;
         bool _quitInProgress;

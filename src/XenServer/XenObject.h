@@ -56,6 +56,7 @@ namespace hnrt
             VM_GUEST_METRICS,
             VM_EXPORTER,
             VM_IMPORTER,
+            VM_VERIFIER,
         };
 
         enum Notification

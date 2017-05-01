@@ -14,6 +14,7 @@
 #include "XenServer/VirtualMachine.h"
 #include "XenServer/VirtualMachineExporter.h"
 #include "XenServer/VirtualMachineImporter.h"
+#include "XenServer/VirtualMachineVerifier.h"
 #include "PixStore.h"
 #include "VirtualMachineStatusWindow.h"
 
@@ -79,6 +80,7 @@ void VirtualMachineStatusWindow::onObjectCreated(RefPtr<XenObject> object, int w
     {
     case XenObject::VM_EXPORTER:
     case XenObject::VM_IMPORTER:
+    case XenObject::VM_VERIFIER:
     {
         SignalManager::instance().xenObjectSignal(*object).connect(sigc::mem_fun(*this, &VirtualMachineStatusWindow::onObjectUpdated));
         _listView.add(object);
@@ -387,6 +389,14 @@ Glib::ustring VirtualMachineStatusWindow::ListView::cancel(Gtk::TreeIter iter)
             updateTime(row, time(NULL));
             uuid = row[_record.colId];
         }
+        else if (object->getType() == XenObject::VM_VERIFIER)
+        {
+            VirtualMachineVerifier& verifier = (VirtualMachineVerifier&)*object;
+            verifier.abort();
+            updateState(row, state);
+            updateTime(row, time(NULL));
+            uuid = row[_record.colId];
+        }
     }
     return uuid;
 }
@@ -463,6 +473,22 @@ void VirtualMachineStatusWindow::ListView::update(Gtk::TreeModel::Row& row)
         }
         state = importer.state();
         percent = importer.percent();
+        break;
+    }
+    case XenObject::VM_VERIFIER:
+    {
+        VirtualMachineVerifier& verifier = (VirtualMachineVerifier&)*object;
+        if (path.empty())
+        {
+            const char* p = verifier.path();
+            if (p)
+            {
+                row[_record.colPath] = Glib::ustring(p);
+            }
+            size = verifier.size();
+        }
+        state = verifier.state();
+        percent = verifier.percent();
         break;
     }
     default:

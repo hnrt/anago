@@ -463,3 +463,21 @@ bool ViewImpl::getImportVmPath(Glib::ustring& path)
         return false;
     }
 }
+
+
+bool ViewImpl::getVerifyVmPath(Glib::ustring& path)
+{
+    ImportVmDialog dialog(_mainWindow);
+    dialog.set_title(gettext("Virtual machine - Verify"));
+    dialog.setPath(path);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_OK)
+    {
+        path = dialog.getPath();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}

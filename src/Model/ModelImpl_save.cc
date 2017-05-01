@@ -54,6 +54,7 @@ void ModelImpl::save()
             json->set("export.path", _exportVmPath);
             json->set("export.verify", _exportVmVerify);
             json->set("import.path", _importVmPath);
+            json->set("verify.path", _verifyVmPath);
             json->save(fp);
         }
         catch (Glib::ustring msg)

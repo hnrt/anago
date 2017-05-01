@@ -21,6 +21,7 @@
 #include "XenServer/VirtualMachine.h"
 #include "XenServer/VirtualMachineExporter.h"
 #include "XenServer/VirtualMachineImporter.h"
+#include "XenServer/VirtualMachineVerifier.h"
 #include "XenServer/XenObjectStore.h"
 #include "ControllerImpl.h"
 
@@ -383,7 +384,40 @@ void ControllerImpl::importVmInBackground(RefPtr<Host> host, Glib::ustring path)
 
 void ControllerImpl::verifyVm()
 {
-    //TODO: IMPLEMENT
+    Glib::ustring path = Model::instance().getVerifyVmPath();
+    while (View::instance().getVerifyVmPath(path))
+    {
+        struct stat statinfo = { 0 };
+        if (stat(path.c_str(), &statinfo))
+        {
+            StringBuffer message;
+            message.format(errno == ENOENT ? gettext("The file you just chose is not found.\n\n%s") :
+                           gettext("The file you just chose cannot be read.\n\n%s"),
+                           path.c_str());
+            View::instance().showWarning(Glib::ustring(message));
+        }
+        else if (S_ISREG(statinfo.st_mode))
+        {
+            _tm.create(sigc::bind<Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::verifyVmInBackground), path), false, "VerifyVm");
+            return;
+        }
+        else
+        {
+            StringBuffer message;
+            message.format(gettext("The file you just chose isn't a regular file.\n\n%s"), path.c_str());
+            View::instance().showWarning(Glib::ustring(message));
+        }
+    }
+}
+
+
+void ControllerImpl::verifyVmInBackground(Glib::ustring path)
+{
+    Model::instance().setVerifyVmPath(path);
+    RefPtr<VirtualMachineVerifier> verifier = VirtualMachineVerifier::create();
+    verifier->emit(XenObject::CREATED);
+    verifier->run(path.c_str());
+    verifier->emit(XenObject::DESTROYED);
 }
 
 

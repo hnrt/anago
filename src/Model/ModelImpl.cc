@@ -431,6 +431,7 @@ void ModelImpl::setConsoleScale(const Glib::ustring& uuid, bool value)
 
 Glib::ustring ModelImpl::getExportVmPath(const VirtualMachine& vm)
 {
+    Glib::RecMutex::Lock lock(_mutex);
     StringBuffer path;
     if (_exportVmPath.empty())
     {
@@ -475,29 +476,48 @@ Glib::ustring ModelImpl::getExportVmPath(const VirtualMachine& vm)
 
 void ModelImpl::setExportVmPath(const Glib::ustring& path)
 {
+    Glib::RecMutex::Lock lock(_mutex);
     _exportVmPath = path;
 }
 
 
 bool ModelImpl::getExportVmVerify()
 {
+    Glib::RecMutex::Lock lock(_mutex);
     return _exportVmVerify;
 }
 
 
 void ModelImpl::setExportVmVerify(bool value)
 {
+    Glib::RecMutex::Lock lock(_mutex);
     _exportVmVerify = value;
 }
 
 
 Glib::ustring ModelImpl::getImportVmPath()
 {
+    Glib::RecMutex::Lock lock(_mutex);
     return _importVmPath;
 }
 
 
 void ModelImpl::setImportVmPath(const Glib::ustring& path)
 {
+    Glib::RecMutex::Lock lock(_mutex);
     _importVmPath = path;
+}
+
+
+Glib::ustring ModelImpl::getVerifyVmPath()
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    return _verifyVmPath;
+}
+
+
+void ModelImpl::setVerifyVmPath(const Glib::ustring& path)
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    _verifyVmPath = path;
 }
