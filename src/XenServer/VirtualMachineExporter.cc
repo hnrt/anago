@@ -51,17 +51,15 @@ void VirtualMachineExporter::run(const char* path, bool verify)
 
     XenObject::Busy busy(&_session);
 
-    open(path, verify);
+    init(path, verify);
 
     XenRef<xen_task, xen_task_free_t> task;
-
-    CURL* curl = NULL;
 
     try
     {
         if (!_session.isConnected())
         {
-            throw "session";
+            throw StringBuffer().format("Session is disconnected.");
         }
 
         char exportString[] = { "export" };
@@ -69,123 +67,144 @@ void VirtualMachineExporter::run(const char* path, bool verify)
         desc.format("export from=%s", _vm->getREFID().c_str());
         if (!xen_task_create(_session, &task, exportString, desc.ptr()))
         {
-            throw "xen_task_create";
+            throw StringBuffer().format("xen_task_create failed.");
         }
         _taskId = (const char*)(xen_task)task;
 
         if (!_xva->open())
         {
-            throw "fopen";
+            throw StringBuffer().format("%s: %s", strerror(_xva->error()), _xva->path());
         }
 
         emit(XenObject::EXPORT_PENDING);
 
-        curl = curl_easy_init();
-        if (!curl)
+        CURL* curl = NULL;
+
+        try
         {
-            throw "curl_easy_init";
-        }
-
-        StringBuffer url;
-        ConnectSpec cs = _session.getConnectSpec();
-        url.format("http://%s/export?session_id=%s&task_id=%s&ref=%s",
-                   cs.hostname.c_str(), _session->session_id, _taskId.c_str(), _vm->getREFID().c_str());
-
-        TRACEPUT("url=%s", url.str());
-
-        //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        //curl_easy_setopt(curl, CURLOPT_STDERR, stderr);
-        curl_easy_setopt(curl, CURLOPT_URL, url.str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receive);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-
-        CURLcode result = curl_easy_perform(curl);
-
-        _xva->close();
-
-        if (_state != VirtualMachineOperationState::EXPORT_INPROGRESS)
-        {
-            goto done;
-        }
-
-        if (result != CURLE_OK)
-        {
-            Logger::instance().warn("CURL: %d (%s)", (int)result, curl_easy_strerror(result));
-            throw "curl_easy_perform";
-        }
-
-        emit(XenObject::EXPORTED);
-
-        if (verify)
-        {
-            emit(XenObject::VERIFY_PENDING);
-            _state = VirtualMachineOperationState::EXPORT_VERIFY_INPROGRESS;
-            if (!_xva->open(NULL, "r"))
+            curl = curl_easy_init();
+            if (!curl)
             {
-                Logger::instance().warn("%s: %'zu bytes exported, but cannot be opened for reading.", _xva->path(), _xva->nbytes());
-                _state = VirtualMachineOperationState::EXPORT_VERIFY_FAILURE;
-                emit(XenObject::VERIFY_FAILED);
+                throw StringBuffer().format("CURL initialize failed.");
             }
-            else if (!_xva->validate(_abort))
+
+            StringBuffer url;
+            ConnectSpec cs = _session.getConnectSpec();
+            url.format("http://%s/export?session_id=%s&task_id=%s&ref=%s",
+                       cs.hostname.c_str(), _session->session_id, _taskId.c_str(), _vm->getREFID().c_str());
+
+            TRACEPUT("url=%s", url.str());
+
+            //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+            //curl_easy_setopt(curl, CURLOPT_STDERR, stderr);
+            curl_easy_setopt(curl, CURLOPT_URL, url.str());
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receive);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+
+            CURLcode result = curl_easy_perform(curl);
+
+            if (_state != VirtualMachineOperationState::EXPORT_FAILURE &&
+                _state != VirtualMachineOperationState::EXPORT_CANCELED)
             {
-                Logger::instance().warn("%s: %'zu bytes exported, but checksum mismatched at %'zu bytes.", _xva->path(), _xva->size(), _xva->nbytes());
-                _state = VirtualMachineOperationState::EXPORT_VERIFY_FAILURE;
-                emit(XenObject::VERIFY_FAILED);
-            }
-            else
-            {
-                Logger::instance().info("%s: %'zu bytes exported and verified.", _xva->path(), _xva->nbytes());
-                _state = VirtualMachineOperationState::EXPORT_VERIFY_SUCCESS;
-                emit(XenObject::VERIFIED);
+                if (result == CURLE_OK)
+                {
+                    Logger::instance().info("Exported %'zu bytes: %s", _xva->nbytes(), _xva->path());
+                    _state = VirtualMachineOperationState::EXPORT_SUCCESS;
+                    emit(XenObject::EXPORTED);
+                }
+                else
+                {
+                    throw StringBuffer().format("CURL: %d (%s)", (int)result, curl_easy_strerror(result));
+                }
             }
         }
-        else
+        catch (StringBuffer msg)
         {
-            Logger::instance().info("%s\t%'zu bytes exported.", _xva->path(), _xva->nbytes());
-            _state = VirtualMachineOperationState::EXPORT_SUCCESS;
-        }
-    }
-    catch (...)
-    {
-        if (_state.isActive())
-        {
+            Logger::instance().warn("Export failed: %s", msg.str());
             _state = VirtualMachineOperationState::EXPORT_FAILURE;
             emit(XenObject::EXPORT_FAILED);
         }
+
+        if (curl)
+        {
+            curl_easy_cleanup(curl);
+        }
+
+        _xva->close();
+
+        if (_verify &&
+            _state == VirtualMachineOperationState::EXPORT_SUCCESS)
+        {
+            try
+            {
+                _state = VirtualMachineOperationState::EXPORT_VERIFY_PENDING;
+                emit(XenObject::VERIFY_PENDING);
+
+                if (!_xva->open(NULL, "r"))
+                {
+                    throw StringBuffer().format("%s: %s", strerror(_xva->error()), _xva->path());
+                }
+
+                _state = VirtualMachineOperationState::EXPORT_VERIFY_INPROGRESS;
+
+                if (_xva->validate(_abort))
+                {
+                    Logger::instance().info("Verified %'zu bytes: %s", _xva->nbytes(), _xva->path());
+                    _state = VirtualMachineOperationState::EXPORT_VERIFY_SUCCESS;
+                    emit(XenObject::VERIFIED);
+                }
+                else if (_xva->error() == ECANCELED)
+                {
+                    Logger::instance().info("Verify canceled: %s", _xva->path());
+                    _state = VirtualMachineOperationState::EXPORT_VERIFY_CANCELED;
+                    emit(XenObject::VERIFY_CANCELED);
+                }
+                else if (_xva->error() == EPROTO)
+                {
+                    throw StringBuffer().format("Stopped at %'zu: %s", _xva->nbytes(), _xva->path());
+                }
+                else
+                {
+                    throw StringBuffer().format("%s: %s", strerror(_xva->error()), _xva->path());
+                }
+            }
+            catch (StringBuffer msg)
+            {
+                Logger::instance().warn("Verify failed: %s", msg.str());
+                _state = VirtualMachineOperationState::EXPORT_VERIFY_FAILURE;
+                emit(XenObject::VERIFY_FAILED);
+            }
+        }
     }
-
-done:
-
-    if (curl)
+    catch (StringBuffer msg)
     {
-        curl_easy_cleanup(curl);
+        Logger::instance().warn("Export failed: %s", msg.str());
+        _state = VirtualMachineOperationState::EXPORT_FAILURE;
+        emit(XenObject::EXPORT_FAILED);
+    }
+    catch (...)
+    {
+        Logger::instance().warn("Unhandled exception caught.");
+        _state = VirtualMachineOperationState::EXPORT_FAILURE;
+        emit(XenObject::EXPORT_FAILED);
     }
 
     if (task)
     {
         xen_task_destroy(_session, task);
     }
-
-    close();
 }
 
 
-void VirtualMachineExporter::open(const char* path, bool verify)
+void VirtualMachineExporter::init(const char* path, bool verify)
 {
     Glib::Mutex::Lock lock(_mutex);
-    VirtualMachinePorter::open(path, "w", VirtualMachineOperationState::EXPORT_PENDING);
+    VirtualMachinePorter::init(path, "w", VirtualMachineOperationState::EXPORT_PENDING);
     _vm->setBusy(true);
     _verify = verify;
-}
-
-
-void VirtualMachineExporter::close()
-{
-    Glib::Mutex::Lock lock(_mutex);
-    VirtualMachinePorter::close();
 }
 
 
@@ -195,6 +214,7 @@ bool VirtualMachineExporter::parse(void* ptr, size_t len)
 
     if (_abort)
     {
+        Logger::instance().info("Export canceled: %s", _xva->path());
         _state = VirtualMachineOperationState::EXPORT_CANCELED;
         emit(XenObject::EXPORT_CANCELED);
         return false;
@@ -215,7 +235,7 @@ bool VirtualMachineExporter::parse(void* ptr, size_t len)
         }
         else
         {
-            TRACEPUT("write failed.");
+            Logger::instance().warn("Export failed: %s: %s", strerror(_xva->error()), _xva->path());
             _state = VirtualMachineOperationState::EXPORT_FAILURE;
             emit(XenObject::EXPORT_FAILED);
             return false;

@@ -1,7 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
-#define NO_TRACE
+//#define NO_TRACE
 
 
 #include "Logger/Trace.h"
@@ -26,28 +26,22 @@ VirtualMachinePorter::VirtualMachinePorter(XenObject::Type type, Session& sessio
 VirtualMachinePorter::~VirtualMachinePorter()
 {
     TRACE("VirtualMachinePorter::dtor");
-}
-
-
-// Note: Lock needs to be held.
-void VirtualMachinePorter::open(const char* path, const char* mode, VirtualMachineOperationState::Value initState)
-{
-    _xva = VirtualMachineArchive::create(path, mode, *this);
-    _state = initState;
-    _abort = false;
-    _lastUpdated = 0;
-}
-
-
-// Note: Lock needs to be held.
-void VirtualMachinePorter::close()
-{
     _xva.reset();
     if (_vm)
     {
         _vm->setBusy(false);
         _vm.reset();
     }
+}
+
+
+// Note: Lock needs to be held.
+void VirtualMachinePorter::init(const char* path, const char* mode, VirtualMachineOperationState::Value initState)
+{
+    _xva = VirtualMachineArchive::create(path, mode, *this);
+    _state = initState;
+    _abort = false;
+    _lastUpdated = 0;
 }
 
 

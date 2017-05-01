@@ -80,7 +80,7 @@ void VirtualMachineImporter::run(const char* path)
 
     XenObject::Busy busy(&_session);
 
-    open(path);
+    init(path);
 
     XenRef<xen_task, xen_task_free_t> task;
 
@@ -105,7 +105,7 @@ void VirtualMachineImporter::run(const char* path)
 
         if (!_xva->open())
         {
-            throw StringBuffer().format("fopen failed.");
+            throw StringBuffer().format("%s: %s", strerror(_xva->error()), _xva->path());
         }
 
         emit(XenObject::IMPORT_PENDING);
@@ -113,7 +113,7 @@ void VirtualMachineImporter::run(const char* path)
         curl = curl_easy_init();
         if (!curl)
         {
-            throw StringBuffer().format("curl init failed.");
+            throw StringBuffer().format("CURL initialize failed.");
         }
 
         StringBuffer url;
@@ -143,44 +143,42 @@ void VirtualMachineImporter::run(const char* path)
 
         CURLcode result = curl_easy_perform(curl);
 
-        _xva->close();
-
-        if (_state == VirtualMachineOperationState::IMPORT_INPROGRESS)
+        if (_state != VirtualMachineOperationState::IMPORT_FAILURE &&
+            _state != VirtualMachineOperationState::IMPORT_CANCELED)
         {
             if (result == CURLE_OK)
             {
             success:
-                Logger::instance().info("%s: %zu bytes imported.", _xva->path(), _xva->nbytes());
+                Logger::instance().info("Imported %'zu bytes: %s", _xva->nbytes(), _xva->path());
                 _state = VirtualMachineOperationState::IMPORT_SUCCESS;
                 emit(XenObject::IMPORTED);
             }
-            else if (result == CURLE_RECV_ERROR)
-            {
-                long response = -1;
-                if (curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response) == CURLE_OK)
-                {
-                    if (response == 200 && _xva->size() == _xva->nbytes())
-                    {
-                        goto success;
-                    }
-                }
-                throw StringBuffer().format("CURL: %d (%s) size=%'zu out=%'zu", (int)result, curl_easy_strerror(result), _xva->size(), _xva->nbytes());
-            }
             else
             {
-                throw StringBuffer().format("CURL: %d (%s) size=%'zu out=%'zu", (int)result, curl_easy_strerror(result), _xva->size(), _xva->nbytes());
+                if (result == CURLE_RECV_ERROR)
+                {
+                    long response = -1;
+                    if (curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response) == CURLE_OK)
+                    {
+                        if (response == 200 && _xva->size() == _xva->nbytes())
+                        {
+                            goto success;
+                        }
+                    }
+                }
+                throw StringBuffer().format("CURL: %d (%s)", (int)result, curl_easy_strerror(result));
             }
         }
     }
     catch (StringBuffer msg)
     {
-        Logger::instance().warn("VirtualMachineImporter: %s", msg.str());
+        Logger::instance().warn("Import failed: %s", msg.str());
         _state = VirtualMachineOperationState::IMPORT_FAILURE;
         emit(XenObject::IMPORT_FAILED);
     }
     catch (...)
     {
-        Logger::instance().warn("VirtualMachineImporter: Unhandled exception caught.");
+        Logger::instance().warn("Unhandled exception caught.");
         _state = VirtualMachineOperationState::IMPORT_FAILURE;
         emit(XenObject::IMPORT_FAILED);
     }
@@ -199,23 +197,14 @@ void VirtualMachineImporter::run(const char* path)
     {
         xen_task_destroy(_session, task);
     }
-
-    close();
 }
 
 
-void VirtualMachineImporter::open(const char* path)
+void VirtualMachineImporter::init(const char* path)
 {
     Glib::Mutex::Lock lock(_mutex);
-    VirtualMachinePorter::open(path, "r", VirtualMachineOperationState::IMPORT_PENDING);
+    VirtualMachinePorter::init(path, "r", VirtualMachineOperationState::IMPORT_PENDING);
     _vm.reset();
-}
-
-
-void VirtualMachineImporter::close()
-{
-    Glib::Mutex::Lock lock(_mutex);
-    VirtualMachinePorter::close();
 }
 
 
@@ -225,21 +214,35 @@ size_t VirtualMachineImporter::read(void* ptr, size_t len)
 
     if (_abort)
     {
-        Logger::instance().info("%s: import canceled.", _xva->path());
+        Logger::instance().info("Import canceled: %s", _xva->path());
         _state = VirtualMachineOperationState::IMPORT_CANCELED;
         emit(XenObject::IMPORT_CANCELED);
         return CURL_READFUNC_ABORT;
     }
 
     size_t ret = _xva->read(ptr, len);
-    TRACEPUT("read=%'zu total=%'zu", ret, _xva->nbytes());
-    time_t now = time(NULL);
-    if (_lastUpdated < now)
+    if (ret)
     {
-        checkVm();
-        _lastUpdated = now;
+        TRACEPUT("read=%'zu total=%'zu", ret, _xva->nbytes());
         _state = VirtualMachineOperationState::IMPORT_INPROGRESS;
-        emit(XenObject::IMPORTING);
+        time_t now = time(NULL);
+        if (_lastUpdated < now)
+        {
+            _lastUpdated = now;
+            checkVm();
+            emit(XenObject::IMPORTING);
+        }
+    }
+    else if (_xva->error())
+    {
+        Logger::instance().warn("Import failed: %s: %s", strerror(_xva->error()), _xva->path());
+        _state = VirtualMachineOperationState::IMPORT_FAILURE;
+        emit(XenObject::IMPORT_FAILED);
+        return CURL_READFUNC_ABORT;
+    }
+    else
+    {
+        TRACEPUT("read=%'zu total=%'zu", ret, _xva->nbytes());
     }
 
     return ret;

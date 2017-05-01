@@ -28,8 +28,7 @@ namespace hnrt
         VirtualMachineExporter(RefPtr<VirtualMachine>);
         VirtualMachineExporter(const VirtualMachineExporter&);
         void operator =(const VirtualMachineExporter&);
-        void open(const char*, bool);
-        void close();
+        void init(const char*, bool);
 
         bool _verify;
     };

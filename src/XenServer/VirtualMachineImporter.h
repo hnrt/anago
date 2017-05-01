@@ -27,8 +27,7 @@ namespace hnrt
         VirtualMachineImporter(Session&);
         VirtualMachineImporter(const VirtualMachineImporter&);
         void operator =(const VirtualMachineImporter&);
-        void open(const char*);
-        void close();
+        void init(const char*);
     };
 }
 

@@ -25,8 +25,7 @@ namespace hnrt
         VirtualMachineVerifier();
         VirtualMachineVerifier(const VirtualMachineVerifier&);
         void operator =(const VirtualMachineVerifier&);
-        void open(const char*);
-        void close();
+        void init(const char*);
     };
 }
 

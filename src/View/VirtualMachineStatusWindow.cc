@@ -373,29 +373,24 @@ Glib::ustring VirtualMachineStatusWindow::ListView::cancel(Gtk::TreeIter iter)
             Logger::instance().error("VirtualMachineStatusWindow::ListView::cancel: Already removed. name=\"%s\"",
                                      ((Glib::ustring)row[_record.colName]).c_str());
         }
-        else if (object->getType() == XenObject::VM_EXPORTER)
+        else
         {
-            VirtualMachineExporter& exporter = (VirtualMachineExporter&)*object;
-            exporter.abort();
-            updateState(row, state);
-            updateTime(row, time(NULL));
-            uuid = row[_record.colId];
-        }
-        else if (object->getType() == XenObject::VM_IMPORTER)
-        {
-            VirtualMachineImporter& importer = (VirtualMachineImporter&)*object;
-            importer.abort();
-            updateState(row, state);
-            updateTime(row, time(NULL));
-            uuid = row[_record.colId];
-        }
-        else if (object->getType() == XenObject::VM_VERIFIER)
-        {
-            VirtualMachineVerifier& verifier = (VirtualMachineVerifier&)*object;
-            verifier.abort();
-            updateState(row, state);
-            updateTime(row, time(NULL));
-            uuid = row[_record.colId];
+            switch (object->getType())
+            {
+            case XenObject::VM_EXPORTER:
+            case XenObject::VM_IMPORTER:
+            case XenObject::VM_VERIFIER:
+            {
+                VirtualMachinePorter& porter = (VirtualMachinePorter&)*object;
+                porter.abort();
+                updateState(row, state);
+                updateTime(row, time(NULL));
+                uuid = row[_record.colId];
+                break;
+            }
+            default:
+                break;
+            }
         }
     }
     return uuid;
@@ -424,71 +419,34 @@ void VirtualMachineStatusWindow::ListView::update(Gtk::TreeModel::Row& row)
     switch (object->getType())
     {
     case XenObject::VM_EXPORTER:
-    {
-        VirtualMachineExporter& exporter = (VirtualMachineExporter&)*object;
-        RefPtr<VirtualMachine> vm = exporter.vm();
-        if (vm)
-        {
-            name = vm->getName();
-        }
-        if (path.empty())
-        {
-            const char* p = exporter.path();
-            if (p)
-            {
-                row[_record.colPath] = Glib::ustring(p);
-            }
-        }
-        state = exporter.state();
-        if (state == VirtualMachineOperationState::EXPORT_VERIFY_INPROGRESS ||
-            state == VirtualMachineOperationState::EXPORT_VERIFY_PENDING)
-        {
-            percent = exporter.percent();
-        }
-        else
-        {
-            size = exporter.nbytes();
-        }
-        break;
-    }
     case XenObject::VM_IMPORTER:
-    {
-        VirtualMachineImporter& importer = (VirtualMachineImporter&)*object;
-        RefPtr<VirtualMachine> vm = importer.vm();
-        if (vm)
-        {
-            name = vm->getName();
-        }
-        if (path.empty())
-        {
-            const char* p = importer.path();
-            if (p)
-            {
-                row[_record.colPath] = Glib::ustring(p);
-            }
-        }
-        if (!(int64_t)row[_record.colSize])
-        {
-            size = importer.size();
-        }
-        state = importer.state();
-        percent = importer.percent();
-        break;
-    }
     case XenObject::VM_VERIFIER:
     {
-        VirtualMachineVerifier& verifier = (VirtualMachineVerifier&)*object;
+        VirtualMachinePorter& porter = (VirtualMachinePorter&)*object;
+        RefPtr<VirtualMachine> vm = porter.vm();
+        if (vm)
+        {
+            name = vm->getName();
+        }
         if (path.empty())
         {
-            const char* p = verifier.path();
+            const char* p = porter.path();
             if (p)
             {
                 row[_record.colPath] = Glib::ustring(p);
             }
-            size = verifier.size();
         }
-        state = verifier.state();
-        percent = verifier.percent();
+        state = porter.state();
+        percent = porter.percent();
+        if (state == VirtualMachineOperationState::EXPORT_INPROGRESS ||
+            state == VirtualMachineOperationState::EXPORT_PENDING)
+        {
+            size = porter.nbytes();
+        }
+        else if (!(int64_t)row[_record.colSize])
+        {
+            size = porter.size();
+        }
         break;
     }
     default:

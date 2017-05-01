@@ -41,13 +41,13 @@ void VirtualMachineVerifier::run(const char* path)
 {
     TRACE("VirtualMachineVerifier::run", "path=\"%s\"", path);
 
-    open(path);
+    init(path);
 
     try
     {
         if (!_xva->open())
         {
-            throw StringBuffer().format("%s: %s", _xva->path(), strerror(_xva->error()));
+            throw StringBuffer().format("%s: %s", strerror(_xva->error()), _xva->path());
         }
 
         emit(XenObject::VERIFY_PENDING);
@@ -56,51 +56,42 @@ void VirtualMachineVerifier::run(const char* path)
 
         if (_xva->validate(_abort))
         {
-            Logger::instance().info("%s: %'zu bytes verified.", _xva->path(), _xva->nbytes());
+            Logger::instance().info("Verified %'zu bytes: %s", _xva->nbytes(), _xva->path());
             _state = VirtualMachineOperationState::VERIFY_SUCCESS;
             emit(XenObject::VERIFIED);
         }
         else if (_xva->error() == ECANCELED)
         {
-            Logger::instance().info("%s: Verify canceled.", _xva->path());
+            Logger::instance().info("Verify canceled: %s", _xva->path());
             _state = VirtualMachineOperationState::VERIFY_CANCELED;
             emit(XenObject::VERIFY_CANCELED);
         }
         else if (_xva->error() == EPROTO)
         {
-            throw StringBuffer().format("%s: Verify failed at %'zu bytes.", _xva->path(), _xva->nbytes());
+            throw StringBuffer().format("Stopped at %'zu: %s", _xva->nbytes(), _xva->path());
         }
         else
         {
-            throw StringBuffer().format("%s: %s", _xva->path(), strerror(_xva->error()));
+            throw StringBuffer().format("%s: %s", strerror(_xva->error()), _xva->path());
         }
     }
     catch (StringBuffer msg)
     {
-        Logger::instance().warn("VirtualMachineVerifier: %s", msg.str());
+        Logger::instance().warn("Verify failed: %s", msg.str());
         _state = VirtualMachineOperationState::VERIFY_FAILURE;
         emit(XenObject::VERIFY_FAILED);
     }
     catch (...)
     {
-        Logger::instance().warn("VirtualMachineVerifier: Unhandled exception caught.");
+        Logger::instance().warn("Unhandled exception caught.");
         _state = VirtualMachineOperationState::VERIFY_FAILURE;
         emit(XenObject::VERIFY_FAILED);
     }
-
-    close();
 }
 
 
-void VirtualMachineVerifier::open(const char* path)
+void VirtualMachineVerifier::init(const char* path)
 {
     Glib::Mutex::Lock lock(_mutex);
-    VirtualMachinePorter::open(path, "r", VirtualMachineOperationState::VERIFY_PENDING);
-}
-
-
-void VirtualMachineVerifier::close()
-{
-    Glib::Mutex::Lock lock(_mutex);
-    VirtualMachinePorter::close();
+    VirtualMachinePorter::init(path, "r", VirtualMachineOperationState::VERIFY_PENDING);
 }

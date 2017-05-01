@@ -34,8 +34,7 @@ namespace hnrt
         VirtualMachinePorter(XenObject::Type, Session&, const char*);
         VirtualMachinePorter(const VirtualMachinePorter&);
         void operator =(const VirtualMachinePorter&);
-        void open(const char*, const char*, VirtualMachineOperationState::Value);
-        void close();
+        void init(const char*, const char*, VirtualMachineOperationState::Value);
         void checkVm();
 
         Glib::ustring _taskId;
