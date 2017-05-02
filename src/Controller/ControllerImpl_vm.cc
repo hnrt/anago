@@ -423,13 +423,13 @@ void ControllerImpl::verifyVmInBackground(Glib::ustring path)
 
 void ControllerImpl::hardShutdownVm()
 {
-    //TODO: IMPLEMENT
+    controlVm(&VirtualMachine::shutdown, true);
 }
 
 
 void ControllerImpl::hardRebootVm()
 {
-    //TODO: IMPLEMENT
+    controlVm(&VirtualMachine::reboot, true);
 }
 
 
