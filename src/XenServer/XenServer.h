@@ -43,6 +43,7 @@ namespace hnrt
         static bool createHdd(xen_session*, xen_vm, int, const HardDiskDriveSpec&);
         static bool createCd(xen_session*, xen_vm, int, xen_vdi);
         static bool createNic(xen_session*, xen_vm, int, xen_network);
+        static bool attachHdd(xen_session*, xen_vm, const char*, xen_vdi);
 
 #define XenPtrFree(type) static void free(type* p) { if (p) type##_free(p); }
 

@@ -26,7 +26,7 @@ namespace hnrt
         };
 
         VirtualDiskImageListView();
-        void update(Session&, const xen_vdi_record_opt_set*, int = 0);
+        void update(const Session&, const xen_vdi_record_opt_set*, int = 0);
         Glib::ustring getSelected();
         Gtk::ScrolledWindow* createScrolledWindow();
 
@@ -85,7 +85,7 @@ namespace hnrt
         Record _record;
         Glib::RefPtr<Gtk::ListStore> _store;
         VirtualDiskImageMenu _menu;
-        Session* _pSession;
+        const Session* _pSession;
     };
 }
 

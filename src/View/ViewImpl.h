@@ -46,6 +46,7 @@ namespace hnrt
         virtual bool getExportVmPath(Glib::ustring&, bool&);
         virtual bool getImportVmPath(Glib::ustring&);
         virtual bool getVerifyVmPath(Glib::ustring&);
+        virtual bool getHddToAttach(const VirtualMachine&, Glib::ustring&, Glib::ustring&);
 
     private:
 

@@ -809,3 +809,29 @@ bool XenServer::createNic(xen_session* session, xen_vm vm, int device, xen_netwo
 
     return true;
 }
+
+
+bool XenServer::attachHdd(xen_session* session, xen_vm vm, const char* userdevice, xen_vdi vdi)
+{
+    xen_vm_record_opt vmRecordOpt = {0};
+    vmRecordOpt.u.handle = vm;
+    xen_vdi_record_opt vdiRecordOpt = {0};
+    vdiRecordOpt.u.handle = vdi;
+    xen_vbd_record vbdRecord = {0};
+    vbdRecord.vm = &vmRecordOpt;
+    vbdRecord.vdi = &vdiRecordOpt;
+    vbdRecord.userdevice = const_cast<char*>(userdevice);
+    vbdRecord.type = XEN_VBD_TYPE_DISK;
+    vbdRecord.mode = XEN_VBD_MODE_RW;
+    vbdRecord.bootable = userdevice && !strcmp(userdevice, "0") ? true : false;
+    vbdRecord.qos_algorithm_params = xen_string_string_map_alloc(0);
+    vbdRecord.other_config = xen_string_string_map_alloc(0);
+
+    XenRef<xen_vbd, xen_vbd_free_t> vbdRefid;
+    bool result = xen_vbd_create(session, &vbdRefid, &vbdRecord);
+
+    xen_string_string_map_free(vbdRecord.qos_algorithm_params);
+    xen_string_string_map_free(vbdRecord.other_config);
+
+    return result;
+}

@@ -13,6 +13,7 @@
 #include "XenServer/VirtualMachine.h"
 #include "AboutDialog.h"
 #include "AddVmDialog.h"
+#include "AttachHddDialog.h"
 #include "ChangeCdDialog.h"
 #include "ConnectDialog.h"
 #include "CopyVmDialog.h"
@@ -474,6 +475,23 @@ bool ViewImpl::getVerifyVmPath(Glib::ustring& path)
     if (response == Gtk::RESPONSE_OK)
     {
         path = dialog.getPath();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getHddToAttach(const VirtualMachine& vm, Glib::ustring& userdevice, Glib::ustring& vdi)
+{
+    AttachHddDialog dialog(_mainWindow, vm);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        userdevice = dialog.getUserDevice();
+        vdi = dialog.getVdi();
         return true;
     }
     else

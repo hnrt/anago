@@ -67,11 +67,14 @@ namespace hnrt
         virtual void deleteCifs();
         virtual void changeSrName();
         virtual void setDefaultSr();
+        virtual void addHddTo(StorageRepository&);
         virtual void openVmStatusWindow();
         virtual void changeSnapshotName();
         virtual void snapshotVm();
         virtual void revertVm();
         virtual void deleteSnapshot();
+        virtual void resizeVdi(VirtualDiskImage&);
+        virtual void removeVdi(VirtualDiskImage&);
         virtual void showAbout();
 
     private:
@@ -98,6 +101,7 @@ namespace hnrt
         void exportVmInBackground(RefPtr<VirtualMachine>, Glib::ustring, bool);
         void importVmInBackground(RefPtr<Host>, Glib::ustring);
         void verifyVmInBackground(Glib::ustring);
+        void attachHddInBackground(RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring);
 
         ThreadManager& _tm;
         bool _quitInProgress;

@@ -45,7 +45,7 @@ VirtualDiskImageListView::VirtualDiskImageListView()
 }
 
 
-void VirtualDiskImageListView::update(Session& session, const xen_vdi_record_opt_set* vdis, int flags)
+void VirtualDiskImageListView::update(const Session& session, const xen_vdi_record_opt_set* vdis, int flags)
 {
     _pSession = &session;
 

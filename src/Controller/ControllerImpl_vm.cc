@@ -23,6 +23,7 @@
 #include "XenServer/VirtualMachineImporter.h"
 #include "XenServer/VirtualMachineVerifier.h"
 #include "XenServer/XenObjectStore.h"
+#include "XenServer/XenServer.h"
 #include "ControllerImpl.h"
 
 
@@ -549,7 +550,27 @@ void ControllerImpl::changeVga()
 
 void ControllerImpl::attachHdd()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    Glib::ustring userdevice;
+    Glib::ustring vdi;
+    if (!View::instance().getHddToAttach(*vm, userdevice, vdi))
+    {
+        return;
+    }
+    _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::attachHddInBackground), vm, userdevice, vdi), false, "AttachHdd");
+}
+
+
+void ControllerImpl::attachHddInBackground(RefPtr<VirtualMachine> vm, Glib::ustring userdevice, Glib::ustring vdi)
+{
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    XenObject::Busy busy(vm);
+    XenServer::attachHdd(session, vm->getHandle(), userdevice.c_str(), (xen_vdi)(char*)vdi.c_str());
 }
 
 

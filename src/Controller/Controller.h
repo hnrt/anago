@@ -7,7 +7,9 @@
 
 namespace hnrt
 {
+    class StorageRepository;
     class VirtualBlockDevice;
+    class VirtualDiskImage;
 
     class Controller
     {
@@ -57,11 +59,14 @@ namespace hnrt
         virtual void deleteCifs() = 0;
         virtual void changeSrName() = 0;
         virtual void setDefaultSr() = 0;
+        virtual void addHddTo(StorageRepository&) = 0;
         virtual void openVmStatusWindow() = 0;
         virtual void changeSnapshotName() = 0;
         virtual void snapshotVm() = 0;
         virtual void revertVm() = 0;
         virtual void deleteSnapshot() = 0;
+        virtual void resizeVdi(VirtualDiskImage&) = 0;
+        virtual void removeVdi(VirtualDiskImage&) = 0;
         virtual void showAbout() = 0;
     };
 }
