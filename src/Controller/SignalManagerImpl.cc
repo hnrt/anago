@@ -85,7 +85,7 @@ SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(int notificati
     }
     else
     {
-        Logger::instance().error("signal notification=%d requested in thread %s.", notification, ThreadManager::instance().getName());
+        Logger::instance().error("signal notification=%s requested in thread %s.", GetNotificationText(notification), ThreadManager::instance().getName());
         throw std::runtime_error("SignalManagerImpl::xenObjectSignal invoked from a background thread.");
     }
 }
@@ -106,7 +106,7 @@ SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(const XenObjec
     }
     else
     {
-        Logger::instance().error("signal object=%zx requested in thread %s.", &object, ThreadManager::instance().getName());
+        Logger::instance().error("signal object=%s@%zx requested in thread %s.", GetXenObjectTypeText(object), &object, ThreadManager::instance().getName());
         throw std::runtime_error("SignalManagerImpl::xenObjectSignal invoked from a background thread.");
     }
 }
@@ -114,7 +114,7 @@ SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(const XenObjec
 
 void SignalManagerImpl::notify(const RefPtr<XenObject>& object, int notification)
 {
-    TRACE("SignalManagerImpl::notify", "object=%zx notification=%d", object.ptr(), notification);
+    TRACE("SignalManagerImpl::notify", "%s@%zx %s", GetXenObjectTypeText(*object), object.ptr(), GetNotificationText(notification));
     enqueue(object, notification);
     _dispatcher();
 }
@@ -127,7 +127,7 @@ void SignalManagerImpl::onNotify()
     int notification;
     if (dequeue(object, notification))
     {
-        TRACEPUT("object=%zx notification=%d", object.ptr(), notification);
+        TRACEPUT("%s@%zx %s", GetXenObjectTypeText(*object), object.ptr(), GetNotificationText(notification));
         {
             NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
             if (iter != _notificationXenObjectSignalMap.end())

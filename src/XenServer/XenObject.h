@@ -141,6 +141,9 @@ namespace hnrt
         Glib::ustring _displayStatus;
         volatile int _busyCount;
     };
+
+    const char* GetXenObjectTypeText(const XenObject&);
+    const char* GetNotificationText(int);
 }
 
 
