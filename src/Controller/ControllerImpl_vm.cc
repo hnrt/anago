@@ -570,7 +570,7 @@ void ControllerImpl::attachHddInBackground(RefPtr<VirtualMachine> vm, Glib::ustr
     Session& session = vm->getSession();
     Session::Lock lock(session);
     XenObject::Busy busy(vm);
-    XenServer::attachHdd(session, vm->getHandle(), userdevice.c_str(), (xen_vdi)(char*)vdi.c_str());
+    XenServer::attachHdd(session, vm->getHandle(), userdevice.c_str(), (xen_vdi)vdi.c_str());
 }
 
 

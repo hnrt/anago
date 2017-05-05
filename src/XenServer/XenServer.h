@@ -40,13 +40,14 @@ namespace hnrt
         static int match(const xen_string_string_map*, const char* key, const char* value1, const char* value2);
         static const char* getText(enum xen_vbd_type);
         static bool createVirtualMachine(xen_session*, const VirtualMachineSpec&, xen_vm*);
-        static bool createHdd(xen_session*, xen_vm, int, const HardDiskDriveSpec&);
-        static bool createCd(xen_session*, xen_vm, int, xen_vdi);
+        static bool createHdd(xen_session*, xen_vm, const char*, const HardDiskDriveSpec&);
+        static bool attachHdd(xen_session*, xen_vm, const char*, xen_vdi);
+        static bool createCd(xen_session*, xen_vm, const char*, xen_vdi);
+        static bool createNic(xen_session*, xen_vm, const char*, xen_network);
         static bool createVdi(xen_session*, const HardDiskDriveSpec&, xen_vdi*);
         static bool setVmHintToVdi(xen_session*, xen_vdi, xen_vm);
-        static bool createVbd(xen_session*, xen_vm, int, xen_vdi, enum xen_vbd_type, enum xen_vbd_mode, bool, xen_vbd*);
-        static bool createNic(xen_session*, xen_vm, int, xen_network);
-        static bool attachHdd(xen_session*, xen_vm, const char*, xen_vdi);
+        static bool createVbd(xen_session*, xen_vm, const char*, xen_vdi, enum xen_vbd_type, enum xen_vbd_mode, bool, xen_vbd*);
+        static bool createVif(xen_session*, xen_vm, const char*, xen_network, xen_vif*);
 
 #define XenPtrFree(type) static void free(type* p) { if (p) type##_free(p); }
 
