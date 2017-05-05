@@ -9,7 +9,9 @@
 #include "Logger/Trace.h"
 #include "Model/ConnectSpec.h"
 #include "Model/Model.h"
+#include "XenServer/HardDiskDriveSpec.h"
 #include "XenServer/PerformanceMonitor.h"
+#include "XenServer/Session.h"
 #include "XenServer/VirtualMachine.h"
 #include "AboutDialog.h"
 #include "AddVmDialog.h"
@@ -20,6 +22,7 @@
 #include "CpuDialog.h"
 #include "DeleteVmDialog.h"
 #include "ExportVmDialog.h"
+#include "HardDiskDriveSpecDialog.h"
 #include "ImportVmDialog.h"
 #include "MemoryDialog.h"
 #include "NameDialog.h"
@@ -492,6 +495,23 @@ bool ViewImpl::getHddToAttach(const VirtualMachine& vm, Glib::ustring& userdevic
     {
         userdevice = dialog.getUserDevice();
         vdi = dialog.getVdi();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getHddToCreate(const Session& session, HardDiskDriveSpec& spec)
+{
+    HardDiskDriveSpecDialog dialog(_mainWindow, session, Glib::ustring(gettext("Add hard disk drive to SR")));
+    dialog.setValue(spec);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        dialog.getValue(spec);
         return true;
     }
     else

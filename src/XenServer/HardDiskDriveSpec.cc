@@ -15,8 +15,10 @@ using namespace hnrt;
 HardDiskDriveSpec::HardDiskDriveSpec()
     : srREFID(NULLREFSTRING)
     , size(1024L * 1024L * 1024L)
-    , name(gettext("New hard disk drive"))
+    , label(gettext("New hard disk drive"))
     , description(gettext("Created by Anago"))
+    , sharable(false)
+    , readonly(false)
 {
 }
 
@@ -24,9 +26,22 @@ HardDiskDriveSpec::HardDiskDriveSpec()
 HardDiskDriveSpec::HardDiskDriveSpec(const HardDiskDriveSpec& src)
     : srREFID(src.srREFID)
     , size(src.size)
-    , name(src.name)
+    , label(src.label)
     , description(src.description)
+    , sharable(src.sharable)
+    , readonly(src.readonly)
 {
+}
+
+
+void HardDiskDriveSpec::operator =(const HardDiskDriveSpec& src)
+{
+    srREFID = src.srREFID;
+    size = src.size;
+    label = src.label;
+    description = src.description;
+    sharable = src.sharable;
+    readonly = src.readonly;
 }
 
 

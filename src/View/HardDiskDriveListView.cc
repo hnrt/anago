@@ -21,7 +21,7 @@ HardDiskDriveListView::HardDiskDriveListView(const Session& session)
     set_model(_store);
     append_column(gettext("Storage repository"), _record.colSr);
     append_column(gettext("Size"), _record.colSize);
-    append_column(gettext("Name"), _record.colName);
+    append_column(gettext("Label"), _record.colLabel);
     append_column(gettext("Description"), _record.colDesc);
     get_column(0)->set_resizable(true);
     get_column(0)->set_reorderable(false);
@@ -106,7 +106,7 @@ void HardDiskDriveListView::setValue(Gtk::TreeIter& iter, const HardDiskDriveSpe
     Gtk::TreeModel::Row row = *iter;
     row[_record.colSr] = spec.getSrName(_session);
     row[_record.colSize] = FormatSize(spec.size);
-    row[_record.colName] = spec.name;
+    row[_record.colLabel] = spec.label;
     row[_record.colDesc] = spec.description;
     row[_record.colSpec] = spec;
     _sigChanged.emit();
@@ -168,7 +168,7 @@ HardDiskDriveListView::Record::Record()
 {
     add(colSr);
     add(colSize);
-    add(colName);
+    add(colLabel);
     add(colDesc);
     add(colSpec);
 }

@@ -611,87 +611,82 @@ bool XenServer::createVirtualMachine(xen_session* session, const VirtualMachineS
 
 bool XenServer::createHdd(xen_session* session, xen_vm vm, int device, const HardDiskDriveSpec& spec)
 {
-    Trace trace("XenServer::createHdd", "vm=%s device=%d", (char*)vm, device);
+    Trace trace("XenServer::createHdd");
 
-    StringBuffer label;
-    if (spec.name.empty())
+    XenRef<xen_vdi, xen_vdi_free_t> vdi;
+    if (!createVdi(session, spec, &vdi))
     {
-        label.format(gettext("Hard disk drive %d"), device);
-    }
-    else
-    {
-        label.assign(spec.name.data());
+        return false;
     }
 
-    StringBuffer description;
-    if (spec.description.empty())
+    XenRef<xen_vbd, xen_vbd_free_t> vbd;
+    if (!createVbd(session, vm, device, vdi, XEN_VBD_TYPE_DISK, XEN_VBD_MODE_RW, true, &vbd))
     {
-        description.assign(gettext("Created by Anago"));
+        return false;
     }
-    else
+
+    if (!setVmHintToVdi(session, vdi, vm))
     {
-        description.assign(spec.description.data());
+        return false;
     }
+
+    return true;
+}
+
+
+bool XenServer::createCd(xen_session* session, xen_vm vm, int device, xen_vdi vdi)
+{
+    XenRef<xen_vbd, xen_vbd_free_t> vbd;
+    return createVbd(session, vm, device, vdi, XEN_VBD_TYPE_CD, XEN_VBD_MODE_RO, true, &vbd);
+}
+
+
+bool XenServer::createVdi(xen_session* session, const HardDiskDriveSpec& spec, xen_vdi* vdiReturn)
+{
+    Trace trace("XenServer::createVdi");
 
     xen_sr_record_opt srRecordOpt = {0};
-    srRecordOpt.u.handle = (xen_sr)spec.srREFID.data();
+    srRecordOpt.u.handle = (xen_sr)spec.srREFID.c_str();
 
     xen_vdi_record vdiRecord = {0};
-    vdiRecord.name_label = label.ptr();
-    vdiRecord.name_description = description.ptr();
+    vdiRecord.name_label = const_cast<char*>(spec.label.c_str());
+    vdiRecord.name_description = const_cast<char*>(spec.description.c_str());
     vdiRecord.sr = &srRecordOpt;
     vdiRecord.virtual_size = spec.size;
     vdiRecord.type = XEN_VDI_TYPE_SYSTEM;
-    vdiRecord.sharable = false;
-    vdiRecord.read_only = false;
+    vdiRecord.sharable = spec.sharable;
+    vdiRecord.read_only = spec.readonly;
     vdiRecord.other_config = xen_string_string_map_alloc(0);
 
-    trace.put("xen_vdi_create(%zu)", spec.size);
+    trace.put("xen_vdi_create(sr=%s size=%'zu label=\"%s\" desc=\"%s\" sharable=%s readonly=%s)",
+              spec.srREFID.c_str(),
+              spec.size,
+              spec.label.c_str(),
+              spec.description.c_str(),
+              spec.sharable ? "true" : "false",
+              spec.readonly ? "true" : "false");
 
-    XenRef<xen_vdi, xen_vdi_free_t> vdi;
-    bool result = xen_vdi_create(session, &vdi, &vdiRecord);
+    bool result = xen_vdi_create(session, vdiReturn, &vdiRecord);
+    if (result)
+    {
+        trace.put("vdi=%s", (char*)*vdiReturn);
+    }
+    else
+    {
+        Logger::instance().error("%s: VDI create failed. sr=%s size=%'zu", trace.name().c_str(), spec.srREFID.c_str(), spec.size);
+    }
 
     xen_string_string_map_free(vdiRecord.other_config);
 
-    if (!result)
-    {
-        Logger::instance().error("%s: VDI create failed.", trace.name().data());
-        return false;
-    }
+    return result;
+}
 
-    StringBuffer userdevice;
 
-    xen_vm_record_opt vmRecordOpt = {0};
-    vmRecordOpt.u.handle = vm;
+bool XenServer::setVmHintToVdi(xen_session* session, xen_vdi vdi, xen_vm vm)
+{
+    Trace trace("XenServer::setVmHintToVdi");
 
-    xen_vdi_record_opt vdiRecordOpt = {0};
-    vdiRecordOpt.u.handle = vdi;
-
-    xen_vbd_record vbdRecord = {0};
-    vbdRecord.vm = &vmRecordOpt;
-    vbdRecord.vdi = &vdiRecordOpt;
-    vbdRecord.userdevice = userdevice.format("%d", device).ptr();
-    vbdRecord.type = XEN_VBD_TYPE_DISK;
-    vbdRecord.mode = XEN_VBD_MODE_RW;
-    vbdRecord.bootable = true;
-    vbdRecord.qos_algorithm_params = xen_string_string_map_alloc(0);
-    vbdRecord.other_config = xen_string_string_map_alloc(0);
-
-    trace.put("xen_vbd_create");
-
-    XenRef<xen_vbd, xen_vbd_free_t> vbd;
-    result = xen_vbd_create(session, &vbd, &vbdRecord);
-
-    xen_string_string_map_free(vbdRecord.qos_algorithm_params);
-    xen_string_string_map_free(vbdRecord.other_config);
-
-    if (!result)
-    {
-        Logger::instance().error("%s: VBD create failed.", trace.name().data());
-        return false;
-    }
-
-    trace.put("xen_vm_get_uuid", spec.size);
+    trace.put("xen_vm_get_uuid");
 
     char* tmp = NULL;
     if (!xen_vm_get_uuid(session, &tmp, vm))
@@ -725,9 +720,9 @@ bool XenServer::createHdd(xen_session* session, xen_vm vm, int device, const Har
 }
 
 
-bool XenServer::createCd(xen_session* session, xen_vm vm, int device, xen_vdi vdi)
+bool XenServer::createVbd(xen_session* session, xen_vm vm, int device, xen_vdi vdi, enum xen_vbd_type type, enum xen_vbd_mode mode, bool bootable, xen_vbd* vbdReturn)
 {
-    Trace trace("XenServer::createCd", "vm=%s device=%d vdi=%s", (char*)vm, device, (char*)vdi);
+    Trace trace("XenServer::createVbd");
 
     StringBuffer userdevice;
     userdevice.format("%d", device);
@@ -742,24 +737,36 @@ bool XenServer::createCd(xen_session* session, xen_vm vm, int device, xen_vdi vd
     vbdRecord.vm = &vmRecordOpt;
     vbdRecord.vdi = IS_NULLREF(vdi) ? NULL : &vdiRecordOpt;
     vbdRecord.userdevice = userdevice.ptr();
-    vbdRecord.type = XEN_VBD_TYPE_CD;
-    vbdRecord.mode = XEN_VBD_MODE_RO;
-    vbdRecord.bootable = true;
+    vbdRecord.type = type;
+    vbdRecord.mode = mode;
+    vbdRecord.bootable = bootable;
     vbdRecord.empty = IS_NULLREF(vdi) ? true : false;
     vbdRecord.qos_algorithm_params = xen_string_string_map_alloc(0);
     vbdRecord.other_config = xen_string_string_map_alloc(0);
 
-    trace.put("xen_vbd_create");
+    trace.put("xen_vbd_create(vm=%s device=%d vdi=%s type=%s mode=%s bootable=%s)",
+              (char*)vm,
+              device,
+              (char*)vdi,
+              xen_vbd_type_to_string(type),
+              xen_vbd_mode_to_string(mode),
+              bootable ? "true" : "false");
 
-    XenRef<xen_vbd, xen_vbd_free_t> vbd;
-    bool result = xen_vbd_create(session, &vbd, &vbdRecord);
+    bool result = xen_vbd_create(session, vbdReturn, &vbdRecord);
 
     xen_string_string_map_free(vbdRecord.qos_algorithm_params);
     xen_string_string_map_free(vbdRecord.other_config);
 
     if (!result)
     {
-        Logger::instance().error("%s: VBD (CD device) create failed.", trace.name().data());
+        Logger::instance().error("%s: VBD create failed. vm=%s device=%d vdi=%s type=%s mode=%s bootable=%s",
+                                 trace.name().data(),
+                                 (char*)vm,
+                                 device,
+                                 (char*)vdi,
+                                 xen_vbd_type_to_string(type),
+                                 xen_vbd_mode_to_string(mode),
+                                 bootable ? "true" : "false");
         return false;
     }
 

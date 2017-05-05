@@ -121,7 +121,7 @@ void AddVmDialog::onTemplateChanged()
     HardDiskDriveSpec hddSpec;
     hddSpec.size = XenServer::getDiskSizeHint(vm->getRecord());
     hddSpec.srREFID = _session.getStore().getSrCandidate(hddSpec.size, XenServer::getDefaultSr(_session));
-    hddSpec.name = gettext("Hard disk drive 0");
+    hddSpec.label = gettext("Hard disk drive 0");
     hddSpec.description = gettext("Created by Anago");
     _hddBox.listView().addValue(hddSpec);
 

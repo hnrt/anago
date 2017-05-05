@@ -1,6 +1,11 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "XenServer/HardDiskDriveSpec.h"
+#include "XenServer/Session.h"
+#include "XenServer/StorageRepository.h"
+#include "Thread/ThreadManager.h"
+#include "View/View.h"
 #include "ControllerImpl.h"
 
 
@@ -33,8 +38,6 @@ void ControllerImpl::setDefaultSr()
 
 void ControllerImpl::addHddTo(StorageRepository& sr)
 {
-    //TODO: IMPLEMENT
-#if 0
     HardDiskDriveSpec spec;
     spec.srREFID = sr.getREFID();
     Session& session = sr.getSession();
@@ -42,16 +45,14 @@ void ControllerImpl::addHddTo(StorageRepository& sr)
     {
         return;
     }
-    _tm.create(sigc::bind<RefPtr<StorageRepository>, HardDiskDriveSpec>(sigc::mem_fun(*this, &ControllerImpl::addHddInBackground), RefPtr<StrorageRepository>(&sr, 1), spec), false, "AddHdd");
-#endif
+    _tm.create(sigc::bind<RefPtr<StorageRepository>, HardDiskDriveSpec>(sigc::mem_fun(*this, &ControllerImpl::addHddInBackground), RefPtr<StorageRepository>(&sr, 1), spec), false, "AddHdd");
 }
 
 
-#if 0
 void ControllerImpl::addHddInBackground(RefPtr<StorageRepository> sr, HardDiskDriveSpec spec)
 {
     Session& session = sr->getSession();
     Session::Lock lock(session);
-    XenServer::createHdd(session, spec);
+    XenRef<xen_vdi, xen_vdi_free_t> vdi;
+    XenServer::createVdi(session, spec, &vdi);
 }
-#endif

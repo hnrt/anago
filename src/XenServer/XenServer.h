@@ -5,7 +5,7 @@
 #define HNRT_XENSERVER_H
 
 
-#include <glibmm.h>
+#include <glibmm/ustring.h>
 #include <vector>
 #include "XenServer/Api.h"
 
@@ -42,6 +42,9 @@ namespace hnrt
         static bool createVirtualMachine(xen_session*, const VirtualMachineSpec&, xen_vm*);
         static bool createHdd(xen_session*, xen_vm, int, const HardDiskDriveSpec&);
         static bool createCd(xen_session*, xen_vm, int, xen_vdi);
+        static bool createVdi(xen_session*, const HardDiskDriveSpec&, xen_vdi*);
+        static bool setVmHintToVdi(xen_session*, xen_vdi, xen_vm);
+        static bool createVbd(xen_session*, xen_vm, int, xen_vdi, enum xen_vbd_type, enum xen_vbd_mode, bool, xen_vbd*);
         static bool createNic(xen_session*, xen_vm, int, xen_network);
         static bool attachHdd(xen_session*, xen_vm, const char*, xen_vdi);
 

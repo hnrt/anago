@@ -33,8 +33,8 @@ namespace hnrt
         StorageRepositoryComboBox _srComboBox;
         Gtk::Label _sizeLabel;
         SizeInBytesBox _sizeBox;
-        Gtk::Label _nameLabel;
-        Gtk::Entry _nameEntry;
+        Gtk::Label _labelLabel;
+        Gtk::Entry _labelEntry;
         Gtk::Label _descLabel;
         Gtk::Entry _descEntry;
     };

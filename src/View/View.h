@@ -15,6 +15,7 @@ namespace hnrt
     class VirtualMachine;
     class VirtualMachineSpec;
     struct ConnectSpec;
+    struct HardDiskDriveSpec;
 
     class View
     {
@@ -53,6 +54,7 @@ namespace hnrt
         virtual bool getImportVmPath(Glib::ustring&) = 0;
         virtual bool getVerifyVmPath(Glib::ustring&) = 0;
         virtual bool getHddToAttach(const VirtualMachine&, Glib::ustring&, Glib::ustring&) = 0;
+        virtual bool getHddToCreate(const Session&, HardDiskDriveSpec&) = 0;
     };
 }
 

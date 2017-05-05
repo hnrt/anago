@@ -8,6 +8,7 @@
 #include <sigc++/sigc++.h>
 #include "Base/RefPtr.h"
 #include "XenServer/VirtualMachineSpec.h"
+#include "XenServer/HardDiskDriveSpec.h"
 #include "Controller.h"
 
 
@@ -15,6 +16,7 @@ namespace hnrt
 {
     class Host;
     class PerformanceMonitor;
+    class StorageRepository;
     class ThreadManager;
     class VirtualMachine;
     class XenObject;
@@ -102,6 +104,7 @@ namespace hnrt
         void importVmInBackground(RefPtr<Host>, Glib::ustring);
         void verifyVmInBackground(Glib::ustring);
         void attachHddInBackground(RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring);
+        void addHddInBackground(RefPtr<StorageRepository>, HardDiskDriveSpec);
 
         ThreadManager& _tm;
         bool _quitInProgress;

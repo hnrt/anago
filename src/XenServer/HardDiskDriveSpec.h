@@ -17,12 +17,15 @@ namespace hnrt
     {
         Glib::ustring srREFID;
         int64_t size;
-        Glib::ustring name;
+        Glib::ustring label;
         Glib::ustring description;
+        bool sharable;
+        bool readonly;
 
         HardDiskDriveSpec();
-        HardDiskDriveSpec(const HardDiskDriveSpec& other);
-        Glib::ustring getSrName(const Session& session) const;
+        HardDiskDriveSpec(const HardDiskDriveSpec&);
+        void operator =(const HardDiskDriveSpec&);
+        Glib::ustring getSrName(const Session&) const;
     };
 }
 

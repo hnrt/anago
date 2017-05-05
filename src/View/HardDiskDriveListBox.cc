@@ -84,7 +84,7 @@ void HardDiskDriveListBox::onAdd()
     HardDiskDriveSpec spec;
     spec.srREFID = XenServer::getDefaultSr(_session);
     spec.size = 1024L * 1024L * 1024L;
-    spec.name = StringBuffer().format(gettext("Hard disk drive %d"), _listView.getCount());
+    spec.label = StringBuffer().format(gettext("Hard disk drive %d"), _listView.getCount());
     spec.description = gettext("Created by Anago");
     dialog.setValue(spec);
     int response = dialog.run();
@@ -122,7 +122,7 @@ void HardDiskDriveListBox::onRemove()
     Gtk::MessageDialog dialog(_parent,
                               Glib::ustring::compose(
                                   gettext("Are you sure to remove the hard disk drive \"%1\"?"),
-                                  spec.name),
+                                  spec.label),
                               false,
                               Gtk::MESSAGE_WARNING,
                               Gtk::BUTTONS_YES_NO,

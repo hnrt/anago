@@ -36,7 +36,7 @@ namespace hnrt
         {
             Gtk::TreeModelColumn<Glib::ustring> colSr;
             Gtk::TreeModelColumn<Glib::ustring> colSize;
-            Gtk::TreeModelColumn<Glib::ustring> colName;
+            Gtk::TreeModelColumn<Glib::ustring> colLabel;
             Gtk::TreeModelColumn<Glib::ustring> colDesc;
             Gtk::TreeModelColumn<HardDiskDriveSpec> colSpec;
 
