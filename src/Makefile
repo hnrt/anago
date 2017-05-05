@@ -293,6 +293,7 @@ clean::
 
 ######################################################################
 
+##### dependency begin #####
 $(OBJDIR)/App/Main.o: App/Main.cc App/Constants.h Base/RefPtr.h Controller/Controller.h Env/Env.h Env/Locale.h Logger/LogLevel.h Logger/Logger.h Model/Model.h Net/PingAgent.h Thread/ThreadManager.h View/View.h XenServer/Api.h 
 $(OBJDIR)/Base/RefObj.o: Base/RefObj.cc Base/Atomic.h Base/RefObj.h Logger/LogLevel.h Logger/Logger.h 
 $(OBJDIR)/Base/StringBuffer.o: Base/StringBuffer.cc Base/StringBuffer.h 
@@ -441,3 +442,4 @@ $(OBJDIR)/XenServer/XenObjectStore.o: XenServer/XenObjectStore.cc Base/RefObj.h 
 $(OBJDIR)/XenServer/XenObjectTypeMap.o: XenServer/XenObjectTypeMap.cc Base/RefObj.h Base/RefPtr.h XenServer/Api.h XenServer/Constants.h XenServer/XenObject.h XenServer/XenObjectTypeMap.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/XenServer/XenServer.o: XenServer/XenServer.cc Base/RefObj.h Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Util/Util.h XenServer/Api.h XenServer/Constants.h XenServer/HardDiskDriveSpec.h XenServer/Macros.h XenServer/VirtualMachineSpec.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/XenServer/XenTask.o: XenServer/XenTask.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h Util/Util.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h XenServer/XenTask.h 
+##### dependency end #####
