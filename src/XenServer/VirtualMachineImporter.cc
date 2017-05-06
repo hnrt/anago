@@ -78,7 +78,7 @@ void VirtualMachineImporter::run(const char* path)
 {
     TRACE("VirtualMachineImporter::run", "path=\"%s\"", path);
 
-    XenObject::Busy busy(&_session);
+    XenObject::Busy busy(_session);
 
     init(path);
 

@@ -567,10 +567,13 @@ void ControllerImpl::attachHdd()
 
 void ControllerImpl::attachHddInBackground(RefPtr<VirtualMachine> vm, Glib::ustring userdevice, Glib::ustring vdi)
 {
+    XenObject::Busy busy(*vm);
     Session& session = vm->getSession();
     Session::Lock lock(session);
-    XenObject::Busy busy(vm);
-    XenServer::attachHdd(session, vm->getHandle(), userdevice.c_str(), (xen_vdi)vdi.c_str());
+    if (!XenServer::attachHdd(session, vm->getHandle(), userdevice.c_str(), (xen_vdi)vdi.c_str()))
+    {
+        session.emit(XenObject::ERROR);
+    }
 }
 
 

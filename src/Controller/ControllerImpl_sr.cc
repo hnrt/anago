@@ -52,7 +52,11 @@ void ControllerImpl::addHddTo(StorageRepository& sr)
 void ControllerImpl::addHddInBackground(RefPtr<StorageRepository> sr, HardDiskDriveSpec spec)
 {
     Session& session = sr->getSession();
+    XenObject::Busy busy(session);
     Session::Lock lock(session);
     XenRef<xen_vdi, xen_vdi_free_t> vdi;
-    XenServer::createVdi(session, spec, &vdi);
+    if (!XenServer::createVdi(session, spec, &vdi))
+    {
+        session.emit(XenObject::ERROR);
+    }
 }

@@ -117,12 +117,12 @@ namespace hnrt
         class Busy
         {
         public:
-            Busy(XenObject* pThis) : _pThis(pThis) { _pThis->setBusy(true); }
-            ~Busy() { _pThis->setBusy(false); }
+            Busy(XenObject& object) : _object(object) { _object.setBusy(true); }
+            ~Busy() { _object.setBusy(false); }
         private:
             Busy(const Busy&);
             void operator =(const Busy&);
-            XenObject* _pThis;
+            XenObject& _object;
         };
 
     protected:

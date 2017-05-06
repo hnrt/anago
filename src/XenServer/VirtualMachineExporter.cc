@@ -49,7 +49,7 @@ void VirtualMachineExporter::run(const char* path, bool verify)
 {
     TRACE(StringBuffer().format("VirtualMachineExporter::run(%s)", _vm->getName().c_str()), "path=\"%s\" verify=%d", path, verify);
 
-    XenObject::Busy busy(&_session);
+    XenObject::Busy busy(_session);
 
     init(path, verify);
 
