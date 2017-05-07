@@ -8,7 +8,6 @@
 #include "CpuGraph.h"
 #include "InputOutputGraph.h"
 #include "MemoryGraph.h"
-//#include "NameValueListViewSw.h"
 #include "Notebook.h"
 #include "SnapshotView.h"
 #include "VirtualMachinePropertyView.h"

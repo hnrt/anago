@@ -22,6 +22,7 @@ namespace hnrt
         SnapshotTreeView();
         void clear();
         void set(const RefPtr<VirtualMachine>&);
+        RefPtr<VirtualMachine> getSelected();
 
     protected:
 

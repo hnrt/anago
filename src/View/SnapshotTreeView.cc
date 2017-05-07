@@ -186,21 +186,29 @@ bool SnapshotTreeView::on_button_press_event(GdkEventButton* event)
 
     if ((event->type == GDK_BUTTON_PRESS) && (event->button == 3))
     {
-        Glib::RefPtr<Gtk::TreeSelection> selection = get_selection();
-        Gtk::TreeIter iter = selection->get_selected();
-        if (iter)
+        RefPtr<VirtualMachine> vm = getSelected();
+        if (vm)
         {
-            Gtk::TreeModel::Row row = *iter;
-            Glib::ustring refid = row[_record.colREFID];
-            RefPtr<VirtualMachine> vm = _vm->getSession().getStore().getVm(refid);
-            if (vm)
-            {
-                _menu.popup(event->button, event->time, vm);
-                // The event has been handled.
-                return true;
-            }
+            _menu.popup(event->button, event->time, vm);
+            // The event has been handled.
+            return true;
         }
     }
 
     return retval;
+}
+
+
+RefPtr<VirtualMachine> SnapshotTreeView::getSelected()
+{
+    RefPtr<VirtualMachine> vm;
+    Glib::RefPtr<Gtk::TreeSelection> selection = get_selection();
+    Gtk::TreeIter iter = selection->get_selected();
+    if (iter)
+    {
+        Gtk::TreeModel::Row row = *iter;
+        Glib::ustring refid = row[_record.colREFID];
+        vm = _vm->getSession().getStore().getVm(refid);
+    }
+    return vm;
 }

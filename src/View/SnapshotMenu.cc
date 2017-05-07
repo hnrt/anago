@@ -57,12 +57,10 @@ void SnapshotMenu::popup(guint button, guint32 activateTime, const RefPtr<Virtua
 void SnapshotMenu::onDeactivate()
 {
     // This is called right after the closure of the popup window.
-    Model::instance().deselectSnapshot();
 }
 
 
 void SnapshotMenu::onSelectionDone()
 {
     // This is called after all the things are done.
-    Model::instance().deselectSnapshot();
 }
