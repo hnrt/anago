@@ -319,6 +319,13 @@ void ModelImpl::deselectSnapshot()
 }
 
 
+RefPtr<VirtualMachine> ModelImpl::getSelectedSnapshot()
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    return _selectedSnapshot;
+}
+
+
 RefPtr<PatchBase> ModelImpl::getPatchBase()
 {
     return _patchBase;

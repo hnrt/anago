@@ -636,13 +636,44 @@ void ControllerImpl::attachNicInBackground(RefPtr<VirtualMachine> vm, Glib::ustr
 
 void ControllerImpl::changeSnapshotName()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedSnapshot();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    XenPtr<xen_vm_record> record = vm->getRecord();
+    Glib::ustring label(record->name_label);
+    Glib::ustring description(record->name_description);
+    if (!View::instance().getName(gettext("Change VM Snapshot label/description"), label, description))
+    {
+        return;
+    }
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    vm->setName(label.c_str(), description.c_str());
 }
 
 
 void ControllerImpl::snapshotVm()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    _tm.create(sigc::bind<RefPtr<VirtualMachine> >(sigc::mem_fun(*this, &ControllerImpl::snapshotVmInBackground), vm), false, "SnapshotVm");
+}
+
+
+void ControllerImpl::snapshotVmInBackground(RefPtr<VirtualMachine> vm)
+{
+    XenObject::Busy busy(*vm);
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    if (!XenServer::createSnapshot(session, vm->getHandle()))
+    {
+        session.emit(XenObject::ERROR);
+    }
 }
 
 

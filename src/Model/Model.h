@@ -48,6 +48,7 @@ namespace hnrt
 
         virtual void selectSnapshot(const RefPtr<VirtualMachine>&) = 0;
         virtual void deselectSnapshot() = 0;
+        virtual RefPtr<VirtualMachine> getSelectedSnapshot() = 0;
 
         virtual RefPtr<PatchBase> getPatchBase() = 0;
 

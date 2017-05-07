@@ -859,3 +859,59 @@ bool XenServer::createVif(xen_session* session, xen_vm vm, const char* device, x
 
     return result;
 }
+
+
+bool XenServer::createSnapshot(xen_session* session, xen_vm vm)
+{
+    XenPtr<xen_vm_record> record;
+    if (!xen_vm_get_record(session, record.address(), vm))
+    {
+        return false;
+    }
+
+    StringBuffer basename;
+    basename = record->name_label;
+
+    time_t currentTime = time(NULL);
+    struct tm localTime = { 0 };
+    localtime_r(&currentTime, &localTime);
+    StringBuffer name;
+    name.format("%s_snapshot_%04d%02d%02d_%02d%02d%02d",
+                basename.str(),
+                localTime.tm_year + 1900, localTime.tm_mon + 1, localTime.tm_mday, localTime.tm_hour, localTime.tm_min, localTime.tm_sec);
+
+    XenRef<xen_vm, xen_vm_free_t> result;
+    if (record->power_state == XEN_VM_POWER_STATE_HALTED)
+    {
+        if (!xen_vm_snapshot(session, &result, vm, name.ptr()))
+        {
+            return false;
+        }
+    }
+    else if (!xen_vm_snapshot_with_quiesce(session, &result, vm, name.ptr()))
+    {
+        if (!xen_vm_snapshot(session, &result, vm, name.ptr()))
+        {
+            return false;
+        }
+    }
+
+    if (!xen_vm_get_record(session, record.address(), result))
+    {
+        xen_session_clear_error(session);
+        return true;
+    }
+
+    time_t snapshotTime = record->snapshot_time - timezone;
+    localtime_r(&snapshotTime, &localTime);
+    name.format("%s_snapshot_%04d%02d%02d_%02d%02d%02d",
+                basename.str(),
+                localTime.tm_year + 1900, localTime.tm_mon + 1, localTime.tm_mday, localTime.tm_hour, localTime.tm_min, localTime.tm_sec);
+    if (!xen_vm_set_name_label(session, result, name.ptr()))
+    {
+        xen_session_clear_error(session);
+        return true;
+    }
+
+    return true;
+}

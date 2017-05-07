@@ -312,6 +312,15 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
         {
             session.clearError();
         }
+        // To update snapshots...
+        std::list<RefPtr<VirtualMachine> > vmList;
+        if (session.getStore().getList(vmList))
+        {
+            for (std::list<RefPtr<VirtualMachine> >::iterator iter = vmList.begin(); iter != vmList.end(); iter++)
+            {
+                (*iter)->emit(XenObject::SNAPSHOT_UPDATED);
+            }
+        }
     }
     session.setMonitoring(true);
     Glib::Thread* pThead = _tm.create(sigc::bind<RefPtr<PerformanceMonitor> >(sigc::mem_fun(*this, &ControllerImpl::performanceMonitorInBackground), performanceMonitor), true, "PerformanceMonitor");

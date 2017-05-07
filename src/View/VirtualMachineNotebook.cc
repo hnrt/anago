@@ -243,11 +243,14 @@ void VirtualMachineNotebook::onUpdated(RefPtr<XenObject> object, int what)
     switch (what)
     {
     case XenObject::POWER_STATE_UPDATED:
-    case XenObject::RECORD_UPDATED:
     case XenObject::NAME_UPDATED:
     case XenObject::STATUS_UPDATED:
     case XenObject::SESSION_UPDATED:
         update();
+        break;
+    case XenObject::RECORD_UPDATED:
+        update();
+        updateSnapshots();
         break;
     case XenObject::SNAPSHOT_UPDATED:
         updateSnapshots();

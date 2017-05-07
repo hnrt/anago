@@ -49,6 +49,7 @@ namespace hnrt
         static bool setVmHintToVdi(xen_session*, xen_vdi, xen_vm);
         static bool createVbd(xen_session*, xen_vm, const char*, xen_vdi, enum xen_vbd_type, enum xen_vbd_mode, bool, xen_vbd*);
         static bool createVif(xen_session*, xen_vm, const char*, xen_network, xen_vif*);
+        static bool createSnapshot(xen_session*, xen_vm);
 
 #define XenPtrFree(type) static void free(type* p) { if (p) type##_free(p); }
 

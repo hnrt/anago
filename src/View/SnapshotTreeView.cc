@@ -65,13 +65,17 @@ void SnapshotTreeView::set(const RefPtr<VirtualMachine>& vm)
 
 void SnapshotTreeView::add(const RefPtr<VirtualMachine>& vm)
 {
+    Gtk::TreeIter iter = find(vm->getREFID(), _store->get_iter("0"));
+    if (iter)
+    {
+        return;
+    }
     XenPtr<xen_vm_record> record = vm->getRecord();
     RefPtr<VirtualMachine> parent = vm->getSession().getStore().getVm(record->parent);
     if (parent)
     {
         add(parent);
-        Glib::ustring refid = parent->getREFID();
-        Gtk::TreeIter iter = find(refid, _store->get_iter("0"));
+        iter = find(parent->getREFID(), _store->get_iter("0"));
         if (iter)
         {
             Gtk::TreeIter iter2 = findPositionOfInsertion(vm, iter->children().begin());
@@ -89,7 +93,7 @@ void SnapshotTreeView::add(const RefPtr<VirtualMachine>& vm)
     }
     else
     {
-        Gtk::TreeIter iter = findPositionOfInsertion(vm, _store->get_iter("0"));
+        iter = findPositionOfInsertion(vm, _store->get_iter("0"));
         if (iter)
         {
             iter = _store->insert(iter);
