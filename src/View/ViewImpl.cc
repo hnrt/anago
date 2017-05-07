@@ -15,6 +15,7 @@
 #include "XenServer/VirtualMachine.h"
 #include "AboutDialog.h"
 #include "AddVmDialog.h"
+#include "AttachCdDialog.h"
 #include "AttachHddDialog.h"
 #include "ChangeCdDialog.h"
 #include "ConnectDialog.h"
@@ -368,6 +369,7 @@ bool ViewImpl::getVgaSettings(bool& stdVga, int& ram)
 bool ViewImpl::selectCd(const VirtualMachine& vm, Glib::ustring& device, Glib::ustring& disc)
 {
     ChangeCdDialog dialog(_mainWindow, vm);
+    dialog.select(device);
     int response = dialog.run();
     if (response == Gtk::RESPONSE_APPLY)
     {
@@ -496,6 +498,22 @@ bool ViewImpl::getHddToAttach(const VirtualMachine& vm, Glib::ustring& userdevic
     {
         userdevice = dialog.getUserDevice();
         vdi = dialog.getVdi();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getCdToAttach(const VirtualMachine& vm, Glib::ustring& userdevice)
+{
+    AttachCdDialog dialog(_mainWindow, vm);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        userdevice = dialog.getUserdevice();
         return true;
     }
     else

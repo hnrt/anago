@@ -50,9 +50,9 @@ ChangeCdDialog::ChangeCdDialog(Gtk::Window& parent, const VirtualMachine& vm)
 }
 
 
-void ChangeCdDialog::select(const VirtualBlockDevice& vbd)
+void ChangeCdDialog::select(const Glib::ustring& refid)
 {
-    _devCombo.select(vbd.getREFID());
+    _devCombo.select(refid);
 }
 
 

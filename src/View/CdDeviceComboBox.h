@@ -18,7 +18,7 @@ namespace hnrt
     public:
 
         CdDeviceComboBox(const VirtualMachine&);
-        void select(const Glib::ustring& refid);
+        void select(const Glib::ustring&);
         Glib::ustring getSelected() const;
         Glib::ustring getSelectedImage() const;
 

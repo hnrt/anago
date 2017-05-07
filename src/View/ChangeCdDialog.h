@@ -20,7 +20,7 @@ namespace hnrt
     public:
 
         ChangeCdDialog(Gtk::Window&, const VirtualMachine&);
-        void select(const VirtualBlockDevice&);
+        void select(const Glib::ustring&);
         Glib::ustring getDevice() const { return _devCombo.getSelected(); }
         Glib::ustring getImage() const { return _imgListView.getSelected(); }
 

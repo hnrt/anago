@@ -120,7 +120,7 @@ void ControllerImpl::changeCd2(const VirtualBlockDevice& vbd)
     {
         return;
     }
-    Glib::ustring device;
+    Glib::ustring device = vbd.getREFID();
     Glib::ustring disc;
     if (!View::instance().selectCd(*vm, device, disc))
     {
@@ -579,7 +579,29 @@ void ControllerImpl::attachHddInBackground(RefPtr<VirtualMachine> vm, Glib::ustr
 
 void ControllerImpl::attachCd()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    Glib::ustring userdevice;
+    if (!View::instance().getCdToAttach(*vm, userdevice))
+    {
+        return;
+    }
+    _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::attachCdInBackground), vm, userdevice), false, "AttachCd");
+}
+
+
+void ControllerImpl::attachCdInBackground(RefPtr<VirtualMachine> vm, Glib::ustring userdevice)
+{
+    XenObject::Busy busy(*vm);
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    if (!XenServer::attachCd(session, vm->getHandle(), userdevice.c_str()))
+    {
+        session.emit(XenObject::ERROR);
+    }
 }
 
 

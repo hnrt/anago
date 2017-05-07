@@ -43,6 +43,7 @@ namespace hnrt
         static bool createHdd(xen_session*, xen_vm, const char*, const HardDiskDriveSpec&);
         static bool attachHdd(xen_session*, xen_vm, const char*, xen_vdi);
         static bool createCd(xen_session*, xen_vm, const char*, xen_vdi);
+        static bool attachCd(xen_session*, xen_vm, const char*);
         static bool createNic(xen_session*, xen_vm, const char*, xen_network);
         static bool createVdi(xen_session*, const HardDiskDriveSpec&, xen_vdi*);
         static bool setVmHintToVdi(xen_session*, xen_vdi, xen_vm);

@@ -18,23 +18,12 @@ namespace hnrt
     {
     public:
 
-        XenRef(T x = 0)
-            : _x(x)
-        {
-        }
-
-        ~XenRef()
-        {
-            F::free(_x);
-        }
-
-        operator T() const { return _x ? _x : (T)NULLREFSTRING; }
-
-        T* operator &() { F::free(_x); _x = 0; return &_x; }
-
-        bool isNull() const { return !_x || !strcmp((const char*)_x, NULLREFSTRING); }
-
-        Glib::ustring toString() const { return Glib::ustring((const char*)_x); }
+        XenRef(T x = 0);
+        ~XenRef();
+        operator T() const;
+        T* operator &();
+        bool isNull() const;
+        Glib::ustring toString() const;
 
     private:
 
@@ -43,6 +32,44 @@ namespace hnrt
 
         T _x;
     };
+
+    template<typename T, typename F>
+    XenRef<T, F>::XenRef(T x)
+        : _x(x)
+    {
+    }
+
+    template<typename T, typename F>
+    XenRef<T, F>::~XenRef()
+    {
+        F::free(_x);
+    }
+
+    template<typename T, typename F>
+    XenRef<T, F>::operator T() const
+    {
+        return _x ? _x : (T)NULLREFSTRING;
+    }
+
+    template<typename T, typename F>
+    T* XenRef<T, F>::operator &()
+    {
+        F::free(_x);
+        _x = 0;
+        return &_x;
+    }
+
+    template<typename T, typename F>
+    bool XenRef<T, F>::isNull() const
+    {
+        return !_x || !*(const char*)_x || !strcmp((const char*)_x, NULLREFSTRING);
+    }
+
+    template<typename T, typename F>
+    Glib::ustring XenRef<T, F>::toString() const
+    {
+        return Glib::ustring((const char*)_x);
+    }
 
 #define XenRefFree(type) struct type##_free_t { static void free(type p) { if (p) type##_free(p); } }
 

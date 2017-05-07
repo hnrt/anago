@@ -665,6 +665,13 @@ bool XenServer::createCd(xen_session* session, xen_vm vm, const char* userdevice
 }
 
 
+bool XenServer::attachCd(xen_session* session, xen_vm vm, const char* userdevice)
+{
+    XenRef<xen_vbd, xen_vbd_free_t> vbd;
+    return createVbd(session, vm, userdevice, NULLREF, XEN_VBD_TYPE_CD, XEN_VBD_MODE_RO, true, &vbd);
+}
+
+
 bool XenServer::createNic(xen_session* session, xen_vm vm, const char* device, xen_network nw)
 {
     XenRef<xen_vif, xen_vif_free_t> vif;

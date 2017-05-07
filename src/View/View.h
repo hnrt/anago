@@ -55,6 +55,7 @@ namespace hnrt
         virtual bool getImportVmPath(Glib::ustring&) = 0;
         virtual bool getVerifyVmPath(Glib::ustring&) = 0;
         virtual bool getHddToAttach(const VirtualMachine&, Glib::ustring&, Glib::ustring&) = 0;
+        virtual bool getCdToAttach(const VirtualMachine&, Glib::ustring&) = 0;
         virtual bool getHddToCreate(const Session&, HardDiskDriveSpec&) = 0;
         virtual bool getSize(int64_t&) = 0;
     };
