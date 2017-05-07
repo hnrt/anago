@@ -589,12 +589,6 @@ void ControllerImpl::attachNic()
 }
 
 
-void ControllerImpl::addHdd()
-{
-    //TODO: IMPLEMENT
-}
-
-
 void ControllerImpl::changeSnapshotName()
 {
     //TODO: IMPLEMENT

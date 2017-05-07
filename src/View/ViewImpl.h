@@ -48,6 +48,7 @@ namespace hnrt
         virtual bool getVerifyVmPath(Glib::ustring&);
         virtual bool getHddToAttach(const VirtualMachine&, Glib::ustring&, Glib::ustring&);
         virtual bool getHddToCreate(const Session&, HardDiskDriveSpec&);
+        virtual bool getSize(int64_t&);
 
     private:
 

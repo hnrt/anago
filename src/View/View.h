@@ -5,6 +5,7 @@
 #define HNRT_VIEW_H
 
 
+#include <stdint.h>
 #include <gtkmm.h>
 #include <list>
 
@@ -55,6 +56,7 @@ namespace hnrt
         virtual bool getVerifyVmPath(Glib::ustring&) = 0;
         virtual bool getHddToAttach(const VirtualMachine&, Glib::ustring&, Glib::ustring&) = 0;
         virtual bool getHddToCreate(const Session&, HardDiskDriveSpec&) = 0;
+        virtual bool getSize(int64_t&) = 0;
     };
 }
 

@@ -27,6 +27,7 @@
 #include "MemoryDialog.h"
 #include "NameDialog.h"
 #include "PixStore.h"
+#include "ResizeDialog.h"
 #include "ShadowMemoryDialog.h"
 #include "VgaDialog.h"
 #include "ViewImpl.h"
@@ -512,6 +513,23 @@ bool ViewImpl::getHddToCreate(const Session& session, HardDiskDriveSpec& spec)
     if (response == Gtk::RESPONSE_APPLY)
     {
         dialog.getValue(spec);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getSize(int64_t& size)
+{
+    ResizeDialog dialog(_mainWindow);
+    dialog.setSize(size);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        size = dialog.getSize();
         return true;
     }
     else

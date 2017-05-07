@@ -130,7 +130,7 @@ void VirtualDiskImageMenu::onChange()
     }
     else if (_name == "virtual-size")
     {
-        //Controller::instance().resizeVdi(_vdi);
+        Controller::instance().resizeVdi(*_vdi);
     }
 }
 
@@ -143,11 +143,11 @@ void VirtualDiskImageMenu::onChangeName()
 
 void VirtualDiskImageMenu::onResize()
 {
-    //Controller::instance().resizeVdi(_vdi);
+    Controller::instance().resizeVdi(*_vdi);
 }
 
 
 void VirtualDiskImageMenu::onRemove()
 {
-    //Controller::instance().removeVdi(_vdi);
+    Controller::instance().removeVdi(*_vdi);
 }

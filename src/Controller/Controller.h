@@ -54,11 +54,11 @@ namespace hnrt
         virtual void attachHdd() = 0;
         virtual void attachCd() = 0;
         virtual void attachNic() = 0;
-        virtual void addHdd() = 0;
         virtual void addCifs() = 0;
         virtual void deleteCifs() = 0;
         virtual void changeSrName() = 0;
         virtual void setDefaultSr() = 0;
+        virtual void addHdd() = 0;
         virtual void addHddTo(StorageRepository&) = 0;
         virtual void openVmStatusWindow() = 0;
         virtual void changeSnapshotName() = 0;

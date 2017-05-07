@@ -1,6 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "Model/Model.h"
 #include "XenServer/HardDiskDriveSpec.h"
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
@@ -33,6 +34,16 @@ void ControllerImpl::changeSrName()
 void ControllerImpl::setDefaultSr()
 {
     //TODO: IMPLEMENT
+}
+
+
+void ControllerImpl::addHdd()
+{
+    std::list<RefPtr<StorageRepository> > srList;
+    if (Model::instance().getSelected(srList) == 1)
+    {
+        ControllerImpl::addHddTo(*srList.front());
+    }
 }
 
 
