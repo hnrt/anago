@@ -17,6 +17,7 @@
 #include "AddVmDialog.h"
 #include "AttachCdDialog.h"
 #include "AttachHddDialog.h"
+#include "AttachNicDialog.h"
 #include "ChangeCdDialog.h"
 #include "ConnectDialog.h"
 #include "CopyVmDialog.h"
@@ -548,6 +549,23 @@ bool ViewImpl::getSize(int64_t& size)
     if (response == Gtk::RESPONSE_APPLY)
     {
         size = dialog.getSize();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getNicToAttach(const VirtualMachine& vm, Glib::ustring& device, Glib::ustring& network)
+{
+    AttachNicDialog dialog(_mainWindow, vm);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        device = dialog.getDevice();
+        network = dialog.getNetwork();
         return true;
     }
     else

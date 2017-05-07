@@ -106,6 +106,7 @@ namespace hnrt
         void attachHddInBackground(RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring);
         void attachCdInBackground(RefPtr<VirtualMachine>, Glib::ustring);
         void addHddInBackground(RefPtr<StorageRepository>, HardDiskDriveSpec);
+        void attachNicInBackground(RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring);
 
         ThreadManager& _tm;
         bool _quitInProgress;

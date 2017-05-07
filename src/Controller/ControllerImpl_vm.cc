@@ -607,7 +607,30 @@ void ControllerImpl::attachCdInBackground(RefPtr<VirtualMachine> vm, Glib::ustri
 
 void ControllerImpl::attachNic()
 {
-    //TODO: IMPLEMENT
+    RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
+    if (!vm || vm->isBusy())
+    {
+        return;
+    }
+    Glib::ustring device;
+    Glib::ustring network;
+    if (!View::instance().getNicToAttach(*vm, device, network))
+    {
+        return;
+    }
+    _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::attachNicInBackground), vm, device, network), false, "AttachNic");
+}
+
+
+void ControllerImpl::attachNicInBackground(RefPtr<VirtualMachine> vm, Glib::ustring device, Glib::ustring network)
+{
+    XenObject::Busy busy(*vm);
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    if (!XenServer::createNic(session, vm->getHandle(), device.c_str(), (xen_network)network.c_str()))
+    {
+        session.emit(XenObject::ERROR);
+    }
 }
 
 
