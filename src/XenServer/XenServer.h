@@ -13,6 +13,7 @@
 namespace hnrt
 {
     class StringBuffer;
+    struct CifsSpec;
     struct HardDiskDriveSpec;
     struct VirtualMachineSpec;
 
@@ -50,6 +51,7 @@ namespace hnrt
         static bool createVbd(xen_session*, xen_vm, const char*, xen_vdi, enum xen_vbd_type, enum xen_vbd_mode, bool, xen_vbd*);
         static bool createVif(xen_session*, xen_vm, const char*, xen_network, xen_vif*);
         static bool createSnapshot(xen_session*, xen_vm);
+        static bool addCifs(xen_session*, xen_host, const CifsSpec&, xen_sr*);
 
 #define XenPtrFree(type) static void free(type* p) { if (p) type##_free(p); }
 

@@ -51,6 +51,7 @@ namespace hnrt
         virtual bool getHddToCreate(const Session&, HardDiskDriveSpec&);
         virtual bool getSize(int64_t&);
         virtual bool getNicToAttach(const VirtualMachine&, Glib::ustring&, Glib::ustring&);
+        virtual bool getCifsToCreate(CifsSpec&);
 
     private:
 

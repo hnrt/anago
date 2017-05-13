@@ -15,6 +15,7 @@ namespace hnrt
     class Session;
     class VirtualMachine;
     class VirtualMachineSpec;
+    struct CifsSpec;
     struct ConnectSpec;
     struct HardDiskDriveSpec;
 
@@ -59,6 +60,7 @@ namespace hnrt
         virtual bool getHddToCreate(const Session&, HardDiskDriveSpec&) = 0;
         virtual bool getSize(int64_t&) = 0;
         virtual bool getNicToAttach(const VirtualMachine&, Glib::ustring&, Glib::ustring&) = 0;
+        virtual bool getCifsToCreate(CifsSpec&) = 0;
     };
 }
 

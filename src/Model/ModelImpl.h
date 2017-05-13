@@ -8,6 +8,7 @@
 #include <glibmm.h>
 #include "Logger/Logger.h"
 #include "File/Json.h"
+#include "XenServer/CifsSpec.h"
 #include "ConsoleInfo.h"
 #include "Model.h"
 
@@ -75,6 +76,9 @@ namespace hnrt
         virtual Glib::ustring getVerifyVmPath();
         virtual void setVerifyVmPath(const Glib::ustring&);
 
+        virtual void getCifsSpec(CifsSpec&);
+        virtual void setCifsSpec(const CifsSpec&);
+
     private:
 
         ModelImpl(const ModelImpl&);
@@ -99,6 +103,7 @@ namespace hnrt
         bool _exportVmVerify;
         Glib::ustring _importVmPath;
         Glib::ustring _verifyVmPath;
+        CifsSpec _cifsSpec;
     };
 }
 

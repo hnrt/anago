@@ -7,6 +7,7 @@
 
 #include <sigc++/sigc++.h>
 #include "Base/RefPtr.h"
+#include "XenServer/CifsSpec.h"
 #include "XenServer/VirtualMachineSpec.h"
 #include "XenServer/HardDiskDriveSpec.h"
 #include "Controller.h"
@@ -109,6 +110,7 @@ namespace hnrt
         void attachNicInBackground(RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring);
         void snapshotVmInBackground(RefPtr<VirtualMachine>);
         void revertVmInBackground(RefPtr<VirtualMachine>);
+        void addCifsInBackground(RefPtr<Host>, CifsSpec);
 
         ThreadManager& _tm;
         bool _quitInProgress;

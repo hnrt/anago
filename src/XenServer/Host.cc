@@ -52,7 +52,15 @@ int Host::setBusy(bool value)
     {
         switch (_state)
         {
+        case STATE_CONNECTED:
+            setDisplayStatus(gettext("Connected"));
+            break;
+        case STATE_DISCONNECTED:
+            setDisplayStatus(gettext("Disconnected"));
+            break;
         case STATE_CONNECT_FAILED:
+            setDisplayStatus(gettext("Failed to connect"));
+            break;
         case STATE_DISCONNECT_PENDING:
         case STATE_DISCONNECTED_BY_PEER:
         case STATE_SHUTDOWN:

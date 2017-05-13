@@ -7,7 +7,10 @@
 #include <new>
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
+#include "Util/Base64.h"
+#include "Util/Scrambler.h"
 #include "Util/Util.h"
+#include "CifsSpec.h"
 #include "Constants.h"
 #include "HardDiskDriveSpec.h"
 #include "Macros.h"
@@ -909,6 +912,68 @@ bool XenServer::createSnapshot(xen_session* session, xen_vm vm)
     {
         xen_session_clear_error(session);
         return true;
+    }
+
+    return true;
+}
+
+
+bool XenServer::addCifs(xen_session* session, xen_host host, const CifsSpec& spec, xen_sr* srReturn)
+{
+    Trace trace("XenServer::addCifs");
+
+    bool result;
+
+    XenRef<xen_secret, xen_secret_free_t> secret;
+
+    xen_secret_record secretRecord = {0};
+    Base64Decoder d1(spec.password.c_str());
+    Descrambler d2(d1.getValue(), d1.getLength());
+    secretRecord.value = const_cast<char*>(reinterpret_cast<const char*>(d2.getValue()));
+    secretRecord.other_config = xen_string_string_map_alloc(0);
+    trace.put("xen_secret_create");
+    result = xen_secret_create(session, &secret, &secretRecord);
+    xen_string_string_map_free(secretRecord.other_config);
+    if (!result)
+    {
+        Logger::instance().error("%s: xen_secret_create failed.", trace.name().c_str());
+        return false;
+    }
+
+    char* tmp = NULL;
+    trace.put("xen_secret_get_uuid");
+    if (!xen_secret_get_uuid(session, &tmp, secret))
+    {
+        Logger::instance().error("%s: Secret UUID get failed.", trace.name().c_str());
+        return false;
+    }
+    StringBuffer uuid;
+    uuid = tmp;
+    xen_uuid_free(tmp);
+
+    xen_string_string_map *deviceConfig = xen_string_string_map_alloc(4);
+    deviceConfig->contents[0].key = xen_strdup_("type");
+    deviceConfig->contents[0].val = xen_strdup_("cifs");
+    deviceConfig->contents[1].key = xen_strdup_("location");
+    deviceConfig->contents[1].val = xen_strdup_(spec.location.c_str());
+    deviceConfig->contents[2].key = xen_strdup_("cifspassword_secret");
+    deviceConfig->contents[2].val = xen_strdup_(uuid);
+    deviceConfig->contents[3].key = xen_strdup_("username");
+    deviceConfig->contents[3].val = xen_strdup_(spec.username.c_str());
+    int64_t size = 0;
+    xen_string_string_map *smConfig = xen_string_string_map_alloc(1);
+    smConfig->contents[0].key = xen_strdup_("iso_type");
+    smConfig->contents[0].val = xen_strdup_("cifs");
+    trace.put("xen_sr_create");
+    result = xen_sr_create(session, srReturn, host, deviceConfig, size,
+                           (char *)spec.label.c_str(), (char *)spec.description.c_str(),
+                           (char *)"iso", (char *)"iso", true, smConfig);
+    xen_string_string_map_free(deviceConfig);
+    xen_string_string_map_free(smConfig);
+    if (!result)
+    {
+        Logger::instance().error("%s: xen_sr_create(cifs:%s) failed.", trace.name().c_str(), spec.location.c_str());
+        return false;
     }
 
     return true;

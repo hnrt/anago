@@ -19,6 +19,7 @@ namespace hnrt
     class StorageRepository;
     class VirtualMachine;
     class XenObject;
+    struct CifsSpec;
     struct ConnectSpec;
 
     class Model
@@ -77,6 +78,9 @@ namespace hnrt
         virtual void setImportVmPath(const Glib::ustring&) = 0;
         virtual Glib::ustring getVerifyVmPath() = 0;
         virtual void setVerifyVmPath(const Glib::ustring&) = 0;
+
+        virtual void getCifsSpec(CifsSpec&) = 0;
+        virtual void setCifsSpec(const CifsSpec&) = 0;
     };
 }
 

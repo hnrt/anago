@@ -528,3 +528,15 @@ void ModelImpl::setVerifyVmPath(const Glib::ustring& path)
     Glib::RecMutex::Lock lock(_mutex);
     _verifyVmPath = path;
 }
+
+
+void ModelImpl::getCifsSpec(CifsSpec& spec)
+{
+    spec = _cifsSpec;
+}
+
+
+void ModelImpl::setCifsSpec(const CifsSpec& spec)
+{
+    _cifsSpec = spec;
+}

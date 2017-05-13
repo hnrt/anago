@@ -9,11 +9,13 @@
 #include "Logger/Trace.h"
 #include "Model/ConnectSpec.h"
 #include "Model/Model.h"
+#include "XenServer/CifsSpec.h"
 #include "XenServer/HardDiskDriveSpec.h"
 #include "XenServer/PerformanceMonitor.h"
 #include "XenServer/Session.h"
 #include "XenServer/VirtualMachine.h"
 #include "AboutDialog.h"
+#include "AddCifsDialog.h"
 #include "AddVmDialog.h"
 #include "AttachCdDialog.h"
 #include "AttachHddDialog.h"
@@ -566,6 +568,23 @@ bool ViewImpl::getNicToAttach(const VirtualMachine& vm, Glib::ustring& device, G
     {
         device = dialog.getDevice();
         network = dialog.getNetwork();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool ViewImpl::getCifsToCreate(CifsSpec& spec)
+{
+    AddCifsDialog dialog(_mainWindow);
+    dialog.setSpec(spec);
+    int response = dialog.run();
+    if (response == Gtk::RESPONSE_APPLY)
+    {
+        dialog.getSpec(spec);
         return true;
     }
     else
