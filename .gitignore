@@ -3,12 +3,14 @@
 
 # Binary Directory
 /bin/
+/support/bin/
 
 # Compiled Object files
 *.slo
 *.lo
 *.o
 *.obj
+*.pot
 
 # Precompiled Headers
 *.gch

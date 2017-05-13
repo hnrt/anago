@@ -56,6 +56,11 @@ XSLIBS=-L /usr/local/lib -lxenserver
 
 ######################################################################
 
+POTMERGE=$(PROJECTROOT)support/bin/$(PLATFORM)/$(CONFIGURATION)/potmerge
+POUPDATE=$(PROJECTROOT)support/bin/$(PLATFORM)/$(CONFIGURATION)/poupdate
+
+######################################################################
+
 RM=rm -f
 RMALL=rm -fr
 MKDIR=mkdir
@@ -455,3 +460,146 @@ $(OBJDIR)/XenServer/XenObjectTypeMap.o: XenServer/XenObjectTypeMap.cc Base/RefOb
 $(OBJDIR)/XenServer/XenServer.o: XenServer/XenServer.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Util/Base64.h Util/ByteString.h Util/Scrambler.h Util/ScramblerBase.h Util/Util.h XenServer/Api.h XenServer/CifsSpec.h XenServer/Constants.h XenServer/HardDiskDriveSpec.h XenServer/Macros.h XenServer/VirtualMachineSpec.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h 
 $(OBJDIR)/XenServer/XenTask.o: XenServer/XenTask.cc Base/RefObj.h Base/RefPtr.h Base/StringBuffer.h Logger/LogLevel.h Logger/Logger.h Logger/Trace.h Model/ConnectSpec.h Net/MacAddress.h Util/Util.h XenServer/Api.h XenServer/Constants.h XenServer/Session.h XenServer/XenObject.h XenServer/XenObjectStore.h XenServer/XenPtr.h XenServer/XenRef.h XenServer/XenServer.h XenServer/XenTask.h 
 ##### dependency end #####
+
+######################################################################
+#
+# Localization related
+#
+######################################################################
+
+##### localization begin #####
+POTFILES=\
+$(OBJDIR)/Controller/ControllerImpl.pot \
+$(OBJDIR)/Controller/ControllerImpl_host.pot \
+$(OBJDIR)/Controller/ControllerImpl_sr.pot \
+$(OBJDIR)/Controller/ControllerImpl_vdi.pot \
+$(OBJDIR)/Controller/ControllerImpl_vm.pot \
+$(OBJDIR)/Net/ConsoleConnector.pot \
+$(OBJDIR)/View/AboutDialog.pot \
+$(OBJDIR)/View/AddCifsDialog.pot \
+$(OBJDIR)/View/AddVmDialog.pot \
+$(OBJDIR)/View/AttachCdDialog.pot \
+$(OBJDIR)/View/AttachHddDialog.pot \
+$(OBJDIR)/View/AttachNicDialog.pot \
+$(OBJDIR)/View/CdImageListView.pot \
+$(OBJDIR)/View/ChangeCdDialog.pot \
+$(OBJDIR)/View/ConnectDialog.pot \
+$(OBJDIR)/View/CopyVmDialog.pot \
+$(OBJDIR)/View/CpuDialog.pot \
+$(OBJDIR)/View/DeleteVmDialog.pot \
+$(OBJDIR)/View/ExportVmDialog.pot \
+$(OBJDIR)/View/HardDiskDriveListBox.pot \
+$(OBJDIR)/View/HardDiskDriveListView.pot \
+$(OBJDIR)/View/HardDiskDriveSpecDialog.pot \
+$(OBJDIR)/View/HostMenu.pot \
+$(OBJDIR)/View/HostNotebook.pot \
+$(OBJDIR)/View/HostTreeView.pot \
+$(OBJDIR)/View/ImportVmDialog.pot \
+$(OBJDIR)/View/InputOutputGraph.pot \
+$(OBJDIR)/View/MainWindow.pot \
+$(OBJDIR)/View/MemoryDialog.pot \
+$(OBJDIR)/View/MemoryGraph.pot \
+$(OBJDIR)/View/NameDialog.pot \
+$(OBJDIR)/View/NameValueListView.pot \
+$(OBJDIR)/View/NetworkListView.pot \
+$(OBJDIR)/View/NetworkMenu.pot \
+$(OBJDIR)/View/NetworkNotebook.pot \
+$(OBJDIR)/View/NoContentsNotebook.pot \
+$(OBJDIR)/View/PatchListView.pot \
+$(OBJDIR)/View/PatchMenu.pot \
+$(OBJDIR)/View/PropertyHelper.pot \
+$(OBJDIR)/View/ResizeDialog.pot \
+$(OBJDIR)/View/ShadowMemoryDialog.pot \
+$(OBJDIR)/View/SizeInBytesBox.pot \
+$(OBJDIR)/View/SnapshotMenu.pot \
+$(OBJDIR)/View/SnapshotTreeView.pot \
+$(OBJDIR)/View/StorageRepositoryComboBox.pot \
+$(OBJDIR)/View/StorageRepositoryMenu.pot \
+$(OBJDIR)/View/StorageRepositoryNotebook.pot \
+$(OBJDIR)/View/VgaDialog.pot \
+$(OBJDIR)/View/ViewImpl.pot \
+$(OBJDIR)/View/VirtualBlockDeviceMenu.pot \
+$(OBJDIR)/View/VirtualDiskImageListView.pot \
+$(OBJDIR)/View/VirtualDiskImageMenu.pot \
+$(OBJDIR)/View/VirtualInterfaceMenu.pot \
+$(OBJDIR)/View/VirtualMachineGenMenu.pot \
+$(OBJDIR)/View/VirtualMachineMemMenu.pot \
+$(OBJDIR)/View/VirtualMachineMenu.pot \
+$(OBJDIR)/View/VirtualMachineNotebook.pot \
+$(OBJDIR)/View/VirtualMachinePropertyView.pot \
+$(OBJDIR)/View/VirtualMachineStatusWindow.pot \
+$(OBJDIR)/View/VirtualMachineTemplateListView.pot \
+$(OBJDIR)/XenServer/HardDiskDriveSpec.pot \
+$(OBJDIR)/XenServer/Host.pot \
+$(OBJDIR)/XenServer/StorageRepository.pot \
+$(OBJDIR)/XenServer/VirtualBlockDevice.pot \
+$(OBJDIR)/XenServer/VirtualDiskImage.pot \
+$(OBJDIR)/XenServer/VirtualInterface.pot \
+$(OBJDIR)/XenServer/VirtualMachine.pot \
+$(OBJDIR)/XenServer/XenServer.pot \
+
+##### localization end #####
+
+PROJ2=$(OBJDIR)/Anago.pot
+
+$(PROJ2): $(POTFILES)
+	$(POTMERGE) $(POTFILES) > $@
+
+pot:: $(PROJ2)
+
+pot-clean::
+	$(RM) $(PROJ2) $(POTFILES)
+
+######################################################################
+
+$(OBJDIR)/Anago.po: $(PROJ2)
+	@test -d $(@D) || $(MKDIRS) $(@D)
+	msginit --no-translator --locale $(LOCALE) --output-file $@ --input $(PROJ2)
+
+po-en::
+	$(MAKE) LOCALE=en_US $(OBJDIR)/Anago.po
+po-ja::
+	$(MAKE) LOCALE=ja_JP $(OBJDIR)/Anago.po
+
+######################################################################
+
+PROJ3=$(BINDIR)/en_US/LC_MESSAGES/anago.mo
+SRC3=Localization/en_US/Anago.po
+
+$(PROJ3): $(SRC3)
+	@test -d $(@D) || $(MKDIRS) $(@D)
+	msgfmt --verbose --output-file $@ $(SRC3)
+
+po:: $(PROJ2)
+	$(POUPDATE) $(PROJ2) $(SRC3)
+
+clean po-clean::
+	$(RM) $(SRC3)~ $(SRC3).backup
+
+all mo:: $(PROJ3)
+
+clean mo-clean::
+	$(RM) $(PROJ3)
+
+######################################################################
+
+PROJ4=$(BINDIR)/ja_JP/LC_MESSAGES/anago.mo
+SRC4=Localization/ja_JP/Anago.po
+
+$(PROJ4): $(SRC4)
+	@test -d $(@D) || $(MKDIRS) $(@D)
+	msgfmt --verbose --output-file $@ $(SRC4)
+
+po:: $(PROJ2)
+	$(POUPDATE) $(PROJ2) $(SRC4)
+
+clean po-clean::
+	$(RM) $(SRC4)~ $(SRC4).backup
+
+all mo:: $(PROJ4)
+
+clean mo-clean::
+	$(RM) $(PROJ4)
+
+######################################################################
+
