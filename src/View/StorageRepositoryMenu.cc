@@ -74,6 +74,24 @@ void StorageRepositoryMenu::popup(guint button, guint32 activateTime, StorageRep
 }
 
 
+void StorageRepositoryMenu::popup(guint button, guint32 activateTime, const Glib::ustring& name)
+{
+    if (name == "Name" ||
+        name == "Description")
+    {
+        _menuChange.set_sensitive(true);
+    }
+    else
+    {
+        _menuChange.set_sensitive(false);
+    }
+    _menuSetDefault.hide();
+    _menuAddHdd.hide();
+    _menuDeleteCifs.hide();
+    Gtk::Menu::popup(button, activateTime);
+}
+
+
 void StorageRepositoryMenu::onDeactivate()
 {
     // This is called right after the closure of the popup window.

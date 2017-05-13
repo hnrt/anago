@@ -47,6 +47,8 @@ StorageRepositoryNotebook::StorageRepositoryNotebook(const RefPtr<StorageReposit
     show_all_children();
 
     _connection = SignalManager::instance().xenObjectSignal(*_sr).connect(sigc::mem_fun(*this, &StorageRepositoryNotebook::onSrUpdated));
+
+    _srLv.setMenu(&_srMenu);
 }
 
 

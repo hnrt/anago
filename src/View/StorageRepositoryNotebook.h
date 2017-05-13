@@ -8,6 +8,7 @@
 #include "Base/RefPtr.h"
 #include "NameValueListView.h"
 #include "Notebook.h"
+#include "StorageRepositoryMenu.h"
 #include "VirtualDiskImageListView.h"
 
 
@@ -37,6 +38,8 @@ namespace hnrt
         Gtk::VBox _srBox;
         Gtk::Label _srLabel;
         NameValueListView _srLv;
+
+        StorageRepositoryMenu _srMenu;
 
         Gtk::VBox _pbdBox;
         Gtk::Label _pbdLabel;

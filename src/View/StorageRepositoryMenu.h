@@ -5,7 +5,7 @@
 #define HNRT_STORAGEREPOSITORYMENU_H
 
 
-#include <gtkmm.h>
+#include "NameValueMenu.h"
 
 
 namespace hnrt
@@ -13,12 +13,13 @@ namespace hnrt
     class StorageRepository;
 
     class StorageRepositoryMenu
-        : public Gtk::Menu
+        : public NameValueMenu
     {
     public:
 
         StorageRepositoryMenu();
         void popup(guint, guint32, StorageRepository&);
+        virtual void popup(guint, guint32, const Glib::ustring&);
 
     protected:
 

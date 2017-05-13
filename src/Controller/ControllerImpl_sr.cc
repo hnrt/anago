@@ -1,6 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include <libintl.h>
 #include "Model/Model.h"
 #include "XenServer/HardDiskDriveSpec.h"
 #include "XenServer/Session.h"
@@ -27,7 +28,21 @@ void ControllerImpl::deleteCifs()
 
 void ControllerImpl::changeSrName()
 {
-    //TODO: IMPLEMENT
+    RefPtr<StorageRepository> sr = Model::instance().getSelectedSr();
+    if (!sr || sr->isBusy())
+    {
+        return;
+    }
+    XenPtr<xen_sr_record> record = sr->getRecord();
+    Glib::ustring label(record->name_label);
+    Glib::ustring description(record->name_description);
+    if (!View::instance().getName(gettext("Change SR label/description"), label, description))
+    {
+        return;
+    }
+    Session& session = sr->getSession();
+    Session::Lock lock(session);
+    sr->setName(label.c_str(), description.c_str());
 }
 
 
@@ -39,6 +54,7 @@ void ControllerImpl::setDefaultSr()
         return;
     }
     Session& session = sr->getSession();
+    Session::Lock lock(session);
     if (!XenServer::setDefaultSr(session, sr->getHandle()))
     {
         session.emit(XenObject::ERROR);
