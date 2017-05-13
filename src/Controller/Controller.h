@@ -52,6 +52,7 @@ namespace hnrt
         virtual void changeShadowMemory() = 0;
         virtual void changeVga() = 0;
         virtual void attachHdd() = 0;
+        virtual void detachHdd(VirtualBlockDevice&) = 0;
         virtual void attachCd() = 0;
         virtual void attachNic() = 0;
         virtual void addCifs() = 0;

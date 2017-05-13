@@ -581,6 +581,36 @@ void ControllerImpl::attachHddInBackground(RefPtr<VirtualMachine> vm, Glib::ustr
 }
 
 
+void ControllerImpl::detachHdd(VirtualBlockDevice& vbd)
+{
+    StringBuffer message;
+    message.format(gettext("Do you wish to detach %s?"), vbd.getDeviceName().c_str());
+    if (!View::instance().askYesNo(Glib::ustring(message)))
+    {
+        return;
+    }
+    RefPtr<VirtualBlockDevice> vbdPtr(&vbd, 1);
+    schedule(sigc::bind<RefPtr<VirtualBlockDevice> >(sigc::mem_fun(*this, &ControllerImpl::detachHddInBackground), vbdPtr));
+}
+
+
+void ControllerImpl::detachHddInBackground(RefPtr<VirtualBlockDevice> vbd)
+{
+    RefPtr<VirtualMachine> vm = vbd->getVm();
+    if (!vm)
+    {
+        return;
+    }
+    XenObject::Busy busy(*vm);
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    if (!xen_vbd_destroy(session, vbd->getHandle()))
+    {
+        session.emit(XenObject::ERROR);
+    }
+}
+
+
 void ControllerImpl::attachCd()
 {
     RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();

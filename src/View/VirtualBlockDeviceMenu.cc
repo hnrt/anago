@@ -126,7 +126,7 @@ void VirtualBlockDeviceMenu::onChange()
 
 void VirtualBlockDeviceMenu::onDetach()
 {
-    //Controller::instance().detachVbd(_vbd);
+    Controller::instance().detachHdd(*_vbd);
 }
 
 

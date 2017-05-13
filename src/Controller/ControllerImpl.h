@@ -20,6 +20,7 @@ namespace hnrt
     class PerformanceMonitor;
     class StorageRepository;
     class ThreadManager;
+    class VirtualBlockDevice;
     class VirtualMachine;
     class XenObject;
 
@@ -64,6 +65,7 @@ namespace hnrt
         virtual void changeShadowMemory();
         virtual void changeVga();
         virtual void attachHdd();
+        virtual void detachHdd(VirtualBlockDevice&);
         virtual void attachCd();
         virtual void attachNic();
         virtual void addCifs();
@@ -108,6 +110,7 @@ namespace hnrt
         void importVmInBackground(RefPtr<Host>, Glib::ustring);
         void verifyVmInBackground(Glib::ustring);
         void attachHddInBackground(RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring);
+        void detachHddInBackground(RefPtr<VirtualBlockDevice>);
         void attachCdInBackground(RefPtr<VirtualMachine>, Glib::ustring);
         void addHddInBackground(RefPtr<StorageRepository>, HardDiskDriveSpec);
         void attachNicInBackground(RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring);
