@@ -1,6 +1,6 @@
-# English translations for PACKAGE package.
-# Copyright (C) 2017 THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# English translations for anago package.
+# Copyright (C) 2017 Hideaki Narita
+# This file is distributed under the same license as the anago package.
 # Automatically generated, 2017.
 #
 msgid ""
@@ -8,11 +8,11 @@ msgstr ""
 "Project-Id-Version: anago\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-13 23:05+0900\n"
-"PO-Revision-Date: 2017-05-13 23:05+0900\n"
+"PO-Revision-Date: 2017-05-14 01:52+0900\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -216,13 +216,16 @@ msgstr "version %1"
 msgid "Add CIFS repository"
 msgstr "Add CIFS repository"
 
-#: View/AddCifsDialog.cc:17 View/HardDiskDriveSpecDialog.cc:18
+#: View/AddCifsDialog.cc:17
+#: View/HardDiskDriveSpecDialog.cc:18
 #: View/NameDialog.cc:14
 msgid "Label:"
 msgstr "Label:"
 
-#: View/AddCifsDialog.cc:18 View/AddVmDialog.cc:53
-#: View/HardDiskDriveSpecDialog.cc:19 View/NameDialog.cc:15
+#: View/AddCifsDialog.cc:18
+#: View/AddVmDialog.cc:53
+#: View/HardDiskDriveSpecDialog.cc:19
+#: View/NameDialog.cc:15
 msgid "Description:"
 msgstr "Description:"
 
@@ -230,11 +233,13 @@ msgstr "Description:"
 msgid "Location:"
 msgstr "Location:"
 
-#: View/AddCifsDialog.cc:20 View/ConnectDialog.cc:21
+#: View/AddCifsDialog.cc:20
+#: View/ConnectDialog.cc:21
 msgid "User name:"
 msgstr "User name:"
 
-#: View/AddCifsDialog.cc:21 View/ConnectDialog.cc:22
+#: View/AddCifsDialog.cc:21
+#: View/ConnectDialog.cc:22
 msgid "Password:"
 msgstr "Password:"
 
@@ -250,7 +255,8 @@ msgstr "Add new VM"
 msgid "Template:"
 msgstr "Template:"
 
-#: View/AddVmDialog.cc:46 View/CopyVmDialog.cc:16
+#: View/AddVmDialog.cc:46
+#: View/CopyVmDialog.cc:16
 msgid "Name:"
 msgstr "Name:"
 
@@ -259,7 +265,8 @@ msgid "New virtual machine"
 msgstr "New virtual machine"
 
 #: View/AddVmDialog.cc:57 View/AddVmDialog.cc:125
-#: View/HardDiskDriveListBox.cc:88 XenServer/HardDiskDriveSpec.cc:19
+#: View/HardDiskDriveListBox.cc:88
+#: XenServer/HardDiskDriveSpec.cc:19
 msgid "Created by Anago"
 msgstr "Created by Anago"
 
@@ -283,8 +290,10 @@ msgstr "Hard disk drive 0"
 msgid "Attach CD drive to VM"
 msgstr "Attach CD drive to VM"
 
-#: View/AttachCdDialog.cc:14 View/AttachHddDialog.cc:23
-#: View/AttachNicDialog.cc:14 View/ChangeCdDialog.cc:15
+#: View/AttachCdDialog.cc:14
+#: View/AttachHddDialog.cc:23
+#: View/AttachNicDialog.cc:14
+#: View/ChangeCdDialog.cc:15
 msgid "Device:"
 msgstr "Device:"
 
@@ -292,11 +301,13 @@ msgstr "Device:"
 msgid "Attach HDD to VM"
 msgstr "Attach HDD to VM"
 
-#: View/AttachHddDialog.cc:25 View/StorageRepositoryNotebook.cc:30
+#: View/AttachHddDialog.cc:25
+#: View/StorageRepositoryNotebook.cc:30
 msgid "Storage repository:"
 msgstr "Storage repository:"
 
-#: View/AttachHddDialog.cc:27 View/ChangeCdDialog.cc:17
+#: View/AttachHddDialog.cc:27
+#: View/ChangeCdDialog.cc:17
 #: View/VirtualMachinePropertyView.cc:169
 msgid "Virtual disk image:"
 msgstr "Virtual disk image:"
@@ -317,14 +328,18 @@ msgstr "_Remove"
 msgid "Attach NIC to VM"
 msgstr "Attach NIC to VM"
 
-#: View/AttachNicDialog.cc:16 View/NetworkNotebook.cc:34
+#: View/AttachNicDialog.cc:16
+#: View/NetworkNotebook.cc:34
 #: View/VirtualMachinePropertyView.cc:231
 msgid "Network:"
 msgstr "Network:"
 
-#: View/CdImageListView.cc:26 View/DeleteVmDialog.cc:61
-#: View/NameValueListView.cc:18 View/NetworkListView.cc:20
-#: View/SnapshotTreeView.cc:23 View/VirtualDiskImageListView.cc:25
+#: View/CdImageListView.cc:26
+#: View/DeleteVmDialog.cc:61
+#: View/NameValueListView.cc:18
+#: View/NetworkListView.cc:20
+#: View/SnapshotTreeView.cc:23
+#: View/VirtualDiskImageListView.cc:25
 #: View/VirtualMachinePropertyView.cc:301
 #: View/VirtualMachineTemplateListView.cc:20
 msgid "Name"
@@ -334,8 +349,10 @@ msgstr "Name"
 msgid "(empty)"
 msgstr "(empty)"
 
-#: View/ChangeCdDialog.cc:14 View/MainWindow.cc:289
-#: View/VirtualBlockDeviceMenu.cc:17 View/VirtualMachineMenu.cc:19
+#: View/ChangeCdDialog.cc:14
+#: View/MainWindow.cc:289
+#: View/VirtualBlockDeviceMenu.cc:17
+#: View/VirtualMachineMenu.cc:19
 msgid "Change CD/DVD"
 msgstr "Change CD/DVD"
 
@@ -359,11 +376,13 @@ msgstr "Method:"
 msgid "Clone"
 msgstr "Clone"
 
-#: View/CopyVmDialog.cc:19 View/VirtualMachineMenu.cc:22
+#: View/CopyVmDialog.cc:19
+#: View/VirtualMachineMenu.cc:22
 msgid "Copy"
 msgstr "Copy"
 
-#: View/CopyVmDialog.cc:20 View/HardDiskDriveSpecDialog.cc:15
+#: View/CopyVmDialog.cc:20
+#: View/HardDiskDriveSpecDialog.cc:15
 msgid "Storage:"
 msgstr "Storage:"
 
@@ -411,12 +430,15 @@ msgstr ""
 "The virtual machine named \"%1\" will be deleted. The selected virtual disks "
 "listed below will also be deleted."
 
-#: View/DeleteVmDialog.cc:58 View/SnapshotMenu.cc:18
-#: View/StorageRepositoryMenu.cc:16 View/VirtualMachineMenu.cc:23
+#: View/DeleteVmDialog.cc:58
+#: View/SnapshotMenu.cc:18
+#: View/StorageRepositoryMenu.cc:16
+#: View/VirtualMachineMenu.cc:23
 msgid "Delete"
 msgstr "Delete"
 
-#: View/DeleteVmDialog.cc:62 View/HardDiskDriveListView.cc:23
+#: View/DeleteVmDialog.cc:62
+#: View/HardDiskDriveListView.cc:23
 #: View/PatchListView.cc:28
 msgid "Size"
 msgstr "Size"
@@ -425,7 +447,8 @@ msgstr "Size"
 msgid "SR"
 msgstr "SR"
 
-#: View/DeleteVmDialog.cc:64 View/VirtualDiskImageListView.cc:35
+#: View/DeleteVmDialog.cc:64
+#: View/VirtualDiskImageListView.cc:35
 msgid "Snapshot"
 msgstr "Snapshot"
 
@@ -441,15 +464,18 @@ msgstr "No"
 msgid "Virtual machine - Export"
 msgstr "Virtual machine - Export"
 
-#: View/ExportVmDialog.cc:16 View/ImportVmDialog.cc:17
+#: View/ExportVmDialog.cc:16
+#: View/ImportVmDialog.cc:17
 msgid "File name:"
 msgstr "File name:"
 
-#: View/ExportVmDialog.cc:17 View/ImportVmDialog.cc:18
+#: View/ExportVmDialog.cc:17
+#: View/ImportVmDialog.cc:18
 msgid "_Browse"
 msgstr "_Browse"
 
-#: View/ExportVmDialog.cc:18 View/MainWindow.cc:111
+#: View/ExportVmDialog.cc:18
+#: View/MainWindow.cc:111
 msgid "_Verify"
 msgstr "_Verify"
 
@@ -461,16 +487,19 @@ msgstr "Choose file name to export"
 msgid "Add"
 msgstr "Add"
 
-#: View/HardDiskDriveListBox.cc:31 View/HostMenu.cc:24
+#: View/HardDiskDriveListBox.cc:31
+#: View/HostMenu.cc:24
 msgid "Edit"
 msgstr "Edit"
 
-#: View/HardDiskDriveListBox.cc:34 View/HostMenu.cc:25
+#: View/HardDiskDriveListBox.cc:34
+#: View/HostMenu.cc:25
 #: View/VirtualDiskImageMenu.cc:19
 msgid "Remove"
 msgstr "Remove"
 
-#: View/HardDiskDriveListBox.cc:83 View/ViewImpl.cc:531
+#: View/HardDiskDriveListBox.cc:83
+#: View/ViewImpl.cc:531
 msgid "Add hard disk drive to SR"
 msgstr "Add hard disk drive to SR"
 
@@ -491,16 +520,19 @@ msgstr "Are you sure to remove the hard disk drive \"%1\"?"
 msgid "Storage repository"
 msgstr "Storage repository"
 
-#: View/HardDiskDriveListView.cc:24 View/PatchListView.cc:21
+#: View/HardDiskDriveListView.cc:24
+#: View/PatchListView.cc:21
 msgid "Label"
 msgstr "Label"
 
-#: View/HardDiskDriveListView.cc:25 View/PatchListView.cc:22
+#: View/HardDiskDriveListView.cc:25
+#: View/PatchListView.cc:22
 #: View/VirtualDiskImageListView.cc:26
 msgid "Description"
 msgstr "Description"
 
-#: View/HardDiskDriveSpecDialog.cc:17 View/ResizeDialog.cc:13
+#: View/HardDiskDriveSpecDialog.cc:17
+#: View/ResizeDialog.cc:13
 msgid "Size:"
 msgstr "Size:"
 
@@ -516,7 +548,8 @@ msgstr "Disconnect"
 msgid "Power on"
 msgstr "Power on"
 
-#: View/HostMenu.cc:19 View/VirtualMachineMenu.cc:15
+#: View/HostMenu.cc:19
+#: View/VirtualMachineMenu.cc:15
 msgid "Shut down"
 msgstr "Shut down"
 
@@ -524,7 +557,8 @@ msgstr "Shut down"
 msgid "Restart"
 msgstr "Restart"
 
-#: View/HostMenu.cc:21 View/StorageRepositoryMenu.cc:18
+#: View/HostMenu.cc:21
+#: View/StorageRepositoryMenu.cc:18
 #: View/VirtualMachineMenu.cc:26
 msgid "Label/Description"
 msgstr "Label/Description"
@@ -537,33 +571,44 @@ msgstr "Add VM"
 msgid "Add CIFS"
 msgstr "Add CIFS"
 
-#: View/HostMenu.cc:26 View/NetworkMenu.cc:14 View/StorageRepositoryMenu.cc:14
-#: View/VirtualBlockDeviceMenu.cc:27 View/VirtualDiskImageMenu.cc:16
-#: View/VirtualDiskImageMenu.cc:30 View/VirtualInterfaceMenu.cc:25
-#: View/VirtualMachineGenMenu.cc:14 View/VirtualMachineMemMenu.cc:14
+#: View/HostMenu.cc:26
+#: View/NetworkMenu.cc:14
+#: View/StorageRepositoryMenu.cc:14
+#: View/VirtualBlockDeviceMenu.cc:27
+#: View/VirtualDiskImageMenu.cc:16 View/VirtualDiskImageMenu.cc:30
+#: View/VirtualInterfaceMenu.cc:25
+#: View/VirtualMachineGenMenu.cc:14
+#: View/VirtualMachineMemMenu.cc:14
 #: View/VirtualMachineMenu.cc:21
 msgid "Change"
 msgstr "Change"
 
-#: View/HostMenu.cc:27 View/NetworkMenu.cc:15 View/PatchMenu.cc:20
-#: View/SnapshotMenu.cc:19 View/StorageRepositoryMenu.cc:17
+#: View/HostMenu.cc:27
+#: View/NetworkMenu.cc:15
+#: View/PatchMenu.cc:20
+#: View/SnapshotMenu.cc:19
+#: View/StorageRepositoryMenu.cc:17
 #: View/VirtualBlockDeviceMenu.cc:18 View/VirtualBlockDeviceMenu.cc:28
 #: View/VirtualDiskImageMenu.cc:20 View/VirtualDiskImageMenu.cc:31
 #: View/VirtualInterfaceMenu.cc:17 View/VirtualInterfaceMenu.cc:26
-#: View/VirtualMachineGenMenu.cc:22 View/VirtualMachineMemMenu.cc:15
+#: View/VirtualMachineGenMenu.cc:22
+#: View/VirtualMachineMemMenu.cc:15
 #: View/VirtualMachineMenu.cc:25
 msgid "Cancel"
 msgstr "Cancel"
 
-#: View/HostNotebook.cc:46 View/VirtualMachineNotebook.cc:107
+#: View/HostNotebook.cc:46
+#: View/VirtualMachineNotebook.cc:107
 msgid "CPU Load History"
 msgstr "CPU Load History"
 
-#: View/HostNotebook.cc:50 View/VirtualMachineNotebook.cc:111
+#: View/HostNotebook.cc:50
+#: View/VirtualMachineNotebook.cc:111
 msgid "Memory Usage History"
 msgstr "Memory Usage History"
 
-#: View/HostNotebook.cc:54 View/VirtualMachineNotebook.cc:115
+#: View/HostNotebook.cc:54
+#: View/VirtualMachineNotebook.cc:115
 msgid "Network I/O History"
 msgstr "Network I/O History"
 
@@ -571,7 +616,8 @@ msgstr "Network I/O History"
 msgid "Automatically connect to this host at start time"
 msgstr "Automatically connect to this host at start time"
 
-#: View/HostNotebook.cc:64 View/VirtualMachineNotebook.cc:142
+#: View/HostNotebook.cc:64
+#: View/VirtualMachineNotebook.cc:142
 msgid "Options"
 msgstr "Options"
 
@@ -579,11 +625,13 @@ msgstr "Options"
 msgid "Host"
 msgstr "Host"
 
-#: View/HostNotebook.cc:141 View/VirtualMachineMenu.cc:27
+#: View/HostNotebook.cc:141
+#: View/VirtualMachineMenu.cc:27
 msgid "CPU"
 msgstr "CPU"
 
-#: View/HostNotebook.cc:142 View/VirtualMachineMenu.cc:28
+#: View/HostNotebook.cc:142
+#: View/VirtualMachineMenu.cc:28
 #: View/VirtualMachinePropertyView.cc:307
 msgid "Memory"
 msgstr "Memory"
@@ -596,7 +644,8 @@ msgstr "Software"
 msgid "Patches"
 msgstr "Patches"
 
-#: View/HostNotebook.cc:145 View/VirtualMachineNotebook.cc:123
+#: View/HostNotebook.cc:145
+#: View/VirtualMachineNotebook.cc:123
 msgid "Performance"
 msgstr "Performance"
 
@@ -626,7 +675,8 @@ msgstr "Total receive"
 msgid "Total send"
 msgstr "Total send"
 
-#: View/HostTreeView.cc:34 View/SnapshotTreeView.cc:22
+#: View/HostTreeView.cc:34
+#: View/SnapshotTreeView.cc:22
 #: View/VirtualMachinePropertyView.cc:300
 msgid "Pix"
 msgstr "Pix"
@@ -784,7 +834,8 @@ msgstr "_Help"
 msgid "Quit"
 msgstr "Quit"
 
-#: View/MainWindow.cc:279 View/ViewImpl.cc:176
+#: View/MainWindow.cc:279
+#: View/ViewImpl.cc:176
 msgid "Add host"
 msgstr "Add host"
 
@@ -900,11 +951,13 @@ msgstr "Available memory"
 msgid "Value"
 msgstr "Value"
 
-#: View/NetworkNotebook.cc:39 View/VirtualMachinePropertyView.cc:231
+#: View/NetworkNotebook.cc:39
+#: View/VirtualMachinePropertyView.cc:231
 msgid "Physical interface:"
 msgstr "Physical interface:"
 
-#: View/NetworkNotebook.cc:46 View/StorageRepositoryNotebook.cc:42
+#: View/NetworkNotebook.cc:46
+#: View/StorageRepositoryNotebook.cc:42
 #: View/VirtualMachineNotebook.cc:48
 msgid "Properties"
 msgstr "Properties"
@@ -913,11 +966,13 @@ msgstr "Properties"
 msgid "Information"
 msgstr "Information"
 
-#: View/PatchListView.cc:20 View/VirtualDiskImageListView.cc:24
+#: View/PatchListView.cc:20
+#: View/VirtualDiskImageListView.cc:24
 msgid "UUID"
 msgstr "UUID"
 
-#: View/PatchListView.cc:23 View/VirtualMachineStatusWindow.cc:238
+#: View/PatchListView.cc:23
+#: View/VirtualMachineStatusWindow.cc:238
 msgid "Status"
 msgstr "Status"
 
@@ -1017,7 +1072,8 @@ msgstr "Apply to host"
 msgid "Clean from pool"
 msgstr "Clean from pool"
 
-#: View/PropertyHelper.cc:221 XenServer/VirtualBlockDevice.cc:26
+#: View/PropertyHelper.cc:221
+#: XenServer/VirtualBlockDevice.cc:26
 #: XenServer/XenServer.cc:244
 msgid "(unknown)"
 msgstr "(unknown)"
@@ -1042,7 +1098,8 @@ msgstr "Typical value: 1.0 for general use, 4.0 for XenApp"
 msgid "Bytes"
 msgstr "Bytes"
 
-#: View/SnapshotMenu.cc:15 View/VirtualDiskImageMenu.cc:17
+#: View/SnapshotMenu.cc:15
+#: View/VirtualDiskImageMenu.cc:17
 msgid "Change label/description"
 msgstr "Change label/description"
 
@@ -1063,7 +1120,8 @@ msgstr "Current virtual machine"
 msgid "%s %s (%ld%% used, %s free)%s"
 msgstr "%s %s (%ld%% used, %s free)%s"
 
-#: View/StorageRepositoryComboBox.cc:77 XenServer/StorageRepository.cc:190
+#: View/StorageRepositoryComboBox.cc:77
+#: XenServer/StorageRepository.cc:190
 msgid " [default]"
 msgstr " [default]"
 
@@ -1143,7 +1201,8 @@ msgstr "Do you wish to shut down the following host?\n"
 msgid "Virtual machine - Verify"
 msgstr "Virtual machine - Verify"
 
-#: View/VirtualBlockDeviceMenu.cc:16 View/VirtualInterfaceMenu.cc:16
+#: View/VirtualBlockDeviceMenu.cc:16
+#: View/VirtualInterfaceMenu.cc:16
 msgid "Detach"
 msgstr "Detach"
 
@@ -1179,7 +1238,8 @@ msgstr "Managed"
 msgid "Missing"
 msgstr "Missing"
 
-#: View/VirtualDiskImageListView.cc:36 View/VirtualMachinePropertyView.cc:306
+#: View/VirtualDiskImageListView.cc:36
+#: View/VirtualMachinePropertyView.cc:306
 #: View/VirtualMachineStatusWindow.cc:241
 msgid "Virtual machine"
 msgstr "Virtual machine"
@@ -1208,15 +1268,18 @@ msgstr "Change shadow memory"
 msgid "Change VGA"
 msgstr "Change VGA"
 
-#: View/VirtualMachineGenMenu.cc:19 View/VirtualMachineMenu.cc:31
+#: View/VirtualMachineGenMenu.cc:19
+#: View/VirtualMachineMenu.cc:31
 msgid "Attach HDD"
 msgstr "Attach HDD"
 
-#: View/VirtualMachineGenMenu.cc:20 View/VirtualMachineMenu.cc:32
+#: View/VirtualMachineGenMenu.cc:20
+#: View/VirtualMachineMenu.cc:32
 msgid "Attach CD drive"
 msgstr "Attach CD drive"
 
-#: View/VirtualMachineGenMenu.cc:21 View/VirtualMachineMenu.cc:33
+#: View/VirtualMachineGenMenu.cc:21
+#: View/VirtualMachineMenu.cc:33
 msgid "Attach NIC"
 msgstr "Attach NIC"
 
@@ -1483,11 +1546,13 @@ msgstr "Detached"
 msgid " (%ld%% used)"
 msgstr " (%ld%% used)"
 
-#: XenServer/VirtualBlockDevice.cc:22 XenServer/XenServer.cc:523
+#: XenServer/VirtualBlockDevice.cc:22
+#: XenServer/XenServer.cc:523
 msgid "CD"
 msgstr "CD"
 
-#: XenServer/VirtualBlockDevice.cc:24 XenServer/XenServer.cc:524
+#: XenServer/VirtualBlockDevice.cc:24
+#: XenServer/XenServer.cc:524
 msgid "Disk"
 msgstr "Disk"
 

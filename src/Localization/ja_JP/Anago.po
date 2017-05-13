@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: anago\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-13 23:08+0900\n"
-"PO-Revision-Date: 2017-05-13 23:08+0900\n"
+"PO-Revision-Date: 2017-05-14 01:52+0900\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -215,13 +215,16 @@ msgstr "バージョン %1"
 msgid "Add CIFS repository"
 msgstr "CIFS リポジトリを追加"
 
-#: View/AddCifsDialog.cc:17 View/HardDiskDriveSpecDialog.cc:18
+#: View/AddCifsDialog.cc:17
+#: View/HardDiskDriveSpecDialog.cc:18
 #: View/NameDialog.cc:14
 msgid "Label:"
 msgstr "ラベル:"
 
-#: View/AddCifsDialog.cc:18 View/AddVmDialog.cc:53
-#: View/HardDiskDriveSpecDialog.cc:19 View/NameDialog.cc:15
+#: View/AddCifsDialog.cc:18
+#: View/AddVmDialog.cc:53
+#: View/HardDiskDriveSpecDialog.cc:19
+#: View/NameDialog.cc:15
 msgid "Description:"
 msgstr "説明:"
 
@@ -229,11 +232,13 @@ msgstr "説明:"
 msgid "Location:"
 msgstr "場所:"
 
-#: View/AddCifsDialog.cc:20 View/ConnectDialog.cc:21
+#: View/AddCifsDialog.cc:20
+#: View/ConnectDialog.cc:21
 msgid "User name:"
 msgstr "ユーザー名:"
 
-#: View/AddCifsDialog.cc:21 View/ConnectDialog.cc:22
+#: View/AddCifsDialog.cc:21
+#: View/ConnectDialog.cc:22
 msgid "Password:"
 msgstr "パスワード:"
 
@@ -249,7 +254,8 @@ msgstr "新しい仮想マシンを追加"
 msgid "Template:"
 msgstr "テンプレート:"
 
-#: View/AddVmDialog.cc:46 View/CopyVmDialog.cc:16
+#: View/AddVmDialog.cc:46
+#: View/CopyVmDialog.cc:16
 msgid "Name:"
 msgstr "名前:"
 
@@ -258,7 +264,8 @@ msgid "New virtual machine"
 msgstr "新しい仮想マシン"
 
 #: View/AddVmDialog.cc:57 View/AddVmDialog.cc:125
-#: View/HardDiskDriveListBox.cc:88 XenServer/HardDiskDriveSpec.cc:19
+#: View/HardDiskDriveListBox.cc:88
+#: XenServer/HardDiskDriveSpec.cc:19
 msgid "Created by Anago"
 msgstr "Anagoにより作成"
 
@@ -282,8 +289,10 @@ msgstr "ハードディスクドライブ 0"
 msgid "Attach CD drive to VM"
 msgstr "仮想マシンに CD ドライブにアタッチ"
 
-#: View/AttachCdDialog.cc:14 View/AttachHddDialog.cc:23
-#: View/AttachNicDialog.cc:14 View/ChangeCdDialog.cc:15
+#: View/AttachCdDialog.cc:14
+#: View/AttachHddDialog.cc:23
+#: View/AttachNicDialog.cc:14
+#: View/ChangeCdDialog.cc:15
 msgid "Device:"
 msgstr "デバイス:"
 
@@ -291,11 +300,13 @@ msgstr "デバイス:"
 msgid "Attach HDD to VM"
 msgstr "仮想マシンにハードディスクドライブをアタッチ"
 
-#: View/AttachHddDialog.cc:25 View/StorageRepositoryNotebook.cc:30
+#: View/AttachHddDialog.cc:25
+#: View/StorageRepositoryNotebook.cc:30
 msgid "Storage repository:"
 msgstr "ストレージリポジトリ:"
 
-#: View/AttachHddDialog.cc:27 View/ChangeCdDialog.cc:17
+#: View/AttachHddDialog.cc:27
+#: View/ChangeCdDialog.cc:17
 #: View/VirtualMachinePropertyView.cc:169
 msgid "Virtual disk image:"
 msgstr "仮想ディスクイメージ:"
@@ -316,14 +327,18 @@ msgstr "削除(_R)"
 msgid "Attach NIC to VM"
 msgstr "仮想マシンにネットワークカードをアタッチ"
 
-#: View/AttachNicDialog.cc:16 View/NetworkNotebook.cc:34
+#: View/AttachNicDialog.cc:16
+#: View/NetworkNotebook.cc:34
 #: View/VirtualMachinePropertyView.cc:231
 msgid "Network:"
 msgstr "ネットワーク:"
 
-#: View/CdImageListView.cc:26 View/DeleteVmDialog.cc:61
-#: View/NameValueListView.cc:18 View/NetworkListView.cc:20
-#: View/SnapshotTreeView.cc:23 View/VirtualDiskImageListView.cc:25
+#: View/CdImageListView.cc:26
+#: View/DeleteVmDialog.cc:61
+#: View/NameValueListView.cc:18
+#: View/NetworkListView.cc:20
+#: View/SnapshotTreeView.cc:23
+#: View/VirtualDiskImageListView.cc:25
 #: View/VirtualMachinePropertyView.cc:301
 #: View/VirtualMachineTemplateListView.cc:20
 msgid "Name"
@@ -333,8 +348,10 @@ msgstr "名前"
 msgid "(empty)"
 msgstr "(空)"
 
-#: View/ChangeCdDialog.cc:14 View/MainWindow.cc:289
-#: View/VirtualBlockDeviceMenu.cc:17 View/VirtualMachineMenu.cc:19
+#: View/ChangeCdDialog.cc:14
+#: View/MainWindow.cc:289
+#: View/VirtualBlockDeviceMenu.cc:17
+#: View/VirtualMachineMenu.cc:19
 msgid "Change CD/DVD"
 msgstr "CD/DVD を変更"
 
@@ -358,11 +375,13 @@ msgstr "方式:"
 msgid "Clone"
 msgstr "クローン"
 
-#: View/CopyVmDialog.cc:19 View/VirtualMachineMenu.cc:22
+#: View/CopyVmDialog.cc:19
+#: View/VirtualMachineMenu.cc:22
 msgid "Copy"
 msgstr "コピー"
 
-#: View/CopyVmDialog.cc:20 View/HardDiskDriveSpecDialog.cc:15
+#: View/CopyVmDialog.cc:20
+#: View/HardDiskDriveSpecDialog.cc:15
 msgid "Storage:"
 msgstr "ストレージ:"
 
@@ -410,12 +429,15 @@ msgstr ""
 "仮想マシン \"%1\" が削除されます. "
 "以下の選択中の仮想ディスクも削除されます."
 
-#: View/DeleteVmDialog.cc:58 View/SnapshotMenu.cc:18
-#: View/StorageRepositoryMenu.cc:16 View/VirtualMachineMenu.cc:23
+#: View/DeleteVmDialog.cc:58
+#: View/SnapshotMenu.cc:18
+#: View/StorageRepositoryMenu.cc:16
+#: View/VirtualMachineMenu.cc:23
 msgid "Delete"
 msgstr "削除"
 
-#: View/DeleteVmDialog.cc:62 View/HardDiskDriveListView.cc:23
+#: View/DeleteVmDialog.cc:62
+#: View/HardDiskDriveListView.cc:23
 #: View/PatchListView.cc:28
 msgid "Size"
 msgstr "サイズ"
@@ -424,7 +446,8 @@ msgstr "サイズ"
 msgid "SR"
 msgstr "ストレージリポジトリ"
 
-#: View/DeleteVmDialog.cc:64 View/VirtualDiskImageListView.cc:35
+#: View/DeleteVmDialog.cc:64
+#: View/VirtualDiskImageListView.cc:35
 msgid "Snapshot"
 msgstr "スナップショット"
 
@@ -440,15 +463,18 @@ msgstr "いいえ"
 msgid "Virtual machine - Export"
 msgstr "仮想マシン - エクスポート"
 
-#: View/ExportVmDialog.cc:16 View/ImportVmDialog.cc:17
+#: View/ExportVmDialog.cc:16
+#: View/ImportVmDialog.cc:17
 msgid "File name:"
 msgstr "ファイル名:"
 
-#: View/ExportVmDialog.cc:17 View/ImportVmDialog.cc:18
+#: View/ExportVmDialog.cc:17
+#: View/ImportVmDialog.cc:18
 msgid "_Browse"
 msgstr "ブラウズ(_B)"
 
-#: View/ExportVmDialog.cc:18 View/MainWindow.cc:111
+#: View/ExportVmDialog.cc:18
+#: View/MainWindow.cc:111
 msgid "_Verify"
 msgstr "検証(_V)"
 
@@ -460,16 +486,19 @@ msgstr "エクスポートするファイル名を選択"
 msgid "Add"
 msgstr "追加"
 
-#: View/HardDiskDriveListBox.cc:31 View/HostMenu.cc:24
+#: View/HardDiskDriveListBox.cc:31
+#: View/HostMenu.cc:24
 msgid "Edit"
 msgstr "編集"
 
-#: View/HardDiskDriveListBox.cc:34 View/HostMenu.cc:25
+#: View/HardDiskDriveListBox.cc:34
+#: View/HostMenu.cc:25
 #: View/VirtualDiskImageMenu.cc:19
 msgid "Remove"
 msgstr "削除"
 
-#: View/HardDiskDriveListBox.cc:83 View/ViewImpl.cc:531
+#: View/HardDiskDriveListBox.cc:83
+#: View/ViewImpl.cc:531
 msgid "Add hard disk drive to SR"
 msgstr "ストレージリポジトリにハードディスクドライブを追加"
 
@@ -490,16 +519,19 @@ msgstr "ハードディスクドライブ \"%1\" を削除しますか?"
 msgid "Storage repository"
 msgstr "ストレージリポジトリ"
 
-#: View/HardDiskDriveListView.cc:24 View/PatchListView.cc:21
+#: View/HardDiskDriveListView.cc:24
+#: View/PatchListView.cc:21
 msgid "Label"
 msgstr "ラベル"
 
-#: View/HardDiskDriveListView.cc:25 View/PatchListView.cc:22
+#: View/HardDiskDriveListView.cc:25
+#: View/PatchListView.cc:22
 #: View/VirtualDiskImageListView.cc:26
 msgid "Description"
 msgstr "説明"
 
-#: View/HardDiskDriveSpecDialog.cc:17 View/ResizeDialog.cc:13
+#: View/HardDiskDriveSpecDialog.cc:17
+#: View/ResizeDialog.cc:13
 msgid "Size:"
 msgstr "サイズ:"
 
@@ -515,7 +547,8 @@ msgstr "切断"
 msgid "Power on"
 msgstr "電源オン"
 
-#: View/HostMenu.cc:19 View/VirtualMachineMenu.cc:15
+#: View/HostMenu.cc:19
+#: View/VirtualMachineMenu.cc:15
 msgid "Shut down"
 msgstr "停止"
 
@@ -523,7 +556,8 @@ msgstr "停止"
 msgid "Restart"
 msgstr "再起動"
 
-#: View/HostMenu.cc:21 View/StorageRepositoryMenu.cc:18
+#: View/HostMenu.cc:21
+#: View/StorageRepositoryMenu.cc:18
 #: View/VirtualMachineMenu.cc:26
 msgid "Label/Description"
 msgstr "ラベル/説明"
@@ -536,33 +570,44 @@ msgstr "仮想マシンを追加"
 msgid "Add CIFS"
 msgstr "CIFS リポジトリを追加"
 
-#: View/HostMenu.cc:26 View/NetworkMenu.cc:14 View/StorageRepositoryMenu.cc:14
-#: View/VirtualBlockDeviceMenu.cc:27 View/VirtualDiskImageMenu.cc:16
-#: View/VirtualDiskImageMenu.cc:30 View/VirtualInterfaceMenu.cc:25
-#: View/VirtualMachineGenMenu.cc:14 View/VirtualMachineMemMenu.cc:14
+#: View/HostMenu.cc:26
+#: View/NetworkMenu.cc:14
+#: View/StorageRepositoryMenu.cc:14
+#: View/VirtualBlockDeviceMenu.cc:27
+#: View/VirtualDiskImageMenu.cc:16 View/VirtualDiskImageMenu.cc:30
+#: View/VirtualInterfaceMenu.cc:25
+#: View/VirtualMachineGenMenu.cc:14
+#: View/VirtualMachineMemMenu.cc:14
 #: View/VirtualMachineMenu.cc:21
 msgid "Change"
 msgstr "変更"
 
-#: View/HostMenu.cc:27 View/NetworkMenu.cc:15 View/PatchMenu.cc:20
-#: View/SnapshotMenu.cc:19 View/StorageRepositoryMenu.cc:17
+#: View/HostMenu.cc:27
+#: View/NetworkMenu.cc:15
+#: View/PatchMenu.cc:20
+#: View/SnapshotMenu.cc:19
+#: View/StorageRepositoryMenu.cc:17
 #: View/VirtualBlockDeviceMenu.cc:18 View/VirtualBlockDeviceMenu.cc:28
 #: View/VirtualDiskImageMenu.cc:20 View/VirtualDiskImageMenu.cc:31
 #: View/VirtualInterfaceMenu.cc:17 View/VirtualInterfaceMenu.cc:26
-#: View/VirtualMachineGenMenu.cc:22 View/VirtualMachineMemMenu.cc:15
+#: View/VirtualMachineGenMenu.cc:22
+#: View/VirtualMachineMemMenu.cc:15
 #: View/VirtualMachineMenu.cc:25
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: View/HostNotebook.cc:46 View/VirtualMachineNotebook.cc:107
+#: View/HostNotebook.cc:46
+#: View/VirtualMachineNotebook.cc:107
 msgid "CPU Load History"
 msgstr "CPU 負荷履歴"
 
-#: View/HostNotebook.cc:50 View/VirtualMachineNotebook.cc:111
+#: View/HostNotebook.cc:50
+#: View/VirtualMachineNotebook.cc:111
 msgid "Memory Usage History"
 msgstr "メモリ使用履歴"
 
-#: View/HostNotebook.cc:54 View/VirtualMachineNotebook.cc:115
+#: View/HostNotebook.cc:54
+#: View/VirtualMachineNotebook.cc:115
 msgid "Network I/O History"
 msgstr "ネットワーク入出力履歴"
 
@@ -570,7 +615,8 @@ msgstr "ネットワーク入出力履歴"
 msgid "Automatically connect to this host at start time"
 msgstr "アプリ起動時にこのホストに自動的に接続する"
 
-#: View/HostNotebook.cc:64 View/VirtualMachineNotebook.cc:142
+#: View/HostNotebook.cc:64
+#: View/VirtualMachineNotebook.cc:142
 msgid "Options"
 msgstr "オプション"
 
@@ -578,11 +624,13 @@ msgstr "オプション"
 msgid "Host"
 msgstr "ホスト"
 
-#: View/HostNotebook.cc:141 View/VirtualMachineMenu.cc:27
+#: View/HostNotebook.cc:141
+#: View/VirtualMachineMenu.cc:27
 msgid "CPU"
 msgstr "CPU"
 
-#: View/HostNotebook.cc:142 View/VirtualMachineMenu.cc:28
+#: View/HostNotebook.cc:142
+#: View/VirtualMachineMenu.cc:28
 #: View/VirtualMachinePropertyView.cc:307
 msgid "Memory"
 msgstr "メモリ"
@@ -595,7 +643,8 @@ msgstr "ソフトウェア"
 msgid "Patches"
 msgstr "パッチ"
 
-#: View/HostNotebook.cc:145 View/VirtualMachineNotebook.cc:123
+#: View/HostNotebook.cc:145
+#: View/VirtualMachineNotebook.cc:123
 msgid "Performance"
 msgstr "パフォーマンス"
 
@@ -625,7 +674,8 @@ msgstr "総受信"
 msgid "Total send"
 msgstr "総送信"
 
-#: View/HostTreeView.cc:34 View/SnapshotTreeView.cc:22
+#: View/HostTreeView.cc:34
+#: View/SnapshotTreeView.cc:22
 #: View/VirtualMachinePropertyView.cc:300
 msgid "Pix"
 msgstr "画像"
@@ -783,7 +833,8 @@ msgstr "ヘルプ(_H)"
 msgid "Quit"
 msgstr "終了"
 
-#: View/MainWindow.cc:279 View/ViewImpl.cc:176
+#: View/MainWindow.cc:279
+#: View/ViewImpl.cc:176
 msgid "Add host"
 msgstr "ホストを追加"
 
@@ -899,11 +950,13 @@ msgstr "利用可能"
 msgid "Value"
 msgstr "値"
 
-#: View/NetworkNotebook.cc:39 View/VirtualMachinePropertyView.cc:231
+#: View/NetworkNotebook.cc:39
+#: View/VirtualMachinePropertyView.cc:231
 msgid "Physical interface:"
 msgstr "物理インターフェース:"
 
-#: View/NetworkNotebook.cc:46 View/StorageRepositoryNotebook.cc:42
+#: View/NetworkNotebook.cc:46
+#: View/StorageRepositoryNotebook.cc:42
 #: View/VirtualMachineNotebook.cc:48
 msgid "Properties"
 msgstr "プロパティ"
@@ -912,11 +965,13 @@ msgstr "プロパティ"
 msgid "Information"
 msgstr "情報"
 
-#: View/PatchListView.cc:20 View/VirtualDiskImageListView.cc:24
+#: View/PatchListView.cc:20
+#: View/VirtualDiskImageListView.cc:24
 msgid "UUID"
 msgstr "UUID"
 
-#: View/PatchListView.cc:23 View/VirtualMachineStatusWindow.cc:238
+#: View/PatchListView.cc:23
+#: View/VirtualMachineStatusWindow.cc:238
 msgid "Status"
 msgstr "ステータス"
 
@@ -1016,7 +1071,8 @@ msgstr "ホストに適用"
 msgid "Clean from pool"
 msgstr "プールをクリーニング"
 
-#: View/PropertyHelper.cc:221 XenServer/VirtualBlockDevice.cc:26
+#: View/PropertyHelper.cc:221
+#: XenServer/VirtualBlockDevice.cc:26
 #: XenServer/XenServer.cc:244
 msgid "(unknown)"
 msgstr "(不明)"
@@ -1041,7 +1097,8 @@ msgstr "典型的な値: 1.0 一般的な用途, 4.0 XenApp用"
 msgid "Bytes"
 msgstr "バイト"
 
-#: View/SnapshotMenu.cc:15 View/VirtualDiskImageMenu.cc:17
+#: View/SnapshotMenu.cc:15
+#: View/VirtualDiskImageMenu.cc:17
 msgid "Change label/description"
 msgstr "ラベル/説明を変更"
 
@@ -1062,7 +1119,8 @@ msgstr "現在の仮想マシン"
 msgid "%s %s (%ld%% used, %s free)%s"
 msgstr "%s %s (使用中 %ld%%, 空き %s)%s"
 
-#: View/StorageRepositoryComboBox.cc:77 XenServer/StorageRepository.cc:190
+#: View/StorageRepositoryComboBox.cc:77
+#: XenServer/StorageRepository.cc:190
 msgid " [default]"
 msgstr " [既定]"
 
@@ -1142,7 +1200,8 @@ msgstr "次のホストを停止しますか?\n"
 msgid "Virtual machine - Verify"
 msgstr "仮想マシン - 検証"
 
-#: View/VirtualBlockDeviceMenu.cc:16 View/VirtualInterfaceMenu.cc:16
+#: View/VirtualBlockDeviceMenu.cc:16
+#: View/VirtualInterfaceMenu.cc:16
 msgid "Detach"
 msgstr "デタッチ"
 
@@ -1178,7 +1237,8 @@ msgstr "管理下"
 msgid "Missing"
 msgstr "不明"
 
-#: View/VirtualDiskImageListView.cc:36 View/VirtualMachinePropertyView.cc:306
+#: View/VirtualDiskImageListView.cc:36
+#: View/VirtualMachinePropertyView.cc:306
 #: View/VirtualMachineStatusWindow.cc:241
 msgid "Virtual machine"
 msgstr "仮想マシン"
@@ -1207,15 +1267,18 @@ msgstr "シャドウメモリ設定変更"
 msgid "Change VGA"
 msgstr "VGA 設定変更"
 
-#: View/VirtualMachineGenMenu.cc:19 View/VirtualMachineMenu.cc:31
+#: View/VirtualMachineGenMenu.cc:19
+#: View/VirtualMachineMenu.cc:31
 msgid "Attach HDD"
 msgstr "ハードディスクドライブをアタッチ"
 
-#: View/VirtualMachineGenMenu.cc:20 View/VirtualMachineMenu.cc:32
+#: View/VirtualMachineGenMenu.cc:20
+#: View/VirtualMachineMenu.cc:32
 msgid "Attach CD drive"
 msgstr "CD ドライブをアタッチ"
 
-#: View/VirtualMachineGenMenu.cc:21 View/VirtualMachineMenu.cc:33
+#: View/VirtualMachineGenMenu.cc:21
+#: View/VirtualMachineMenu.cc:33
 msgid "Attach NIC"
 msgstr "ネットワークカードをアタッチ"
 
@@ -1482,11 +1545,13 @@ msgstr "デタッチ"
 msgid " (%ld%% used)"
 msgstr " (%ld%% 使用)"
 
-#: XenServer/VirtualBlockDevice.cc:22 XenServer/XenServer.cc:523
+#: XenServer/VirtualBlockDevice.cc:22
+#: XenServer/XenServer.cc:523
 msgid "CD"
 msgstr "CD"
 
-#: XenServer/VirtualBlockDevice.cc:24 XenServer/XenServer.cc:524
+#: XenServer/VirtualBlockDevice.cc:24
+#: XenServer/XenServer.cc:524
 msgid "Disk"
 msgstr "ディスク"
 
