@@ -564,11 +564,6 @@ void VirtualMachineStatusWindow::ListView::updateState(Gtk::TreeModel::Row& row,
             {
                 vm->setDisplayStatus(displayState);
             }
-            else
-            {
-                XenPtr<xen_vm_record> record = vm->getRecord();
-                vm->setDisplayStatus(XenServer::getPowerStateText(record->power_state));
-            }
         }
         break;
     }

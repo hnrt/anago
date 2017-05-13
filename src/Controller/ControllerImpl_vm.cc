@@ -167,11 +167,12 @@ void ControllerImpl::addVm()
 void ControllerImpl::addVmInBackground(RefPtr<Host> host, VirtualMachineSpec spec)
 {
     Trace trace("ControllerImpl::addVmInBackground");
-    host->setBusy(true);
+    XenObject::Busy busy(*host);
     try
     {
         Session& session = host->getSession();
         Session::Lock lock(session);
+        host->setDisplayStatus(gettext("Creating VM..."));
         XenRef<xen_vm, xen_vm_free_t> vm;
         if (XenServer::createVirtualMachine(session, spec, &vm))
         {
@@ -190,7 +191,6 @@ void ControllerImpl::addVmInBackground(RefPtr<Host> host, VirtualMachineSpec spe
     {
         Logger::instance().error("%s: Unhandled exception caught.", trace.name().data());
     }
-    host->setBusy(false);
 }
 
 
@@ -222,36 +222,36 @@ void ControllerImpl::copyVm()
 void ControllerImpl::cloneVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustring label)
 {
     Trace trace("ControllerImpl::cloneVmInBackground");
-    vm->setBusy(true);
+    XenObject::Busy busy(*vm);
     try
     {
         Session& session = vm->getSession();
         Session::Lock lock(session);
+        // display status will be updated by task object
         vm->clone(label.c_str());
     }
     catch (...)
     {
         Logger::instance().error("%s: Unhandled exception caught.", trace.name().data());
     }
-    vm->setBusy(false);
 }
 
 
 void ControllerImpl::copyVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustring label, Glib::ustring srREFID)
 {
     Trace trace("ControllerImpl::copyVmInBackground");
-    vm->setBusy(true);
+    XenObject::Busy busy(*vm);
     try
     {
         Session& session = vm->getSession();
         Session::Lock lock(session);
+        // display status will be updated by task object
         vm->copy(label.c_str(), (xen_sr)(char*)srREFID.c_str());
     }
     catch (...)
     {
         Logger::instance().error("%s: Unhandled exception caught.", trace.name().data());
     }
-    vm->setBusy(false);
 }
 
 
@@ -274,12 +274,15 @@ void ControllerImpl::deleteVm()
 void ControllerImpl::deleteVmInBackground(RefPtr<VirtualMachine> vm, std::list<Glib::ustring> disks)
 {
     Session& session = vm->getSession();
+    XenObjectStore& store = session.getStore();
+    RefPtr<Host> host = store.getHost();
+    XenObject::Busy busy(*host);
     Session::Lock lock(session);
+    host->setDisplayStatus(gettext("Deleting VM..."));
     if (!vm->destroy())
     {
         return;
     }
-    XenObjectStore& store = session.getStore();
     for (std::list<Glib::ustring>::const_iterator iter = disks.begin(); iter != disks.end(); iter++)
     {
         RefPtr<VirtualDiskImage> vdi = store.getVdi(*iter);
@@ -570,6 +573,7 @@ void ControllerImpl::attachHddInBackground(RefPtr<VirtualMachine> vm, Glib::ustr
     XenObject::Busy busy(*vm);
     Session& session = vm->getSession();
     Session::Lock lock(session);
+    vm->setDisplayStatus(gettext("Attaching HDD..."));
     if (!XenServer::attachHdd(session, vm->getHandle(), userdevice.c_str(), (xen_vdi)vdi.c_str()))
     {
         session.emit(XenObject::ERROR);
@@ -598,6 +602,7 @@ void ControllerImpl::attachCdInBackground(RefPtr<VirtualMachine> vm, Glib::ustri
     XenObject::Busy busy(*vm);
     Session& session = vm->getSession();
     Session::Lock lock(session);
+    vm->setDisplayStatus(gettext("Attaching CD..."));
     if (!XenServer::attachCd(session, vm->getHandle(), userdevice.c_str()))
     {
         session.emit(XenObject::ERROR);
@@ -627,6 +632,7 @@ void ControllerImpl::attachNicInBackground(RefPtr<VirtualMachine> vm, Glib::ustr
     XenObject::Busy busy(*vm);
     Session& session = vm->getSession();
     Session::Lock lock(session);
+    vm->setDisplayStatus(gettext("Attaching NIC..."));
     if (!XenServer::createNic(session, vm->getHandle(), device.c_str(), (xen_network)network.c_str()))
     {
         session.emit(XenObject::ERROR);
@@ -673,6 +679,7 @@ void ControllerImpl::snapshotVmInBackground(RefPtr<VirtualMachine> vm)
     XenObject::Busy busy(*vm);
     Session& session = vm->getSession();
     Session::Lock lock(session);
+    vm->setDisplayStatus(gettext("Creating snapshot..."));
     if (!XenServer::createSnapshot(session, vm->getHandle()))
     {
         session.emit(XenObject::ERROR);
@@ -705,10 +712,11 @@ void ControllerImpl::revertVmInBackground(RefPtr<VirtualMachine> vm)
 {
     TRACE("ControllerImpl::revertVmInBackground");
     Session& session = vm->getSession();
-    Session::Lock lock(session);
     XenPtr<xen_vm_record> record = vm->getRecord();
     RefPtr<VirtualMachine> src = session.getStore().getVm(record->snapshot_of);
     XenObject::Busy busy(*src);
+    Session::Lock lock(session);
+    src->setDisplayStatus(gettext("Reverting..."));
     if (!xen_vm_revert(session, vm->getHandle()))
     {
         session.emit(XenObject::ERROR);
