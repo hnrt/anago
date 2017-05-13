@@ -5,6 +5,7 @@
 #define HNRT_CONTROLLERIMPL_H
 
 
+#include <glibmm.h>
 #include <sigc++/sigc++.h>
 #include "Base/RefPtr.h"
 #include "XenServer/CifsSpec.h"
@@ -85,6 +86,8 @@ namespace hnrt
         ControllerImpl(const ControllerImpl&);
         void operator =(const ControllerImpl&);
         bool quit2();
+        void backgroundWorker();
+        void schedule(const sigc::slot<void>&);
         void connectAtStartup();
         void onConnectFailed(RefPtr<XenObject>, int);
         void onXenObjectError(RefPtr<XenObject>, int);
@@ -115,6 +118,9 @@ namespace hnrt
 
         ThreadManager& _tm;
         bool _quitInProgress;
+        Glib::Mutex _mutexBackground;
+        Glib::Cond _condBackground;
+        std::list<sigc::slot<void> > _backgroundQueue;
     };
 }
 

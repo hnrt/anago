@@ -34,7 +34,7 @@ void ControllerImpl::addCifs()
     {
         return;
     }
-    _tm.create(sigc::bind<RefPtr<Host>, CifsSpec>(sigc::mem_fun(*this, &ControllerImpl::addCifsInBackground), host, spec), false, "AddCifs");
+    schedule(sigc::bind<RefPtr<Host>, CifsSpec>(sigc::mem_fun(*this, &ControllerImpl::addCifsInBackground), host, spec));
 }
 
 
@@ -88,7 +88,7 @@ void ControllerImpl::deleteCifs()
     {
         return;
     }
-    _tm.create(sigc::bind<RefPtr<StorageRepository> >(sigc::mem_fun(*this, &ControllerImpl::deleteCifsInBackground), sr), false, "DeleteCifs");
+    schedule(sigc::bind<RefPtr<StorageRepository> >(sigc::mem_fun(*this, &ControllerImpl::deleteCifsInBackground), sr));
 }
 
 
@@ -159,7 +159,8 @@ void ControllerImpl::addHddTo(StorageRepository& sr)
     {
         return;
     }
-    _tm.create(sigc::bind<RefPtr<StorageRepository>, HardDiskDriveSpec>(sigc::mem_fun(*this, &ControllerImpl::addHddInBackground), RefPtr<StorageRepository>(&sr, 1), spec), false, "AddHdd");
+    RefPtr<StorageRepository> srPtr(&sr, 1);
+    schedule(sigc::bind<RefPtr<StorageRepository>, HardDiskDriveSpec>(sigc::mem_fun(*this, &ControllerImpl::addHddInBackground), srPtr, spec));
 }
 
 

@@ -365,7 +365,7 @@ void ControllerImpl::disconnect()
 
 void ControllerImpl::disconnect(const RefPtr<Host>& host)
 {
-    _tm.create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host), false, "Disconnect");
+    schedule(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::disconnectInBackground), host));
 }
 
 
@@ -455,7 +455,7 @@ void ControllerImpl::shutdownHosts()
     }
     for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
     {
-        _tm.create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::shutdownHostInBackground), *iter), false, "ShutdownHost");
+        schedule(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::shutdownHostInBackground), *iter));
     }
 }
 
@@ -486,7 +486,7 @@ void ControllerImpl::restartHosts()
     }
     for (std::list<RefPtr<Host> >::iterator iter = hosts.begin(); iter != hosts.end(); iter++)
     {
-        _tm.create(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::restartHostInBackground), *iter), false, "RestartHost");
+        schedule(sigc::bind<RefPtr<Host> >(sigc::mem_fun(*this, &ControllerImpl::restartHostInBackground), *iter));
     }
 }
 

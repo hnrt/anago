@@ -160,7 +160,7 @@ void ControllerImpl::addVm()
     {
         return;
     }
-    _tm.create(sigc::bind<RefPtr<Host>, VirtualMachineSpec>(sigc::mem_fun(*this, &ControllerImpl::addVmInBackground), host, spec), false, "AddVm");
+    schedule(sigc::bind<RefPtr<Host>, VirtualMachineSpec>(sigc::mem_fun(*this, &ControllerImpl::addVmInBackground), host, spec));
 }
 
 
@@ -210,11 +210,11 @@ void ControllerImpl::copyVm()
     }
     if (srREFID.empty())
     {
-        _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::cloneVmInBackground), vm, label), false, "CloneVm");
+        schedule(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::cloneVmInBackground), vm, label));
     }
     else
     {
-        _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::copyVmInBackground), vm, label, srREFID), false, "CopyVm");
+        schedule(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::copyVmInBackground), vm, label, srREFID));
     }
 }
 
@@ -267,7 +267,7 @@ void ControllerImpl::deleteVm()
     {
         return;
     }
-    _tm.create(sigc::bind<RefPtr<VirtualMachine>, std::list<Glib::ustring> >(sigc::mem_fun(*this, &ControllerImpl::deleteVmInBackground), vm, disks), false, "DeleteVm");
+    schedule(sigc::bind<RefPtr<VirtualMachine>, std::list<Glib::ustring> >(sigc::mem_fun(*this, &ControllerImpl::deleteVmInBackground), vm, disks));
 }
 
 
@@ -306,7 +306,7 @@ void ControllerImpl::exportVm()
         if (stat(path.c_str(), &statinfo))
         {
         doIt:
-            _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, bool>(sigc::mem_fun(*this, &ControllerImpl::exportVmInBackground), vm, path, verify), false, "ExportVm");
+            schedule(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, bool>(sigc::mem_fun(*this, &ControllerImpl::exportVmInBackground), vm, path, verify));
             return;
         }
         else if (S_ISREG(statinfo.st_mode))
@@ -360,7 +360,7 @@ void ControllerImpl::importVm()
         }
         else if (S_ISREG(statinfo.st_mode))
         {
-            _tm.create(sigc::bind<RefPtr<Host>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::importVmInBackground), host, path), false, "ImportVm");
+            schedule(sigc::bind<RefPtr<Host>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::importVmInBackground), host, path));
             return;
         }
         else
@@ -399,7 +399,7 @@ void ControllerImpl::verifyVm()
         }
         else if (S_ISREG(statinfo.st_mode))
         {
-            _tm.create(sigc::bind<Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::verifyVmInBackground), path), false, "VerifyVm");
+            schedule(sigc::bind<Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::verifyVmInBackground), path));
             return;
         }
         else
@@ -561,7 +561,7 @@ void ControllerImpl::attachHdd()
     {
         return;
     }
-    _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::attachHddInBackground), vm, userdevice, vdi), false, "AttachHdd");
+    schedule(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::attachHddInBackground), vm, userdevice, vdi));
 }
 
 
@@ -589,7 +589,7 @@ void ControllerImpl::attachCd()
     {
         return;
     }
-    _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::attachCdInBackground), vm, userdevice), false, "AttachCd");
+    schedule(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::attachCdInBackground), vm, userdevice));
 }
 
 
@@ -618,7 +618,7 @@ void ControllerImpl::attachNic()
     {
         return;
     }
-    _tm.create(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::attachNicInBackground), vm, device, network), false, "AttachNic");
+    schedule(sigc::bind<RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ControllerImpl::attachNicInBackground), vm, device, network));
 }
 
 
@@ -663,7 +663,7 @@ void ControllerImpl::snapshotVm()
         TRACEPUT(vm ? "Selected VM is busy." : "No selected VM.");
         return;
     }
-    _tm.create(sigc::bind<RefPtr<VirtualMachine> >(sigc::mem_fun(*this, &ControllerImpl::snapshotVmInBackground), vm), false, "SnapshotVm");
+    schedule(sigc::bind<RefPtr<VirtualMachine> >(sigc::mem_fun(*this, &ControllerImpl::snapshotVmInBackground), vm));
 }
 
 
@@ -697,7 +697,7 @@ void ControllerImpl::revertVm()
         TRACEPUT(src ? "Selected snapshot source is busy." : "No selected snapshot source.");
         return;
     }
-    _tm.create(sigc::bind<RefPtr<VirtualMachine> >(sigc::mem_fun(*this, &ControllerImpl::revertVmInBackground), vm), false, "RevertVm");
+    schedule(sigc::bind<RefPtr<VirtualMachine> >(sigc::mem_fun(*this, &ControllerImpl::revertVmInBackground), vm));
 }
 
 
@@ -730,5 +730,5 @@ void ControllerImpl::deleteSnapshot()
     {
         return;
     }
-    _tm.create(sigc::bind<RefPtr<VirtualMachine>, std::list<Glib::ustring> >(sigc::mem_fun(*this, &ControllerImpl::deleteVmInBackground), vm, disks), false, "DeleteSnapshot");
+    schedule(sigc::bind<RefPtr<VirtualMachine>, std::list<Glib::ustring> >(sigc::mem_fun(*this, &ControllerImpl::deleteVmInBackground), vm, disks));
 }

@@ -32,6 +32,11 @@ ControllerImpl::ControllerImpl()
     sm.xenObjectSignal(XenObject::TASK_ON_FAILURE).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
     sm.xenObjectSignal(XenObject::TASK_ON_CANCELLED).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
     sm.xenObjectSignal(XenObject::TASK_IN_PROGRESS).connect(sigc::mem_fun(*this, &ControllerImpl::onXenTaskUpdated));
+
+    _tm.create(sigc::mem_fun(*this, &ControllerImpl::backgroundWorker), false, "Background");
+    _tm.create(sigc::mem_fun(*this, &ControllerImpl::backgroundWorker), false, "Background");
+    _tm.create(sigc::mem_fun(*this, &ControllerImpl::backgroundWorker), false, "Background");
+    _tm.create(sigc::mem_fun(*this, &ControllerImpl::backgroundWorker), false, "Background");
 }
 
 
@@ -92,6 +97,8 @@ bool ControllerImpl::quit2()
 {
     Trace trace("ControllerImpl::quit2");
 
+    _condBackground.broadcast();
+
     int busyCount = 0;
     std::list<RefPtr<Host> > hosts;
     Model::instance().get(hosts);
@@ -131,6 +138,50 @@ bool ControllerImpl::quit2()
         View::instance().getWindow().hide();
         return false; // done
     }
+}
+
+
+void ControllerImpl::backgroundWorker()
+{
+    Trace trace("ControllerImpl::backgroundWorker");
+    for (;;)
+    {
+        sigc::slot<void> job;
+        {
+            Glib::Mutex::Lock lock(_mutexBackground);
+            while (!_backgroundQueue.size())
+            {
+                if (_quitInProgress)
+                {
+                    return;
+                }
+                _condBackground.wait(_mutexBackground);
+            }
+            job = _backgroundQueue.front();
+            _backgroundQueue.pop_front();
+        }
+        try
+        {
+            job();
+        }
+        catch (std::bad_alloc)
+        {
+            Logger::instance().error("Out of memory.");
+        }
+        catch (...)
+        {
+            Logger::instance().error("Unhandled exception caught.");
+        }
+    }
+}
+
+
+void ControllerImpl::schedule(const sigc::slot<void>& job)
+{
+    Trace trace("ControllerImpl::schedule");
+    Glib::Mutex::Lock lock(_mutexBackground);
+    _backgroundQueue.push_back(job);
+    _condBackground.signal();
 }
 
 
