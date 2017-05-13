@@ -33,7 +33,16 @@ void ControllerImpl::changeSrName()
 
 void ControllerImpl::setDefaultSr()
 {
-    //TODO: IMPLEMENT
+    RefPtr<StorageRepository> sr = Model::instance().getSelectedSr();
+    if (!sr || sr->isBusy() || sr->isTools() || sr->isCifs() || sr->getSubType() != StorageRepository::USR)
+    {
+        return;
+    }
+    Session& session = sr->getSession();
+    if (!XenServer::setDefaultSr(session, sr->getHandle()))
+    {
+        session.emit(XenObject::ERROR);
+    }
 }
 
 

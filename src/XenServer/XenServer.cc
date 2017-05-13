@@ -407,7 +407,6 @@ bool XenServer::setDefaultSr(xen_session* session, xen_sr sr)
     XenPtr<xen_pool_set> ps;
     if (!xen_pool_get_all(session, ps.address()))
     {
-        xen_session_clear_error(session);
         return false;
     }
     if (!ps->size)
@@ -418,7 +417,6 @@ bool XenServer::setDefaultSr(xen_session* session, xen_sr sr)
     {
         if (!xen_pool_set_default_sr(session, ps->contents[i], sr))
         {
-            xen_session_clear_error(session);
             return false;
         }
     }
