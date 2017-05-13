@@ -100,5 +100,5 @@ void VirtualInterfaceMenu::onChange()
 
 void VirtualInterfaceMenu::onDetach()
 {
-    //Controller::instance().detachVif(_vif);
+    Controller::instance().detachNic(*_vif);
 }

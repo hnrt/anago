@@ -18,6 +18,7 @@
 #include "XenServer/Session.h"
 #include "XenServer/VirtualBlockDevice.h"
 #include "XenServer/VirtualDiskImage.h"
+#include "XenServer/VirtualInterface.h"
 #include "XenServer/VirtualMachine.h"
 #include "XenServer/VirtualMachineExporter.h"
 #include "XenServer/VirtualMachineImporter.h"
@@ -604,6 +605,7 @@ void ControllerImpl::detachHddInBackground(RefPtr<VirtualBlockDevice> vbd)
     XenObject::Busy busy(*vm);
     Session& session = vm->getSession();
     Session::Lock lock(session);
+    vm->setDisplayStatus(gettext("Detaching HDD..."));
     if (!xen_vbd_destroy(session, vbd->getHandle()))
     {
         session.emit(XenObject::ERROR);
@@ -664,6 +666,37 @@ void ControllerImpl::attachNicInBackground(RefPtr<VirtualMachine> vm, Glib::ustr
     Session::Lock lock(session);
     vm->setDisplayStatus(gettext("Attaching NIC..."));
     if (!XenServer::createNic(session, vm->getHandle(), device.c_str(), (xen_network)network.c_str()))
+    {
+        session.emit(XenObject::ERROR);
+    }
+}
+
+
+void ControllerImpl::detachNic(VirtualInterface& vif)
+{
+    StringBuffer message;
+    message.format(gettext("Do you wish to detach %s?"), vif.getDeviceName().c_str());
+    if (!View::instance().askYesNo(Glib::ustring(message)))
+    {
+        return;
+    }
+    RefPtr<VirtualInterface> vifPtr(&vif, 1);
+    schedule(sigc::bind<RefPtr<VirtualInterface> >(sigc::mem_fun(*this, &ControllerImpl::detachNicInBackground), vifPtr));
+}
+
+
+void ControllerImpl::detachNicInBackground(RefPtr<VirtualInterface> vif)
+{
+    RefPtr<VirtualMachine> vm = vif->getVm();
+    if (!vm)
+    {
+        return;
+    }
+    XenObject::Busy busy(*vm);
+    Session& session = vm->getSession();
+    Session::Lock lock(session);
+    vm->setDisplayStatus(gettext("Detaching NIC..."));
+    if (!xen_vif_destroy(session, vif->getHandle()))
     {
         session.emit(XenObject::ERROR);
     }

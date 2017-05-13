@@ -10,6 +10,7 @@ namespace hnrt
     class StorageRepository;
     class VirtualBlockDevice;
     class VirtualDiskImage;
+    class VirtualInterface;
 
     class Controller
     {
@@ -55,6 +56,7 @@ namespace hnrt
         virtual void detachHdd(VirtualBlockDevice&) = 0;
         virtual void attachCd() = 0;
         virtual void attachNic() = 0;
+        virtual void detachNic(VirtualInterface&) = 0;
         virtual void addCifs() = 0;
         virtual void deleteCifs() = 0;
         virtual void changeSrName() = 0;

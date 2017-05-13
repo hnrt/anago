@@ -68,6 +68,7 @@ namespace hnrt
         virtual void detachHdd(VirtualBlockDevice&);
         virtual void attachCd();
         virtual void attachNic();
+        virtual void detachNic(VirtualInterface&);
         virtual void addCifs();
         virtual void deleteCifs();
         virtual void changeSrName();
@@ -114,6 +115,7 @@ namespace hnrt
         void attachCdInBackground(RefPtr<VirtualMachine>, Glib::ustring);
         void addHddInBackground(RefPtr<StorageRepository>, HardDiskDriveSpec);
         void attachNicInBackground(RefPtr<VirtualMachine>, Glib::ustring, Glib::ustring);
+        void detachNicInBackground(RefPtr<VirtualInterface>);
         void snapshotVmInBackground(RefPtr<VirtualMachine>);
         void revertVmInBackground(RefPtr<VirtualMachine>);
         void addCifsInBackground(RefPtr<Host>, CifsSpec);
