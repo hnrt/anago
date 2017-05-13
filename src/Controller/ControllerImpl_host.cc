@@ -373,6 +373,7 @@ void ControllerImpl::disconnectInBackground(RefPtr<Host> host)
 {
     Trace trace("ControllerImpl::disconnectInBackground", "host=%s", host->getSession().getConnectSpec().hostname.c_str());
     XenObject::Busy busy(*host);
+    host->onDisconnectPending();
     Session& session = host->getSession();
     Session::Lock lock(session);
     if (session.disconnect())

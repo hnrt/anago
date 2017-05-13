@@ -29,6 +29,7 @@ namespace hnrt
         void onConnectPending();
         bool onConnected();
         void onConnectFailed();
+        void onDisconnectPending();
         void onDisconnected();
         void onDisconnectedByPeer();
         void notifyDisconnection();

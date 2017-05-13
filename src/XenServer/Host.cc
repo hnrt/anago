@@ -58,11 +58,14 @@ int Host::setBusy(bool value)
         case STATE_DISCONNECTED:
             setDisplayStatus(gettext("Disconnected"));
             break;
+        case STATE_DISCONNECTED_BY_PEER:
+            setDisplayStatus(gettext("Disconnected by peer"));
+            _state = STATE_DISCONNECTED;
+            break;
         case STATE_CONNECT_FAILED:
             setDisplayStatus(gettext("Failed to connect"));
             break;
         case STATE_DISCONNECT_PENDING:
-        case STATE_DISCONNECTED_BY_PEER:
         case STATE_SHUTDOWN:
         case STATE_SHUTDOWN_FAILED:
         case STATE_REBOOTED:
@@ -141,7 +144,6 @@ bool Host::onConnected()
 {
     _state = STATE_CONNECTED;
     _session.getConnectSpec().lastAccess = (long)time(NULL);
-    setDisplayStatus(gettext("Connected"));
     XenRef<xen_host, xen_host_free_t> host;
     if (!xen_session_get_this_host(_session, &host, _session))
     {
@@ -201,23 +203,25 @@ bool Host::onConnected()
 void Host::onConnectFailed()
 {
     _state = STATE_CONNECT_FAILED;
-    setDisplayStatus(gettext("Failed to connect"));
+}
+
+
+void Host::onDisconnectPending()
+{
+    _state = STATE_DISCONNECT_PENDING;
+    setDisplayStatus(gettext("Disconnecting..."));
 }
 
 
 void Host::onDisconnected()
 {
     emit(DISCONNECTED);
-    if (_state == STATE_CONNECTED || _state == STATE_DISCONNECT_PENDING)
+    if (_state != STATE_CONNECTED &&
+        _state != STATE_DISCONNECTED_BY_PEER)
     {
-        setDisplayStatus(gettext("Disconnected"));
-    }
-    else if (_state == STATE_DISCONNECTED_BY_PEER)
-    {
-        setDisplayStatus(gettext("Disconnected by peer"));
+        _state = STATE_DISCONNECTED;
     }
     _patchList.clear();
-    _state = STATE_DISCONNECTED;
 }
 
 

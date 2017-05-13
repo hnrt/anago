@@ -10,6 +10,7 @@
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "XenServer/StorageRepository.h"
+#include "XenServer/XenObjectStore.h"
 #include "Thread/ThreadManager.h"
 #include "View/View.h"
 #include "ControllerImpl.h"
@@ -41,10 +42,10 @@ void ControllerImpl::addCifs()
 void ControllerImpl::addCifsInBackground(RefPtr<Host> host, CifsSpec spec)
 {
     TRACE("ControllerImpl::addCifsInBackground");
+    XenObject::Busy busy1(*host);
     Session& session = host->getSession();
+    XenObject::Busy busy2(session);
     Session::Lock lock(session);
-    XenObject::Busy busy1(session);
-    XenObject::Busy busy2(*host);
     host->setDisplayStatus(gettext("Creating CIFS..."));
     XenRef<xen_sr, xen_sr_free_t> sr;
     if (!XenServer::addCifs(session, host->getHandle(), spec, &sr))
@@ -57,29 +58,11 @@ void ControllerImpl::addCifsInBackground(RefPtr<Host> host, CifsSpec spec)
 void ControllerImpl::deleteCifs()
 {
     TRACE("ControllerImpl::deleteCifs");
-    std::list<RefPtr<StorageRepository> > list;
-    if (!Model::instance().getSelected(list))
+    RefPtr<StorageRepository> sr = Model::instance().getSelectedSr();
+    if (sr->isBusy() || !sr->isCifs())
     {
         return;
     }
-    std::list<RefPtr<StorageRepository> >::iterator next;
-    for (std::list<RefPtr<StorageRepository> >::iterator iter = list.begin(); iter != list.end(); iter = next)
-    {
-        RefPtr<StorageRepository>& sr = *iter;
-        if (sr->isBusy() || !sr->isCifs())
-        {
-            next = list.erase(iter);
-        }
-        else
-        {
-            next = ++iter;
-        }
-    }
-    if (list.size() != 1)
-    {
-        return;
-    }
-    RefPtr<StorageRepository>& sr = list.front();
     StringBuffer message;
     message.format(gettext("Do you wish to delete the following CIFS repository?\n\n%s (%s)"),
                    sr->getName().c_str(),
@@ -96,6 +79,12 @@ void ControllerImpl::deleteCifsInBackground(RefPtr<StorageRepository> sr)
 {
     TRACE("ControllerImpl::deleteCifsInBackground");
     TRACEPUT("Removing %s...", sr->getName().c_str());
+    Session& session = sr->getSession();
+    RefPtr<Host> host = session.getStore().getHost();
+    XenObject::Busy busy1(*host);
+    XenObject::Busy busy2(session);
+    Session::Lock lock(session);
+    host->setDisplayStatus(gettext("Deleting CIFS..."));
     sr->remove();
 }
 
