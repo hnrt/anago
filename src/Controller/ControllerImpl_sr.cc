@@ -2,6 +2,7 @@
 
 
 #include <libintl.h>
+#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "XenServer/CifsSpec.h"
@@ -56,7 +57,46 @@ void ControllerImpl::addCifsInBackground(RefPtr<Host> host, CifsSpec spec)
 void ControllerImpl::deleteCifs()
 {
     TRACE("ControllerImpl::deleteCifs");
-    //TODO: IMPLEMENT
+    std::list<RefPtr<StorageRepository> > list;
+    if (!Model::instance().getSelected(list))
+    {
+        return;
+    }
+    std::list<RefPtr<StorageRepository> >::iterator next;
+    for (std::list<RefPtr<StorageRepository> >::iterator iter = list.begin(); iter != list.end(); iter = next)
+    {
+        RefPtr<StorageRepository>& sr = *iter;
+        if (sr->isBusy() || !sr->isCifs())
+        {
+            next = list.erase(iter);
+        }
+        else
+        {
+            next = ++iter;
+        }
+    }
+    if (list.size() != 1)
+    {
+        return;
+    }
+    RefPtr<StorageRepository>& sr = list.front();
+    StringBuffer message;
+    message.format(gettext("Do you wish to delete the following CIFS repository?\n\n%s (%s)"),
+                   sr->getName().c_str(),
+                   sr->getUUID().c_str());
+    if (!View::instance().askYesNo(Glib::ustring(message)))
+    {
+        return;
+    }
+    _tm.create(sigc::bind<RefPtr<StorageRepository> >(sigc::mem_fun(*this, &ControllerImpl::deleteCifsInBackground), sr), false, "DeleteCifs");
+}
+
+
+void ControllerImpl::deleteCifsInBackground(RefPtr<StorageRepository> sr)
+{
+    TRACE("ControllerImpl::deleteCifsInBackground");
+    TRACEPUT("Removing %s...", sr->getName().c_str());
+    sr->remove();
 }
 
 

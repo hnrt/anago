@@ -111,6 +111,7 @@ namespace hnrt
         void snapshotVmInBackground(RefPtr<VirtualMachine>);
         void revertVmInBackground(RefPtr<VirtualMachine>);
         void addCifsInBackground(RefPtr<Host>, CifsSpec);
+        void deleteCifsInBackground(RefPtr<StorageRepository>);
 
         ThreadManager& _tm;
         bool _quitInProgress;
