@@ -1,3 +1,9 @@
+# Backup files
+*~
+
+# Binary Directory
+/bin/
+
 # Compiled Object files
 *.slo
 *.lo

@@ -1,0 +1,54 @@
+// Copyright (C) 2012-2017 Hideaki Narita
+
+
+#include "XenObject.h"
+
+
+namespace hnrt {
+
+
+const char* GetNotificationText(int value)
+{
+    switch (value)
+    {
+#define CASE(x) case XenObject::x: return #x
+    CASE(CREATED);
+    CASE(BUSY_SET);
+    CASE(BUSY_RESET);
+    CASE(NAME_UPDATED);
+    CASE(STATUS_UPDATED);
+    CASE(SESSION_UPDATED);
+    CASE(CONNECTED);
+    CASE(CONNECT_FAILED);
+    CASE(DISCONNECTED);
+    CASE(POWER_STATE_UPDATED);
+    CASE(RECORD_UPDATED);
+    CASE(SNAPSHOT_UPDATED);
+    CASE(TASK_ON_SUCCESS);
+    CASE(TASK_ON_FAILURE);
+    CASE(TASK_ON_CANCELLED);
+    CASE(TASK_IN_PROGRESS);
+    CASE(PERFORMANCE_STATS_UPDATED);
+    CASE(EXPORT_PENDING);
+    CASE(EXPORTING);
+    CASE(EXPORTED);
+    CASE(EXPORT_FAILED);
+    CASE(EXPORT_CANCELED);
+    CASE(IMPORT_PENDING);
+    CASE(IMPORTING);
+    CASE(IMPORTED);
+    CASE(IMPORT_FAILED);
+    CASE(IMPORT_CANCELED);
+    CASE(VERIFY_PENDING);
+    CASE(VERIFYING);
+    CASE(VERIFIED);
+    CASE(VERIFY_FAILED);
+    CASE(VERIFY_CANCELED);
+    CASE(ERROR);
+    CASE(DESTROYED);
+    default: return "?";
+    }
+}
+
+
+} // namespace hnrt
