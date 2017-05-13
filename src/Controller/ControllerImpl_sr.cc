@@ -130,11 +130,32 @@ void ControllerImpl::setDefaultSr()
 void ControllerImpl::addHdd()
 {
     TRACE("ControllerImpl::addHdd");
+    RefPtr<StorageRepository> sr;
     std::list<RefPtr<StorageRepository> > srList;
     if (Model::instance().getSelected(srList) == 1)
     {
-        ControllerImpl::addHddTo(*srList.front());
+        sr = srList.front();
     }
+    else
+    {
+        RefPtr<Host> host = Model::instance().getSelectedHost();
+        if (!host || host->isBusy())
+        {
+            return;
+        }
+        Session& session = host->getSession();
+        Glib::ustring refid = XenServer::getDefaultSr(session);
+        if (refid.empty())
+        {
+            return;
+        }
+        sr = session.getStore().getSr(refid);
+    }
+    if (!sr)
+    {
+        return;
+    }
+    ControllerImpl::addHddTo(*sr);
 }
 
 
