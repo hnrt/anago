@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: anago\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-13 23:08+0900\n"
-"PO-Revision-Date: 2017-05-14 01:52+0900\n"
+"PO-Revision-Date: 2017-05-14 09:48+0900\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -1129,8 +1129,8 @@ msgid "Add HDD"
 msgstr "ハードディスクドライブを追加"
 
 #: View/StorageRepositoryMenu.cc:19
-msgid "Set default"
-msgstr "既定に設定"
+msgid "Set as default SR"
+msgstr "既定ストレージリポジトリとして設定"
 
 #: View/StorageRepositoryNotebook.cc:35
 msgid "Physical block device:"

@@ -16,7 +16,7 @@ StorageRepositoryMenu::StorageRepositoryMenu()
     , _menuDeleteCifs(gettext("Delete"))
     , _menuCancel(gettext("Cancel"))
     , _menuChangeName(gettext("Label/Description"))
-    , _menuSetDefault(gettext("Set default"))
+    , _menuSetDefault(gettext("Set as default SR"))
 {
     append(_menuChange);
     append(_menuAddHdd);

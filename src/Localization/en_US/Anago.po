@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: anago\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-13 23:05+0900\n"
-"PO-Revision-Date: 2017-05-14 01:52+0900\n"
+"PO-Revision-Date: 2017-05-14 09:53+0900\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -1130,8 +1130,8 @@ msgid "Add HDD"
 msgstr "Add HDD"
 
 #: View/StorageRepositoryMenu.cc:19
-msgid "Set default"
-msgstr "Set default"
+msgid "Set as default SR"
+msgstr "Set as default SR"
 
 #: View/StorageRepositoryNotebook.cc:35
 msgid "Physical block device:"
