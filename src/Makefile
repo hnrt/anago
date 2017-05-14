@@ -95,6 +95,8 @@ clean::
 distclean::
 	$(RMALL) $(OBJROOT)
 
+both:: release debug
+
 release debug::
 	$(MAKE) all CONFIGURATION=$@
 
