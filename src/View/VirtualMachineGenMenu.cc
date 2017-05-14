@@ -87,7 +87,7 @@ void VirtualMachineGenMenu::popup(guint button, guint32 activateTime, const Glib
         _menuAttachCd.hide();
         _menuAttachNic.hide();
         if (
-            _name == "Name" ||
+            _name == "Label" ||
             _name == "Description"
             )
         {
@@ -128,7 +128,7 @@ void VirtualMachineGenMenu::onSelectionDone()
 void VirtualMachineGenMenu::onChange()
 {
     if (
-        _name == "Name" ||
+        _name == "Label" ||
         _name == "Description"
         )
     {

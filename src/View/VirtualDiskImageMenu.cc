@@ -86,9 +86,9 @@ void VirtualDiskImageMenu::popup(guint button, guint32 activateTime, const Glib:
     _name = name;
 
     bool sensitive = false;
-    if (_name == "Name"
-        || _name == "Description"
-        || _name == "virtual-size")
+    if (_name == "Label" ||
+        _name == "Description" ||
+        _name == "virtual-size")
     {
         XenPtr<xen_vdi_record> vdiRecord = _vdi->getRecord();
         if (!vdiRecord->read_only)
@@ -123,8 +123,8 @@ void VirtualDiskImageMenu::onSelectionDone()
 
 void VirtualDiskImageMenu::onChange()
 {
-    if (_name == "Name"
-        || _name == "Description")
+    if (_name == "Label" ||
+        _name == "Description")
     {
         //Controller::instance().changeVdiName(_vdi);
     }

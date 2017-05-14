@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: anago\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-13 23:05+0900\n"
-"PO-Revision-Date: 2017-05-14 09:53+0900\n"
+"PO-Revision-Date: 2017-05-14 10:24+0900\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -217,6 +217,8 @@ msgid "Add CIFS repository"
 msgstr "Add CIFS repository"
 
 #: View/AddCifsDialog.cc:17
+#: View/AddVmDialog.cc:46
+#: View/CopyVmDialog.cc:16
 #: View/HardDiskDriveSpecDialog.cc:18
 #: View/NameDialog.cc:14
 msgid "Label:"
@@ -254,11 +256,6 @@ msgstr "Add new VM"
 #: View/AddVmDialog.cc:39
 msgid "Template:"
 msgstr "Template:"
-
-#: View/AddVmDialog.cc:46
-#: View/CopyVmDialog.cc:16
-msgid "Name:"
-msgstr "Name:"
 
 #: View/AddVmDialog.cc:50
 msgid "New virtual machine"

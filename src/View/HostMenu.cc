@@ -121,7 +121,7 @@ void HostMenu::popup(guint button, guint32 activateTime, const Glib::ustring& na
 
     bool sensitive = false;
     if (
-        _name == "Name" ||
+        _name == "Label" ||
         _name == "Description"
         )
     {
@@ -147,7 +147,7 @@ void HostMenu::onSelectionDone()
 void HostMenu::onChange()
 {
     if (
-        _name == "Name" ||
+        _name == "Label" ||
         _name == "Description"
         )
     {

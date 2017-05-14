@@ -13,7 +13,7 @@ using namespace hnrt;
 
 CopyVmDialog::CopyVmDialog(Gtk::Window& parent, const Session& session, const char* name, const char* srREFID)
     : Gtk::Dialog(gettext("Copy VM"), parent)
-    , _nameLabel(gettext("Name:"))
+    , _nameLabel(gettext("Label:"))
     , _methodLabel(gettext("Method:"))
     , _cloneButton(_opGroup, gettext("Clone"))
     , _copyButton(_opGroup, gettext("Copy"))

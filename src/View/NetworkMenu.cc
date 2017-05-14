@@ -32,7 +32,7 @@ void NetworkMenu::popup(guint button, guint32 activateTime, const Glib::ustring&
 
     bool sensitive = false;
     if (
-        _name == "Name" ||
+        _name == "Label" ||
         _name == "Description"
         )
     {
@@ -61,7 +61,7 @@ void NetworkMenu::onSelectionDone()
 void NetworkMenu::onChange()
 {
     if (
-        _name == "Name" ||
+        _name == "Label" ||
         _name == "Description"
         )
     {

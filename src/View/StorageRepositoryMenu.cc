@@ -76,7 +76,7 @@ void StorageRepositoryMenu::popup(guint button, guint32 activateTime, StorageRep
 
 void StorageRepositoryMenu::popup(guint button, guint32 activateTime, const Glib::ustring& name)
 {
-    if (name == "Name" ||
+    if (name == "Label" ||
         name == "Description")
     {
         _menuChange.set_sensitive(true);

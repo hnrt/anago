@@ -43,7 +43,7 @@ AddVmDialog::AddVmDialog(Gtk::Window& parent, const Session& session)
     _templateLv.get_selection()->signal_changed().connect(sigc::mem_fun(*this, &AddVmDialog::onTemplateChanged));
     _box1.pack_start(_teSw);
 
-    _nameLabel.set_text(gettext("Name:"));
+    _nameLabel.set_text(gettext("Label:"));
     _nameLabel.set_alignment(0.0, 0.5); // h=left, v=center
     _box1.pack_start(_nameLabel, Gtk::PACK_SHRINK);
 

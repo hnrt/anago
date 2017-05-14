@@ -19,7 +19,7 @@ using namespace hnrt;
 void hnrt::SetHostProperties(NameValueListView& listView, const xen_host_record* record)
 {
     listView.set("UUID", record->uuid);
-    listView.set("Name", record->name_label);
+    listView.set("Label", record->name_label);
     listView.set("Description", record->name_description);
     listView.set("Host name", record->hostname);
     listView.set("Address", record->address);
@@ -71,7 +71,7 @@ void hnrt::SetHostSoftwareProperties(NameValueListView& listView, const xen_host
 void hnrt::SetNetworkProperties(NameValueListView& listView, const xen_network_record* record)
 {
     listView.set("UUID", record->uuid);
-    listView.set("Name", record->name_label);
+    listView.set("Label", record->name_label);
     listView.set("Description", record->name_description);
     listView.set("MTU", record->mtu);
     listView.set("bridge", record->bridge);
@@ -114,7 +114,7 @@ void hnrt::SetPifProperties(NameValueListView& listView, const xen_pif_record* r
 void hnrt::SetSrProperties(NameValueListView& listView, const xen_sr_record* record)
 {
     listView.set("UUID", record->uuid);
-    listView.set("Name", record->name_label);
+    listView.set("Label", record->name_label);
     listView.set("Description", record->name_description);
     listView.set("virtual_allocation", record->virtual_allocation);
     listView.set("physical_utilisation", record->physical_utilisation);
@@ -149,7 +149,7 @@ void hnrt::SetVbdProperties(NameValueListView& listView, const xen_vbd_record* r
 void hnrt::SetVdiProperties(NameValueListView& listView, const xen_vdi_record* record)
 {
     listView.set("UUID", record->uuid);
-    listView.set("Name", record->name_label);
+    listView.set("Label", record->name_label);
     listView.set("Description", record->name_description);
     listView.set("Type", xen_vdi_type_to_string(record->type));
     listView.set("virtual-size", record->virtual_size);
@@ -196,7 +196,7 @@ void hnrt::SetVifProperties(NameValueListView& listView, const xen_vif_record* v
 void hnrt::SetVmProperties(NameValueListView& listView, const xen_vm_record* record, const xen_vm_guest_metrics_record* guestMetricsRecord)
 {
     listView.set("UUID", record->uuid);
-    listView.set("Name", record->name_label);
+    listView.set("Label", record->name_label);
     listView.set("Description", record->name_description);
     listView.set("power_state", xen_vm_power_state_to_string(record->power_state));
     listView.set("vcpus_max", record->vcpus_max);
