@@ -6,3 +6,9 @@ This means that you can enjoy XenServer only with Linux machines; you don't have
 
 * Citrix XenServer is an enterprise-class, cloud-proven, virtualization platform available free of charge at [xenserver.org](https://xenserver.org/).
 * Citrix XenCenter is the Windows-native graphical user interface for managing Citrix XenServer. For more information, visit [community blog](https://xenserver.org/partners/developing-products-for-xenserver/21-xencenter-development/88-xc-dev-home.html) at xenserver.org.
+
+## Requirements
+
+* Development has been done on CentOS 6 GNOME desktop with GTKMM 2.4.
+* libcurl-devel and libxml2-devel package are required to build the executable.
+* XenServer SDK is also required to build the executable. It is available free of charge at [xenserver.org](https://xenserver.org/).
