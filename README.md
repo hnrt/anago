@@ -1,4 +1,4 @@
-# Anago - XenServer Console for Linux
+# Anago - XenServer Management Console for Linux
 
 Anago is a graphical user interface for managing Citrix XenServer, working on Intel x86\_64 Linux platform.
 Though its functionality is limited as compared with Citrix XenCenter, Anago provides Linux GNOME desktop users with fundamental means for XenServer management.
