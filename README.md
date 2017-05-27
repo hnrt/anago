@@ -9,6 +9,12 @@ This means that you can enjoy XenServer only with Linux machines; you don't have
 
 ## Requirements
 
-* Development has been done on CentOS 6 GNOME desktop with GTKMM 2.4 library.
+* Development has been in progress on CentOS 6 GNOME desktop with GTKMM 2.4 library.
 * libcurl-devel and libxml2-devel package are required to build the executable.
 * XenServer SDK is also required to build and to run the executable. It is available free of charge at [xenserver.org](https://xenserver.org/).
+
+## Screenshot
+
+<p align="center">
+  <img src="http://www.hideakin.com/anago_con.png" alt="VM console"/>
+</p>
