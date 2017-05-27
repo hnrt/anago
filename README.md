@@ -13,8 +13,10 @@ This means that you can enjoy XenServer only with Linux machines; you don't have
 * libcurl-devel and libxml2-devel package are required to build the executable.
 * XenServer SDK is also required to build and to run the executable. It is available free of charge at [xenserver.org](https://xenserver.org/).
 
-## Screenshot
+## Screenshots
 
-<p align="center">
-  <img src="http://www.hideakin.com/img/c6d2f2b3-5323-4504-861e-2eb7bea5695f.png" alt="VM console"/>
-</p>
+* Virtual machine console
+![VM console](http://www.hideakin.com/img/dc096dc8-565a-44fb-92ff-473f7d91cdaf.png)
+
+* Performance monitor (Japanese locale)
+![Performance](http://www.hideakin.com/img/40833f84-19b5-475d-9804-c168da0bdbc2.png)
