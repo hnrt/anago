@@ -18,5 +18,8 @@ This means that you can enjoy XenServer only with Linux machines; you don't have
 * Virtual machine console
 ![VM console](http://www.hideakin.com/img/dc096dc8-565a-44fb-92ff-473f7d91cdaf.png)
 
+* Property view (Japanese locale)
+![Properties](http://www.hideakin.com/img/a11fe307-ed20-427d-8704-455321f6eadc.png)
+
 * Performance monitor (Japanese locale)
 ![Performance](http://www.hideakin.com/img/40833f84-19b5-475d-9804-c168da0bdbc2.png)
