@@ -16,5 +16,5 @@ This means that you can enjoy XenServer only with Linux machines; you don't have
 ## Screenshot
 
 <p align="center">
-  <img src="http://www.hideakin.com/anago_con.png" alt="VM console"/>
+  <img src="http://www.hideakin.com/img/c6d2f2b3-5323-4504-861e-2eb7bea5695f.png" alt="VM console"/>
 </p>
