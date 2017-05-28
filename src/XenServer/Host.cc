@@ -208,7 +208,10 @@ void Host::onConnectFailed()
 
 void Host::onDisconnectPending()
 {
-    _state = STATE_DISCONNECT_PENDING;
+    if (_state == STATE_CONNECTED)
+    {
+        _state = STATE_DISCONNECT_PENDING;
+    }
     setDisplayStatus(gettext("Disconnecting..."));
 }
 
@@ -216,8 +219,7 @@ void Host::onDisconnectPending()
 void Host::onDisconnected()
 {
     emit(DISCONNECTED);
-    if (_state != STATE_CONNECTED &&
-        _state != STATE_DISCONNECTED_BY_PEER)
+    if (_state == STATE_CONNECTED)
     {
         _state = STATE_DISCONNECTED;
     }

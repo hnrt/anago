@@ -379,8 +379,8 @@ void ControllerImpl::disconnectInBackground(RefPtr<Host> host)
     if (session.disconnect())
     {
         trace.put("Disconnected successfully.");
-        host->onDisconnected();
     }
+    host->onDisconnected();
 }
 
 
