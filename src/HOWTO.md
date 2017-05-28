@@ -1,6 +1,6 @@
 # How to update the source file dependency in Makefile
 
-Update OBJS1 macro and do as follows.
+Update OBJS1 macro in Makefile and do as follows.
 
     sh ../support/scripts/update_dependency.sh Makefile
 
