@@ -16,6 +16,21 @@ NetworkMenu::NetworkMenu(const RefPtr<Network>& network)
     , _network(network)
     , _readonly(network->isHostInternalManagement())
 {
+    init();
+}
+
+
+NetworkMenu::NetworkMenu()
+    : _menuChange(gettext("Change"))
+    , _menuCancel(gettext("Cancel"))
+    , _readonly(false)
+{
+    init();
+}
+
+
+void NetworkMenu::init()
+{
     append(_menuChange);
     append(*Gtk::manage(new Gtk::SeparatorMenuItem));
     append(_menuCancel);
@@ -46,6 +61,16 @@ void NetworkMenu::popup(guint button, guint32 activateTime, const Glib::ustring&
 }
 
 
+void NetworkMenu::popup(guint button, guint32 activateTime, Network& network)
+{
+    _network = RefPtr<Network>(&network, 1);
+    _readonly = network.isHostInternalManagement();
+    _name = "";
+    _menuChange.set_sensitive(!_readonly);
+    Gtk::Menu::popup(button, activateTime);
+}
+
+
 void NetworkMenu::onDeactivate()
 {
     // This is called right after the closure of the popup window.
@@ -65,6 +90,11 @@ void NetworkMenu::onChange()
         _name == "Description"
         )
     {
-        //Controller::instance().changeNetworkName(_network);
+        Controller::instance().changeNetworkName(*_network);
+    }
+    else if (_name.empty())
+    {
+        Controller::instance().changeNetworkName(*_network);
+        _network.reset();
     }
 }

@@ -8,6 +8,7 @@
 #include <gtkmm.h>
 #include "Base/RefPtr.h"
 #include "HostMenu.h"
+#include "NetworkMenu.h"
 #include "StorageRepositoryMenu.h"
 #include "VirtualMachineMenu.h"
 
@@ -69,6 +70,7 @@ namespace hnrt
         HostMenu _menuHost;
         VirtualMachineMenu _menuVm;
         StorageRepositoryMenu _menuSr;
+        NetworkMenu _menuNetwork;
 
         SignalNodeCreated _signalNodeCreated;
     };

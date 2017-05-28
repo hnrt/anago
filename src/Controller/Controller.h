@@ -7,6 +7,7 @@
 
 namespace hnrt
 {
+    class Network;
     class StorageRepository;
     class VirtualBlockDevice;
     class VirtualDiskImage;
@@ -71,6 +72,7 @@ namespace hnrt
         virtual void changeVdiName(VirtualDiskImage&) = 0;
         virtual void resizeVdi(VirtualDiskImage&) = 0;
         virtual void removeVdi(VirtualDiskImage&) = 0;
+        virtual void changeNetworkName(Network&) = 0;
         virtual void showAbout() = 0;
     };
 }

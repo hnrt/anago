@@ -19,12 +19,15 @@ namespace hnrt
     public:
 
         NetworkMenu(const RefPtr<Network>&);
+        NetworkMenu();
         virtual void popup(guint, guint32, const Glib::ustring&);
+        void popup(guint button, guint32 activateTime, Network&);
 
     protected:
 
         NetworkMenu(const NetworkMenu&);
         void operator =(const NetworkMenu&);
+        void init();
         void onDeactivate();
         void onSelectionDone();
         void onChange();

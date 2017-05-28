@@ -18,9 +18,7 @@ namespace hnrt
 {
     class Host;
     class PerformanceMonitor;
-    class StorageRepository;
     class ThreadManager;
-    class VirtualBlockDevice;
     class VirtualMachine;
     class XenObject;
 
@@ -83,6 +81,7 @@ namespace hnrt
         virtual void changeVdiName(VirtualDiskImage&);
         virtual void resizeVdi(VirtualDiskImage&);
         virtual void removeVdi(VirtualDiskImage&);
+        virtual void changeNetworkName(Network&);
         virtual void showAbout();
 
     private:
