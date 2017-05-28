@@ -106,6 +106,7 @@ void ModelImpl::add(const ConnectSpec& cs)
                 cs2.username = cs.username;
                 cs2.password = cs.password;
                 cs2.autoConnect = cs.autoConnect;
+                host->emit(XenObject::NAME_UPDATED);
                 return;
             }
         }
