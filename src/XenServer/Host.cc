@@ -47,7 +47,9 @@ Host:: ~Host()
 
 int Host::setBusy(bool value)
 {
+    TRACE(StringBuffer().format("Host@%zx::setBusy", this));
     int count = XenObject::setBusy(value);
+    TRACEPUT("count=%d state=%d", count, _state);
     if (!count)
     {
         switch (_state)
@@ -219,7 +221,7 @@ void Host::onDisconnectPending()
 void Host::onDisconnected()
 {
     emit(DISCONNECTED);
-    if (_state == STATE_CONNECTED)
+    if (_state == STATE_DISCONNECT_PENDING)
     {
         _state = STATE_DISCONNECTED;
     }
