@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: anago\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-13 23:08+0900\n"
-"PO-Revision-Date: 2017-05-14 10:24+0900\n"
+"PO-Revision-Date: 2017-05-28 14:15+0900\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -81,7 +81,11 @@ msgstr "CIFS リポジトリを削除中..."
 msgid "Change SR label/description"
 msgstr "ストレージリポジトリのラベル/説明を変更"
 
-#: Controller/ControllerImpl_vdi.cc:51
+#: Controller/ControllerImpl_vdi.cc:21
+msgid "Change VDI label/description"
+msgstr "仮想ディスクイメージのラベル/説明を変更"
+
+#: Controller/ControllerImpl_vdi.cc:66
 #, c-format
 msgid ""
 "Do you wish to delete the following virtual disk image?\n"
@@ -1509,23 +1513,23 @@ msgstr "接続に失敗"
 msgid "Connecting..."
 msgstr "接続中..."
 
-#: XenServer/Host.cc:212
+#: XenServer/Host.cc:215
 msgid "Disconnecting..."
 msgstr "切断中..."
 
-#: XenServer/Host.cc:253
+#: XenServer/Host.cc:255
 msgid "Shut down successfully"
 msgstr "停止に成功"
 
-#: XenServer/Host.cc:259
+#: XenServer/Host.cc:261
 msgid "Failed to shut down"
 msgstr "停止に失敗"
 
-#: XenServer/Host.cc:287
+#: XenServer/Host.cc:289
 msgid "Rebooted successfully"
 msgstr "再起動に成功"
 
-#: XenServer/Host.cc:293
+#: XenServer/Host.cc:295
 msgid "Failed to reboot"
 msgstr "再起動に失敗"
 

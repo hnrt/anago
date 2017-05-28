@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: anago\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-13 23:05+0900\n"
-"PO-Revision-Date: 2017-05-14 10:24+0900\n"
+"PO-Revision-Date: 2017-05-28 14:27+0900\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -82,7 +82,11 @@ msgstr "Deleting CIFS..."
 msgid "Change SR label/description"
 msgstr "Change SR label/description"
 
-#: Controller/ControllerImpl_vdi.cc:51
+#: Controller/ControllerImpl_vdi.cc:21
+msgid "Change VDI label/description"
+msgstr "Change VDI label/description"
+
+#: Controller/ControllerImpl_vdi.cc:66
 #, c-format
 msgid ""
 "Do you wish to delete the following virtual disk image?\n"
@@ -1510,23 +1514,23 @@ msgstr "Failed to connect"
 msgid "Connecting..."
 msgstr "Connecting..."
 
-#: XenServer/Host.cc:212
+#: XenServer/Host.cc:215
 msgid "Disconnecting..."
 msgstr "Disconnecting..."
 
-#: XenServer/Host.cc:253
+#: XenServer/Host.cc:255
 msgid "Shut down successfully"
 msgstr "Shut down successfully"
 
-#: XenServer/Host.cc:259
+#: XenServer/Host.cc:261
 msgid "Failed to shut down"
 msgstr "Failed to shut down"
 
-#: XenServer/Host.cc:287
+#: XenServer/Host.cc:289
 msgid "Rebooted successfully"
 msgstr "Rebooted successfully"
 
-#: XenServer/Host.cc:293
+#: XenServer/Host.cc:295
 msgid "Failed to reboot"
 msgstr "Failed to reboot"
 

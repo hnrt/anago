@@ -1,0 +1,30 @@
+# How to update the localization files
+
+0. Build tools once.
+
+	cd $(PROJECTROOT)/support/src
+	make both
+
+1. Change the current working directory to $(PROJECTROOT)/src.
+
+2. If one or more gettext lines were added or removed, update POTFILES in Makefile.
+
+	sh ../support/scripts/update_potlist.sh Makefile
+
+3. If one or more strings passed to gettext were changed, update po files.
+
+	make po
+
+4. Check updated strings in English po file.
+
+	../support/bin/linux/release/pocheck Localization/en_US/Anago.po
+
+5. Translate po files.
+
+    1. If translations (msgstr) should be exactly the same as labels (msgid), just copy msgid to msgstr.
+
+	../support/bin/linux/release/poupdate -copy Localization/xx_YY/Anago.po
+
+    2. Otherwise, translate po file by hand.
+
+	vi Localization/xx_YY/Anago.po

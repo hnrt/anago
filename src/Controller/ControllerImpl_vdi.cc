@@ -13,6 +13,21 @@
 using namespace hnrt;
 
 
+void ControllerImpl::changeVdiName(VirtualDiskImage& vdi)
+{
+    XenPtr<xen_vdi_record> record = vdi.getRecord();
+    Glib::ustring label(record->name_label);
+    Glib::ustring description(record->name_description);
+    if (!View::instance().getName(gettext("Change VDI label/description"), label, description))
+    {
+        return;
+    }
+    Session& session = vdi.getSession();
+    Session::Lock lock(session);
+    vdi.setName(label.c_str(), description.c_str());
+}
+
+
 void ControllerImpl::resizeVdi(VirtualDiskImage& vdi)
 {
     RefPtr<VirtualMachine> vm = vdi.getVm();

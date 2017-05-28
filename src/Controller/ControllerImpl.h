@@ -80,6 +80,7 @@ namespace hnrt
         virtual void snapshotVm();
         virtual void revertVm();
         virtual void deleteSnapshot();
+        virtual void changeVdiName(VirtualDiskImage&);
         virtual void resizeVdi(VirtualDiskImage&);
         virtual void removeVdi(VirtualDiskImage&);
         virtual void showAbout();

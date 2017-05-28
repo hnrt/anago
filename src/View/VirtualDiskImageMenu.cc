@@ -126,7 +126,7 @@ void VirtualDiskImageMenu::onChange()
     if (_name == "Label" ||
         _name == "Description")
     {
-        //Controller::instance().changeVdiName(_vdi);
+        Controller::instance().changeVdiName(*_vdi);
     }
     else if (_name == "virtual-size")
     {
@@ -137,7 +137,7 @@ void VirtualDiskImageMenu::onChange()
 
 void VirtualDiskImageMenu::onChangeName()
 {
-    //Controller::instance().changeVdiName(_vdi);
+    Controller::instance().changeVdiName(*_vdi);
 }
 
 
