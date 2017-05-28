@@ -4,6 +4,7 @@ PROJNAME=anago
 TARGETEXE=$(PROJNAME)
 PACKAGENAME=$(PROJNAME)
 DEFAULTDOMAIN=$(PROJNAME)
+MSGOBJNAME=$(PROJNAME).mo
 
 PROJECTROOT=../
 
@@ -14,6 +15,12 @@ OBJDIR=$(OBJROOT)/$(PLATFORM)/$(CONFIGURATION)
 
 PLATFORM=linux
 CONFIGURATION=debug
+
+DESTDIR=/usr/local
+DESTBINDIR=$(DESTDIR)/bin
+DESTLOCDIR=$(DESTDIR)/share/locale
+DESTENGDIR=$(DESTLOCDIR)/en_US/LC_MESSAGES
+DESTJPNDIR=$(DESTLOCDIR)/ja_JP/LC_MESSAGES
 
 ######################################################################
 
@@ -65,6 +72,7 @@ RM=rm -f
 RMALL=rm -fr
 MKDIR=mkdir
 MKDIRS=mkdir -p
+INSTALL=install
 
 ######################################################################
 
@@ -303,6 +311,12 @@ all:: $(PROJ1)
 
 clean::
 	$(RM) $(PROJ1)
+
+install::
+	$(MAKE) bin-install CONFIGURATION=release
+
+bin-install:: $(PROJ1)
+	$(INSTALL) -m 755 -s $(PROJ1) $(DESTBINDIR)/$(TARGETEXE)
 
 ######################################################################
 
@@ -565,7 +579,7 @@ po-ja::
 
 ######################################################################
 
-PROJ3=$(BINDIR)/en_US/LC_MESSAGES/anago.mo
+PROJ3=$(BINDIR)/en_US/LC_MESSAGES/$(MSGOBJNAME)
 SRC3=Localization/en_US/Anago.po
 
 $(PROJ3): $(SRC3)
@@ -583,9 +597,12 @@ all mo:: $(PROJ3)
 clean mo-clean::
 	$(RM) $(PROJ3)
 
+install:: $(PROJ3)
+	$(INSTALL) -m 644 $(PROJ3) $(DESTENGDIR)/$(MSGOBJNAME)
+
 ######################################################################
 
-PROJ4=$(BINDIR)/ja_JP/LC_MESSAGES/anago.mo
+PROJ4=$(BINDIR)/ja_JP/LC_MESSAGES/$(MSGOBJNAME)
 SRC4=Localization/ja_JP/Anago.po
 
 $(PROJ4): $(SRC4)
@@ -602,6 +619,9 @@ all mo:: $(PROJ4)
 
 clean mo-clean::
 	$(RM) $(PROJ4)
+
+install:: $(PROJ4)
+	$(INSTALL) -m 644 $(PROJ4) $(DESTJPNDIR)/$(MSGOBJNAME)
 
 ######################################################################
 
