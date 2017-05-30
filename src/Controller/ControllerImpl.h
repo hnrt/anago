@@ -82,6 +82,7 @@ namespace hnrt
         virtual void resizeVdi(VirtualDiskImage&);
         virtual void removeVdi(VirtualDiskImage&);
         virtual void changeNetworkName(Network&);
+        virtual void browsePatchPage(const Glib::ustring&);
         virtual void showAbout();
 
     private:

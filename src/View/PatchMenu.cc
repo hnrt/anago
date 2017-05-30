@@ -70,7 +70,7 @@ void PatchMenu::onSelectionDone()
 
 void PatchMenu::onBrowse()
 {
-    //Controller::instance().browsePatchPage(_uuid);
+    Controller::instance().browsePatchPage(_uuid.c_str());
 }
 
 

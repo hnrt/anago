@@ -79,6 +79,8 @@ namespace hnrt
         virtual void getCifsSpec(CifsSpec&);
         virtual void setCifsSpec(const CifsSpec&);
 
+        virtual Glib::ustring getWebBrowserPath();
+
     private:
 
         ModelImpl(const ModelImpl&);
@@ -104,6 +106,7 @@ namespace hnrt
         Glib::ustring _importVmPath;
         Glib::ustring _verifyVmPath;
         CifsSpec _cifsSpec;
+        Glib::ustring _webBrowserPath;
     };
 }
 

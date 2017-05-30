@@ -90,6 +90,8 @@ void ModelImpl::loadV1(const RefPtr<Json>& json)
     json->get("export.verify", _exportVmVerify);
     json->get("import.path", _importVmPath);
     json->get("verify.path", _verifyVmPath);
+
+    json->get("web_browser.path", _webBrowserPath);
 }
 
 

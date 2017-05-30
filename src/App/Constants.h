@@ -25,4 +25,7 @@
 #define PANE1WIDTH_DEFAULT 200
 
 
+#define WEBBROWSER_DEFAULT "/usr/bin/firefox"
+
+
 #endif //!HNRT_APP_CONSTANTS_H

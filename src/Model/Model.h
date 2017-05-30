@@ -81,6 +81,8 @@ namespace hnrt
 
         virtual void getCifsSpec(CifsSpec&) = 0;
         virtual void setCifsSpec(const CifsSpec&) = 0;
+
+        virtual Glib::ustring getWebBrowserPath() = 0;
     };
 }
 

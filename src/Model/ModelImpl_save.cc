@@ -55,6 +55,7 @@ void ModelImpl::save()
             json->set("export.verify", _exportVmVerify);
             json->set("import.path", _importVmPath);
             json->set("verify.path", _verifyVmPath);
+            json->set("web_browser.path", _webBrowserPath);
             json->save(fp);
         }
         catch (Glib::ustring msg)

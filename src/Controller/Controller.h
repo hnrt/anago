@@ -5,6 +5,9 @@
 #define HNRT_CONTROLLER_H
 
 
+#include <glibmm/ustring.h>
+
+
 namespace hnrt
 {
     class Network;
@@ -73,6 +76,7 @@ namespace hnrt
         virtual void resizeVdi(VirtualDiskImage&) = 0;
         virtual void removeVdi(VirtualDiskImage&) = 0;
         virtual void changeNetworkName(Network&) = 0;
+        virtual void browsePatchPage(const Glib::ustring&) = 0;
         virtual void showAbout() = 0;
     };
 }

@@ -44,6 +44,7 @@ ModelImpl::ModelImpl()
     , _width(WIDTH_DEFAULT)
     , _height(HEIGHT_DEFAULT)
     , _pane1Width(PANE1WIDTH_DEFAULT)
+    , _webBrowserPath(WEBBROWSER_DEFAULT)
 {
     Trace trace("ModelImpl::ctor");
 }
@@ -540,4 +541,11 @@ void ModelImpl::getCifsSpec(CifsSpec& spec)
 void ModelImpl::setCifsSpec(const CifsSpec& spec)
 {
     _cifsSpec = spec;
+}
+
+
+Glib::ustring ModelImpl::getWebBrowserPath()
+{
+    Glib::RecMutex::Lock lock(_mutex);
+    return _webBrowserPath;
 }
