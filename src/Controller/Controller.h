@@ -77,6 +77,7 @@ namespace hnrt
         virtual void removeVdi(VirtualDiskImage&) = 0;
         virtual void changeNetworkName(Network&) = 0;
         virtual void browsePatchPage(const Glib::ustring&) = 0;
+        virtual void downloadPatch(const Glib::ustring&) = 0;
         virtual void showAbout() = 0;
     };
 }

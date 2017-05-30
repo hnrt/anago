@@ -17,6 +17,7 @@
 namespace hnrt
 {
     class Host;
+    class PatchRecord;
     class PerformanceMonitor;
     class ThreadManager;
     class VirtualMachine;
@@ -83,6 +84,7 @@ namespace hnrt
         virtual void removeVdi(VirtualDiskImage&);
         virtual void changeNetworkName(Network&);
         virtual void browsePatchPage(const Glib::ustring&);
+        virtual void downloadPatch(const Glib::ustring&);
         virtual void showAbout();
 
     private:
@@ -121,6 +123,7 @@ namespace hnrt
         void revertVmInBackground(RefPtr<VirtualMachine>);
         void addCifsInBackground(RefPtr<Host>, CifsSpec);
         void deleteCifsInBackground(RefPtr<StorageRepository>);
+        void downloadPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
 
         ThreadManager& _tm;
         bool _quitInProgress;
