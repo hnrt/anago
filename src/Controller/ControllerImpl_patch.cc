@@ -6,7 +6,9 @@
 #include "Model/Model.h"
 #include "Model/PatchRecord.h"
 #include "XenServer/Host.h"
+#include "XenServer/Session.h"
 #include "XenServer/PatchDownloader.h"
+#include "XenServer/PatchUploader.h"
 #include "ControllerImpl.h"
 
 
@@ -98,4 +100,100 @@ void ControllerImpl::downloadPatchInBackground(RefPtr<Host> host, RefPtr<PatchRe
     patchRecord->state = PatchState::DOWNLOADED;
     host->emit(XenObject::RECORD_UPDATED);
     TRACEPUT("%s: %zu bytes extracted.", path2.c_str(), file2->size());
+}
+
+
+void ControllerImpl::uploadPatch(const Glib::ustring& uuid)
+{
+    TRACE("ControllerImpl::uploadPatch", "uuid=%s", uuid.c_str());
+    RefPtr<Host> host = Model::instance().getSelectedHost();
+    if (!host)
+    {
+        return;
+    }
+    RefPtr<PatchRecord> record = host->getPatchRecord(uuid);
+    if (!record)
+    {
+        return;
+    }
+    schedule(sigc::bind<RefPtr<Host>, RefPtr<PatchRecord> >(sigc::mem_fun(*this, &ControllerImpl::uploadPatchInBackground), host, record));
+}
+
+
+void ControllerImpl::uploadPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecord> patchRecord)
+{
+    TRACE("ControllerImpl::uploadPatchInBackground");
+    patchRecord->state = PatchState::UPLOAD_INPROGRESS;
+    host->emit(XenObject::RECORD_UPDATED);
+    Glib::ustring filename = Glib::ustring::compose("%1.xsupdate", patchRecord->label);
+    Glib::ustring dir = Model::instance().getAppDir();
+    Glib::ustring path = Glib::ustring::compose("%1%2", dir, filename);
+    TRACEPUT("path=\"%s\"", path.c_str());
+    RefPtr<PatchUploader> uploader = PatchUploader::create();
+    uploader->run(*host, path);
+    sleep(1); // in order for host to finish updating its internal patch information
+    patchRecord->state = PatchState::UPLOADED;
+    host->updatePatchList();
+    host->emit(XenObject::RECORD_UPDATED);
+}
+
+
+void ControllerImpl::applyPatch(const Glib::ustring& uuid)
+{
+    TRACE("ControllerImpl::applyPatch", "uuid=%s", uuid.c_str());
+    RefPtr<Host> host = Model::instance().getSelectedHost();
+    if (!host)
+    {
+        return;
+    }
+    RefPtr<PatchRecord> record = host->getPatchRecord(uuid);
+    if (!record)
+    {
+        return;
+    }
+    schedule(sigc::bind<RefPtr<Host>, RefPtr<PatchRecord> >(sigc::mem_fun(*this, &ControllerImpl::applyPatchInBackground), host, record));
+}
+
+
+void ControllerImpl::applyPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecord> patchRecord)
+{
+    TRACE("ControllerImpl::applyPatchInBackground");
+    patchRecord->state = PatchState::APPLY_INPROGRESS;
+    host->emit(XenObject::RECORD_UPDATED);
+    XenObject::Busy busy(*host);
+    Session::Lock lock(host->getSession());
+    bool result = host->applyPatch(patchRecord->uuid);
+    patchRecord->state = result ? PatchState::APPLIED : PatchState::APPLY_FAILURE;
+    host->emit(XenObject::RECORD_UPDATED);
+}
+
+
+void ControllerImpl::cleanPatch(const Glib::ustring& uuid)
+{
+    TRACE("ControllerImpl::cleanPatch", "uuid=%s", uuid.c_str());
+    RefPtr<Host> host = Model::instance().getSelectedHost();
+    if (!host)
+    {
+        return;
+    }
+    RefPtr<PatchRecord> record = host->getPatchRecord(uuid);
+    if (!record)
+    {
+        return;
+    }
+    schedule(sigc::bind<RefPtr<Host>, RefPtr<PatchRecord> >(sigc::mem_fun(*this, &ControllerImpl::cleanPatchInBackground), host, record));
+}
+
+
+void ControllerImpl::cleanPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecord> patchRecord)
+{
+    TRACE("ControllerImpl::cleanPatchInBackground");
+    patchRecord->state = PatchState::CLEAN_INPROGRESS;
+    host->emit(XenObject::RECORD_UPDATED);
+    XenObject::Busy busy(*host);
+    Session::Lock lock(host->getSession());
+    bool result = host->cleanPatch(patchRecord->uuid);
+    patchRecord->state = result ? PatchState::CLEANED : PatchState::CLEAN_FAILURE;
+    host->updatePatchList();
+    host->emit(XenObject::RECORD_UPDATED);
 }

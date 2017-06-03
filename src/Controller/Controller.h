@@ -78,6 +78,9 @@ namespace hnrt
         virtual void changeNetworkName(Network&) = 0;
         virtual void browsePatchPage(const Glib::ustring&) = 0;
         virtual void downloadPatch(const Glib::ustring&) = 0;
+        virtual void uploadPatch(const Glib::ustring&) = 0;
+        virtual void applyPatch(const Glib::ustring&) = 0;
+        virtual void cleanPatch(const Glib::ustring&) = 0;
         virtual void showAbout() = 0;
     };
 }

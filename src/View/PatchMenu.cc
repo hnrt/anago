@@ -82,17 +82,17 @@ void PatchMenu::onDownload()
 
 void PatchMenu::onUpload()
 {
-    //Controller::instance().uploadPatch(_uuid);
+    Controller::instance().uploadPatch(_uuid);
 }
 
 
 void PatchMenu::onApply()
 {
-    //Controller::instance().applyPatch(_uuid);
+    Controller::instance().applyPatch(_uuid);
 }
 
 
 void PatchMenu::onClean()
 {
-    //Controller::instance().cleanPatch(_uuid);
+    Controller::instance().cleanPatch(_uuid);
 }

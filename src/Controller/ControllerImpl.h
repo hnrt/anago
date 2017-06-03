@@ -85,6 +85,9 @@ namespace hnrt
         virtual void changeNetworkName(Network&);
         virtual void browsePatchPage(const Glib::ustring&);
         virtual void downloadPatch(const Glib::ustring&);
+        virtual void uploadPatch(const Glib::ustring&);
+        virtual void applyPatch(const Glib::ustring&);
+        virtual void cleanPatch(const Glib::ustring&);
         virtual void showAbout();
 
     private:
@@ -124,6 +127,9 @@ namespace hnrt
         void addCifsInBackground(RefPtr<Host>, CifsSpec);
         void deleteCifsInBackground(RefPtr<StorageRepository>);
         void downloadPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
+        void uploadPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
+        void applyPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
+        void cleanPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
 
         ThreadManager& _tm;
         bool _quitInProgress;

@@ -28,6 +28,7 @@ namespace hnrt
             APPLIED,
             CLEAN_INPROGRESS,
             CLEAN_FAILURE,
+            CLEANED,
         };
 
         inline PatchState(Value = UNDEFINED);
