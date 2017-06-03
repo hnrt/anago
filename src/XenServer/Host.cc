@@ -213,8 +213,8 @@ void Host::onDisconnectPending()
     if (_state == STATE_CONNECTED)
     {
         _state = STATE_DISCONNECT_PENDING;
+        setDisplayStatus(gettext("Disconnecting..."));
     }
-    setDisplayStatus(gettext("Disconnecting..."));
 }
 
 
