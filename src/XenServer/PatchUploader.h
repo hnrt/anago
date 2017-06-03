@@ -9,35 +9,37 @@
 #include <glibmm/ustring.h>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
+#include "Protocol/HttpClientHandler.h"
 
 
 namespace hnrt
 {
-    class Host;
     class File;
+    class Session;
 
     class PatchUploader
         : public RefObj
+        , public HttpClientHandler
     {
     public:
 
         static RefPtr<PatchUploader> create();
 
         ~PatchUploader();
-        void init();
-        void fini();
-        void run(Host&, const Glib::ustring&);
-        size_t read(void*, size_t);
-        void rewind();
+        void run(const Session&, const Glib::ustring&);
+
+        virtual bool onSuccess(HttpClient&, int);
+        virtual bool onFailure(HttpClient&, const char*);
+        virtual bool onCancelled(HttpClient&);
+        virtual size_t read(HttpClient&, void*, size_t);
+        virtual void rewind(HttpClient&);
 
     private:
 
         PatchUploader();
         PatchUploader(const PatchUploader&);
         void operator =(const PatchUploader&);
-        void updateStatus();
 
-        RefPtr<Host> _host;
         RefPtr<File> _file;
     };
 }

@@ -130,7 +130,7 @@ void ControllerImpl::uploadPatchInBackground(RefPtr<Host> host, RefPtr<PatchReco
     Glib::ustring path = Glib::ustring::compose("%1%2", dir, filename);
     TRACEPUT("path=\"%s\"", path.c_str());
     RefPtr<PatchUploader> uploader = PatchUploader::create();
-    uploader->run(*host, path);
+    uploader->run(host->getSession(), path);
     sleep(1); // in order for host to finish updating its internal patch information
     patchRecord->state = PatchState::UPLOADED;
     host->updatePatchList();
