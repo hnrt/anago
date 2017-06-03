@@ -12,14 +12,17 @@
 #include <map>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
+#include "Protocol/HttpClientHandler.h"
 
 
 namespace hnrt
 {
+    class File;
     struct PatchRecord;
 
     class PatchBase
         : public RefObj
+        , public HttpClientHandler
     {
     public:
 
@@ -29,7 +32,6 @@ namespace hnrt
         void init();
         void fini();
         bool load();
-        bool parse(void* ptr, size_t len);
 
         struct ServerRecord
             : public RefObj
@@ -78,6 +80,8 @@ namespace hnrt
         RecordIterator getRecordIterator(const char*);
         RefPtr<PatchRecord> getRecord(const Glib::ustring&) const;
 
+        virtual bool write(HttpClient&, void* ptr, size_t len);
+
     protected:
 
         PatchBase();
@@ -86,8 +90,7 @@ namespace hnrt
         bool download();
 
         Glib::ustring _path;
-        FILE* _fp;
-        size_t _size;
+        RefPtr<File> _file;
         RecordMap _recordMap;
         ServerRecordMap _serverRecordMap;
     };

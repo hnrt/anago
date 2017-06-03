@@ -8,12 +8,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <glibmm.h>
-#include <curl/curl.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include "Base/StringBuffer.h"
+#include "File/File.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
+#include "Protocol/HttpClient.h"
 #include "PatchBase.h"
 #include "PatchRecord.h"
 
@@ -28,22 +29,20 @@ RefPtr<PatchBase> PatchBase::create()
 
 
 PatchBase::PatchBase()
-    : _fp(0)
-    , _size(0)
 {
-    TRACE(StringBuffer().format("PatchBase@%zx::ctor", this));
+    TRACE("PatchBase::ctor");
 }
 
 
 PatchBase::~PatchBase()
 {
-    TRACE(StringBuffer().format("PatchBase@%zx::dtor", this));
+    TRACE("PatchBase::dtor");
 }
 
 
 void PatchBase::init()
 {
-    TRACE(StringBuffer().format("PatchBase@%zx::init", this));
+    TRACE("PatchBase::init");
     _path = Glib::ustring::compose("%1%2", Model::instance().getAppDir(), "updates.xml");
     TRACEPUT("path=%s", _path.c_str());
 }
@@ -51,7 +50,7 @@ void PatchBase::init()
 
 void PatchBase::fini()
 {
-    TRACE(StringBuffer().format("PatchBase@%zx::fini", this));
+    TRACE("PatchBase::fini");
 }
 
 
@@ -468,7 +467,7 @@ static bool ParseServerVersion(xmlNode* node, PatchBase::ServerRecord& serverRec
 
 bool PatchBase::load()
 {
-    TRACE(StringBuffer().format("PatchBase@%zx::load", this));
+    TRACE("PatchBase::load");
 
     bool downloadRequired = true;
 
@@ -587,28 +586,18 @@ bool PatchBase::load()
 }
 
 
-static size_t receive(void* ptr, size_t size, size_t nmemb, PatchBase* pThis)
-{
-    size_t len = size * nmemb;
-    size_t ret = pThis->parse(ptr, len) ? len : 0;
-    return ret;
-}
-
-
 bool PatchBase::download()
 {
-    TRACE(StringBuffer().format("PatchBase@%zx::download", this));
+    TRACE("PatchBase::download");
 
     bool retval = false;
 
-    CURL* curl = NULL;
-
-    try
     {
         Glib::ustring::size_type i = _path.rfind("/");
         if (i == Glib::ustring::npos)
         {
-            throw "malformed path";
+            TRACEPUT("Malformed path: %s", _path.c_str());
+            goto done;
         }
         Glib::ustring dir(_path, 0, i);
         struct stat statinfo = { 0 };
@@ -616,22 +605,22 @@ bool PatchBase::download()
         {
             if (!mkdir(dir.c_str(), 0777))
             {
-                TRACEPUT("dir={%s} created.", dir.c_str());
+                TRACEPUT("dir=\"%s\" created.", dir.c_str());
             }
             else
             {
-                TRACEPUT("dir={%s} mkdir failed. error=%d", dir.c_str(), errno);
-                throw "unable to create dir";
+                TRACEPUT("dir=\"%s\" mkdir failed. error=%d", dir.c_str(), errno);
+                goto done;
             }
         }
         else if (S_ISDIR(statinfo.st_mode))
         {
-            TRACEPUT("dir={%s} exists.", dir.c_str());
+            TRACEPUT("dir=\"%s\" exists.", dir.c_str());
         }
         else
         {
-            TRACEPUT("dir={%s} is not a directory.", dir.c_str());
-            throw "no such directory";
+            TRACEPUT("dir=\"%s\" is not a directory.", dir.c_str());
+            goto done;
         }
 
         Glib::ustring tmp1 = Glib::ustring::compose("%1.tmp1", _path);
@@ -640,103 +629,61 @@ bool PatchBase::download()
         unlink(tmp1.c_str());
         unlink(tmp2.c_str());
 
-        _fp = fopen(tmp1.c_str(), "w");
-        _size = 0;
+        _file = File::create(tmp1.c_str(), "w");
 
-        if (!_fp)
+        if (!_file->open())
         {
-            throw "fopen";
-        }
-
-        curl = curl_easy_init();
-        if (!curl)
-        {
-            throw "curl_easy_init";
+            Logger::instance().error("%s: %s", _file->path(), strerror(_file->error()));
+            goto done;
         }
 
         Glib::ustring url("http://updates.xensource.com/XenServer/updates.xml");
+        TRACEPUT("url=\"%s\"", url.c_str());
 
-        if (Logger::instance().getLevel() >= LogLevel::DEBUG)
+        RefPtr<HttpClient> httpClient = HttpClient::create();
+        httpClient->init();
+        httpClient->setUrl(url.c_str());
+        if (!httpClient->run(*this))
         {
-            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-            curl_easy_setopt(curl, CURLOPT_STDERR, stderr);
+            Logger::instance().error("%s: %s", url.c_str(), httpClient->getError());
+            goto done;
         }
 
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receive);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-
-        CURLcode result = curl_easy_perform(curl);
-
-        fclose(_fp);
-        _fp = 0;
-
-        if (result != CURLE_OK)
-        {
-            Logger::instance().info("CURL: %d (%s)", (int)result, curl_easy_strerror(result));
-            throw "curl_easy_perform";
-        }
+        _file->close();
 
         if (rename(_path.c_str(), tmp2.c_str()))
         {
             if (errno != ENOENT)
             {
-                Logger::instance().debug("PatchBase::download: rename(%s,%s) failed.", _path.c_str(), tmp2.c_str());
-                throw "rename(1)";
+                TRACEPUT("rename(%s,%s) failed.", _path.c_str(), tmp2.c_str());
+                goto done;
             }
         }
 
         if (rename(tmp1.c_str(), _path.c_str()))
         {
-            Logger::instance().debug("PatchBase::download: rename(%s,%s) failed.", tmp1.c_str(), _path.c_str());
-            throw "rename(2)";
+            TRACEPUT("rename(%s,%s) failed.", tmp1.c_str(), _path.c_str());
+            goto done;
         }
 
         unlink(tmp2.c_str());
 
-        Logger::instance().info("%s\t%'zu bytes downloaded.", _path.c_str(), _size);
+        TRACEPUT("%s %'zu bytes downloaded.", _path.c_str(), _file->nbytes());
 
         retval = true;
     }
-    catch (...)
-    {
-    }
 
-    if (curl)
-    {
-        curl_easy_cleanup(curl);
-    }
+done:
 
-    if (_fp)
-    {
-        fclose(_fp);
-        _fp = 0;
-    }
+    _file.reset();
 
     return retval;
 }
 
 
-bool PatchBase::parse(void* ptr, size_t len)
+bool PatchBase::write(HttpClient&, void* ptr, size_t len)
 {
-    if (len)
-    {
-        size_t out = fwrite(ptr, len, 1, _fp);
-        if (!out)
-        {
-            return false;
-        }
-        _size += len;
-    }
-    else
-    {
-        Logger::instance().warn("PatchBase::parse: ZERO byte!");
-    }
-
-    return true;
+    return _file->write(ptr, len);
 }
 
 

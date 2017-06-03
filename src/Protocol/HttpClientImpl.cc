@@ -51,6 +51,9 @@ void HttpClientImpl::init()
     curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYHOST, 0);
     curl_easy_setopt(_curl, CURLOPT_NOPROGRESS, 1);
     curl_easy_setopt(_curl, CURLOPT_ERRORBUFFER, _errbuf);
+
+    //curl_easy_setopt(_curl, CURLOPT_VERBOSE, 1L);
+    //curl_easy_setopt(_curl, CURLOPT_STDERR, stderr);
 }
 
 

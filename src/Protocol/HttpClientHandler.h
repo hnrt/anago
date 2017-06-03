@@ -18,7 +18,7 @@ namespace hnrt
 
         virtual bool onSuccess(HttpClient&, int) { return true; }
         virtual bool onFailure(HttpClient&, const char*) { return false; }
-        virtual bool onCancelled(HttpClient&)  { return false; }
+        virtual bool onCancelled(HttpClient&) { return false; }
         virtual size_t read(HttpClient&, void* ptr, size_t len) { return 0; }
         virtual bool write(HttpClient&, void* ptr, size_t len) { return true; }
         virtual void rewind(HttpClient&) {}
