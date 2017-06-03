@@ -9,6 +9,7 @@
 #include <glibmm/ustring.h>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
+#include "Protocol/HttpClientHandler.h"
 
 
 namespace hnrt
@@ -17,16 +18,19 @@ namespace hnrt
 
     class PatchDownloader
         : public RefObj
+        , public HttpClientHandler
     {
     public:
 
         static RefPtr<PatchDownloader> create();
 
         ~PatchDownloader();
-        void init();
-        void fini();
         void run(const Glib::ustring&, const Glib::ustring&);
-        bool parse(void*, size_t);
+
+        virtual bool onSuccess(HttpClient&, int);
+        virtual bool onFailure(HttpClient&, const char*);
+        virtual bool onCancelled(HttpClient&);
+        virtual bool write(HttpClient&, void*, size_t);
 
     private:
 
@@ -36,8 +40,6 @@ namespace hnrt
 
         RefPtr<File> _file;
         Glib::Mutex _mutex;
-        void* _context;
-        double _contentLength;
         double _written;
     };
 }
