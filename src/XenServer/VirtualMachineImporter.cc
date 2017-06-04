@@ -5,7 +5,6 @@
 
 
 #include <glibmm.h>
-#include <curl/curl.h>
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Protocol/HttpClient.h"
