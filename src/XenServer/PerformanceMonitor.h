@@ -18,7 +18,6 @@
 
 namespace hnrt
 {
-    class HttpClient;
     class Session;
     class Scrambler;
 
