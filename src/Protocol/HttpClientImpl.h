@@ -23,6 +23,7 @@ namespace hnrt
         virtual void setHttpVersion(const char*);
         virtual void setUrl(const char*);
         virtual void setMethod(Method);
+        virtual void setCredentials(const char*, const char*);
         virtual void followLocation();
         virtual void setUpload(size_t);
         virtual void removeExpectHeader();

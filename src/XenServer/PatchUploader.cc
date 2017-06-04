@@ -54,22 +54,35 @@ bool PatchUploader::run(Session& session, const char* path)
             session.clearError();
             goto done;
         }
+        char* uuidTask = NULL;
+        xen_task_get_uuid(session, &uuidTask, task);
+        char* uuidSession = NULL;
+        xen_session_get_uuid(session, &uuidSession, session);
 
         const ConnectSpec& cs = session.getConnectSpec();
         Glib::ustring url = Glib::ustring::compose(
             "https://%1/pool_patch_upload?task_id=%2&session_id=%3",
             cs.hostname,
-            task.toString().c_str(),
-            session->session_id);
+            uuidTask,
+            uuidSession);
+
+        xen_uuid_free(uuidTask);
+        xen_uuid_free(uuidSession);
+
+        Glib::ustring pw = cs.descramblePassword();
+        printf("password=\"%s\"\n", pw.c_str());
 
         RefPtr<HttpClient> httpClient = HttpClient::create();
         httpClient->init();
         httpClient->setUrl(url.c_str());
         httpClient->setMethod(HttpClient::PUT);
+        httpClient->setCredentials(cs.username.c_str(), pw.c_str());
         httpClient->setUpload(_file->size());
         httpClient->removeExpectHeader();
         httpClient->setVerbose(Logger::instance().getLevel() <= LogLevel::TRACE ? true : false);
         retval = httpClient->run(*this);
+
+        pw.clear();
 
         if (!xen_task_destroy(session, task))
         {

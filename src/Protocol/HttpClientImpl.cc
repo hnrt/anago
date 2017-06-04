@@ -113,6 +113,13 @@ void HttpClientImpl::setMethod(Method method)
 }
 
 
+void HttpClientImpl::setCredentials(const char* username, const char* password)
+{
+    curl_easy_setopt(_curl, CURLOPT_USERNAME, username);
+    curl_easy_setopt(_curl, CURLOPT_PASSWORD, password);
+}
+
+
 void HttpClientImpl::followLocation()
 {
     curl_easy_setopt(_curl, CURLOPT_FOLLOWLOCATION, 1L);
