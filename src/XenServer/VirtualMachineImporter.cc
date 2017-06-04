@@ -128,7 +128,7 @@ void VirtualMachineImporter::init(const char* path)
 }
 
 
-size_t VirtualMachineImporter::read(HttpClient&, void* ptr, size_t len)
+size_t VirtualMachineImporter::read(HttpClient& httpClient, void* ptr, size_t len)
 {
     TRACE("VirtualMachineImporter::read", "ptr=%zx len=%zu", ptr, len);
 
@@ -137,7 +137,8 @@ size_t VirtualMachineImporter::read(HttpClient&, void* ptr, size_t len)
         Logger::instance().info("Import canceled: %s", _xva->path());
         _state = VirtualMachineOperationState::IMPORT_CANCELED;
         emit(XenObject::IMPORT_CANCELED);
-        return CURL_READFUNC_ABORT;
+        httpClient.cancel();
+        return 0;
     }
 
     size_t ret = _xva->read(ptr, len);
@@ -158,7 +159,7 @@ size_t VirtualMachineImporter::read(HttpClient&, void* ptr, size_t len)
         Logger::instance().warn("Import failed: %s: %s", strerror(_xva->error()), _xva->path());
         _state = VirtualMachineOperationState::IMPORT_FAILURE;
         emit(XenObject::IMPORT_FAILED);
-        return CURL_READFUNC_ABORT;
+        return 0;
     }
     else
     {
