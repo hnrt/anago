@@ -34,6 +34,7 @@ namespace hnrt
         virtual void setUrl(const char*) = 0;
         virtual void setMethod(Method) = 0;
         virtual void setCredentials(const char*, const char*) = 0;
+        virtual void setPost(const void*, size_t) = 0;
         virtual void followLocation() = 0;
         virtual void setUpload(size_t) = 0;
         virtual void removeExpectHeader() = 0;
@@ -41,6 +42,7 @@ namespace hnrt
         virtual bool run(HttpClientHandler&) = 0;
         virtual void cancel() = 0;
         virtual int getStatus() const = 0;
+        virtual int getResult() const = 0;
         virtual const char* getError() const = 0;
         virtual double getContentLength() const = 0;
 

@@ -120,6 +120,14 @@ void HttpClientImpl::setCredentials(const char* username, const char* password)
 }
 
 
+void HttpClientImpl::setPost(const void* data, size_t size)
+{
+    curl_easy_setopt(_curl, CURLOPT_POST, 1L);
+    curl_easy_setopt(_curl, CURLOPT_POSTFIELDS, data);
+    curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, size);
+}
+
+
 void HttpClientImpl::followLocation()
 {
     curl_easy_setopt(_curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -161,7 +169,7 @@ bool HttpClientImpl::run(HttpClientHandler& handler)
         curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _chunk);
     }
 
-    CURLcode result = curl_easy_perform(_curl);
+    _result = curl_easy_perform(_curl);
 
     long responseCode = 0;
     CURLcode result2 = curl_easy_getinfo(_curl, CURLINFO_RESPONSE_CODE, &responseCode);
@@ -170,7 +178,7 @@ bool HttpClientImpl::run(HttpClientHandler& handler)
         _status = static_cast<int>(responseCode);
     }
 
-    if (result == CURLE_OK)
+    if (_result == CURLE_OK)
     {
         if (_cancelled)
         {
@@ -184,14 +192,14 @@ bool HttpClientImpl::run(HttpClientHandler& handler)
         return _handler->onCancelled(*this);
     }
 
-    if (result == CURLE_ABORTED_BY_CALLBACK)
+    if (_result == CURLE_ABORTED_BY_CALLBACK)
     {
         return _handler->onSuccess(*this, _status);
     }
 
     if (!_errbuf[0])
     {
-        snprintf(_errbuf, sizeof(_errbuf), "%s", curl_easy_strerror(result));
+        snprintf(_errbuf, sizeof(_errbuf), "%s", curl_easy_strerror(_result));
     }
 
     return _handler->onFailure(*this, _errbuf);

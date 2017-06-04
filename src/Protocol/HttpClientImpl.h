@@ -24,6 +24,7 @@ namespace hnrt
         virtual void setUrl(const char*);
         virtual void setMethod(Method);
         virtual void setCredentials(const char*, const char*);
+        virtual void setPost(const void*, size_t);
         virtual void followLocation();
         virtual void setUpload(size_t);
         virtual void removeExpectHeader();
@@ -31,6 +32,7 @@ namespace hnrt
         virtual bool run(HttpClientHandler&);
         virtual void cancel();
         virtual int getStatus() const { return _status; }
+        virtual int getResult() const { return _result; }
         virtual const char* getError() const { return _errbuf; }
         virtual double getContentLength() const { return _contentLength; }
 
@@ -46,6 +48,7 @@ namespace hnrt
         struct curl_slist *_chunk;
         HttpClientHandler* _handler;
         volatile bool _cancelled;
+        CURLcode _result;
         int _status;
         double _contentLength;
         char _errbuf[CURL_ERROR_SIZE];

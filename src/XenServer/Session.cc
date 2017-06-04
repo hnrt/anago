@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libxml/parser.h>
-#include <curl/curl.h>
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
+#include "Protocol/HttpClient.h"
 #include "Api.h"
 #include "Constants.h"
 #include "Session.h"
@@ -18,57 +18,42 @@
 using namespace hnrt;
 
 
-struct xen_comms
+class RpcCallback
+    : public HttpClientHandler
 {
-    xen_result_func func;
-    void* handle;
-    //StringBuffer* pbuf;
+public:
+
+    RpcCallback(xen_result_func func, void* handle)
+        : _func(func)
+        , _handle(handle)
+    {
+    }
+
+    virtual bool write(HttpClient&, void* ptr, size_t len)
+    {
+        return _func(ptr, len, _handle) ? true : false;
+    }
+
+private:
+
+    xen_result_func _func;
+    void* _handle;
 };
-
-
-static size_t rpcReceive(void* ptr, size_t size, size_t nmemb, xen_comms* pcomms)
-{
-    size_t n = size * nmemb;
-    //pcomms->pbuf->append((const char*)ptr, n);
-    size_t ret = pcomms->func(ptr, n, pcomms->handle) ? n : 0;
-    return ret;
-}
 
 
 static int rpcExecute(const void* data, size_t size, void* user_handle, void* result_handle, xen_result_func result_func)
 {
     Session* x = (Session*)user_handle;
 
-    CURL* curl = curl_easy_init();
-    if (curl == NULL)
-    {
-        Logger::instance().error("CURL failed.");
-        return -1;
-    }
+    RpcCallback callback(result_func, result_handle);
 
-    //StringBuffer buf;
+    RefPtr<HttpClient> httpClient = HttpClient::create();
+    httpClient->init();
+    httpClient->setUrl(x->url());
+    httpClient->setPost(data, size);
+    httpClient->run(callback);
 
-    xen_comms comms = {
-        result_func,
-        result_handle,
-        //&buf
-    };
-
-    curl_easy_setopt(curl, CURLOPT_URL, x->url());
-    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, rpcReceive);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &comms);
-    curl_easy_setopt(curl, CURLOPT_POST, 1);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, size);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-
-    CURLcode result = curl_easy_perform(curl);
-
-    curl_easy_cleanup(curl);
-
-    return result;
+    return httpClient->getResult();
 }
 
 
