@@ -181,7 +181,7 @@ void VirtualMachineExporter::init(const char* path, bool verify)
 }
 
 
-bool VirtualMachineExporter::write(HttpClient&, const void* ptr, size_t len)
+bool VirtualMachineExporter::write(HttpClient& httpClient, const void* ptr, size_t len)
 {
     TRACE("VirtualMachineExporter::write", "ptr=%zx len=%zu", ptr, len);
 
@@ -190,6 +190,7 @@ bool VirtualMachineExporter::write(HttpClient&, const void* ptr, size_t len)
         Logger::instance().info("Export canceled: %s", _xva->path());
         _state = VirtualMachineOperationState::EXPORT_CANCELED;
         emit(XenObject::EXPORT_CANCELED);
+        httpClient.cancel();
         return false;
     }
 
