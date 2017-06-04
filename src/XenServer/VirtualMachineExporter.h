@@ -5,6 +5,7 @@
 #define HNRT_VIRTUALMACHINEEXPORTER_H
 
 
+#include "Protocol/HttpClientHandler.h"
 #include "VirtualMachinePorter.h"
 
 
@@ -12,6 +13,7 @@ namespace hnrt
 {
     class VirtualMachineExporter
         : public VirtualMachinePorter
+        , public HttpClientHandler
     {
     public:
 
@@ -19,9 +21,10 @@ namespace hnrt
 
         virtual ~VirtualMachineExporter();
         void run(const char*, bool);
-        bool parse(void*, size_t);
         bool getVerify() const { return _verify; }
         void setVerify(bool verify) { _verify = verify; }
+
+        virtual bool write(HttpClient&, const void*, size_t);
 
     protected:
 

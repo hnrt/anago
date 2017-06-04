@@ -5,9 +5,9 @@
 
 
 #include <glibmm.h>
-#include <curl/curl.h>
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
+#include "Protocol/HttpClient.h"
 #include "Session.h"
 #include "VirtualMachine.h"
 #include "VirtualMachineArchive.h"
@@ -34,14 +34,6 @@ VirtualMachineExporter::VirtualMachineExporter(RefPtr<VirtualMachine> vm)
 VirtualMachineExporter::~VirtualMachineExporter()
 {
     TRACE("VirtualMachineExporter::dtor");
-}
-
-
-static size_t receive(void* ptr, size_t size, size_t nmemb, VirtualMachineExporter* pThis)
-{
-    size_t len = size * nmemb;
-    size_t ret = pThis->parse(ptr, len) ? len : 0;
-    return ret;
 }
 
 
@@ -78,16 +70,8 @@ void VirtualMachineExporter::run(const char* path, bool verify)
 
         emit(XenObject::EXPORT_PENDING);
 
-        CURL* curl = NULL;
-
         try
         {
-            curl = curl_easy_init();
-            if (!curl)
-            {
-                throw StringBuffer().format("CURL initialize failed.");
-            }
-
             StringBuffer url;
             ConnectSpec cs = _session.getConnectSpec();
             url.format("http://%s/export?session_id=%s&task_id=%s&ref=%s",
@@ -95,21 +79,15 @@ void VirtualMachineExporter::run(const char* path, bool verify)
 
             TRACEPUT("url=%s", url.str());
 
-            //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-            //curl_easy_setopt(curl, CURLOPT_STDERR, stderr);
-            curl_easy_setopt(curl, CURLOPT_URL, url.str());
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receive);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-            curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-
-            CURLcode result = curl_easy_perform(curl);
+            RefPtr<HttpClient> httpClient = HttpClient::create();
+            httpClient->init();
+            httpClient->setUrl(url.str());
+            bool result = httpClient->run(*this);
 
             if (_state != VirtualMachineOperationState::EXPORT_FAILURE &&
                 _state != VirtualMachineOperationState::EXPORT_CANCELED)
             {
-                if (result == CURLE_OK)
+                if (result)
                 {
                     Logger::instance().info("Exported %'zu bytes: %s", _xva->nbytes(), _xva->path());
                     _state = VirtualMachineOperationState::EXPORT_SUCCESS;
@@ -117,7 +95,7 @@ void VirtualMachineExporter::run(const char* path, bool verify)
                 }
                 else
                 {
-                    throw StringBuffer().format("CURL: %d (%s)", (int)result, curl_easy_strerror(result));
+                    throw StringBuffer().format("%s", httpClient->getError());
                 }
             }
         }
@@ -126,11 +104,6 @@ void VirtualMachineExporter::run(const char* path, bool verify)
             Logger::instance().warn("Export failed: %s", msg.str());
             _state = VirtualMachineOperationState::EXPORT_FAILURE;
             emit(XenObject::EXPORT_FAILED);
-        }
-
-        if (curl)
-        {
-            curl_easy_cleanup(curl);
         }
 
         _xva->close();
@@ -208,9 +181,9 @@ void VirtualMachineExporter::init(const char* path, bool verify)
 }
 
 
-bool VirtualMachineExporter::parse(void* ptr, size_t len)
+bool VirtualMachineExporter::write(HttpClient&, const void* ptr, size_t len)
 {
-    TRACE("VirtualMachineExporter::parse", "ptr=%zx len=%zu", ptr, len);
+    TRACE("VirtualMachineExporter::write", "ptr=%zx len=%zu", ptr, len);
 
     if (_abort)
     {
