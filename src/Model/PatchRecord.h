@@ -15,6 +15,8 @@
 
 namespace hnrt
 {
+    class File;
+
     struct PatchRecord
         : public RefObj
     {
@@ -36,6 +38,8 @@ namespace hnrt
         inline static RefPtr<PatchRecord> create();
 
         inline PatchRecord& operator =(const PatchRecord& rhs);
+        RefPtr<File> unzipFile(const Glib::ustring&) const;
+        RefPtr<File> getFile() const;
 
     protected:
 

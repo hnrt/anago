@@ -30,11 +30,13 @@ namespace hnrt
         virtual ~HttpClient();
         virtual void init() = 0;
         virtual void fini() = 0;
+        virtual void setHttpVersion(const char*) = 0;
         virtual void setUrl(const char*) = 0;
         virtual void setMethod(Method) = 0;
         virtual void followLocation() = 0;
         virtual void setUpload(size_t) = 0;
         virtual void removeExpectHeader() = 0;
+        virtual void setVerbose(bool = true) = 0;
         virtual bool run(HttpClientHandler&) = 0;
         virtual void cancel() = 0;
         virtual int getStatus() const = 0;

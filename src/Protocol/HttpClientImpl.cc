@@ -51,9 +51,6 @@ void HttpClientImpl::init()
     curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYHOST, 0);
     curl_easy_setopt(_curl, CURLOPT_NOPROGRESS, 1);
     curl_easy_setopt(_curl, CURLOPT_ERRORBUFFER, _errbuf);
-
-    //curl_easy_setopt(_curl, CURLOPT_VERBOSE, 1L);
-    //curl_easy_setopt(_curl, CURLOPT_STDERR, stderr);
 }
 
 
@@ -71,6 +68,23 @@ void HttpClientImpl::fini()
     {
         curl_easy_cleanup(_curl);
         _curl = NULL;
+    }
+}
+
+
+void HttpClientImpl::setHttpVersion(const char* version)
+{
+    if (!strcmp(version, "1.1"))
+    {
+        curl_easy_setopt(_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+    }
+    else if (!strcmp(version, "1.0"))
+    {
+        curl_easy_setopt(_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
+    }
+    else
+    {
+        throw std::invalid_argument("HttpClientImpl::setHttpVersion");
     }
 }
 
@@ -94,7 +108,7 @@ void HttpClientImpl::setMethod(Method method)
         curl_easy_setopt(_curl, CURLOPT_POST, 1L);
         break;
     default:
-        throw std::runtime_error("HttpClientImpl::setMethod");
+        throw std::invalid_argument("HttpClientImpl::setMethod");
     }
 }
 
@@ -118,6 +132,13 @@ void HttpClientImpl::removeExpectHeader()
 }
 
 
+void HttpClientImpl::setVerbose(bool value)
+{
+    curl_easy_setopt(_curl, CURLOPT_VERBOSE, value ? 1L : 0L);
+    curl_easy_setopt(_curl, CURLOPT_STDERR, stderr);
+}
+
+
 bool HttpClientImpl::run(HttpClientHandler& handler)
 {
     TRACE(StringBuffer().format("HttpClientImpl@%zx::run", this));
@@ -135,14 +156,15 @@ bool HttpClientImpl::run(HttpClientHandler& handler)
 
     CURLcode result = curl_easy_perform(_curl);
 
+    long responseCode = 0;
+    CURLcode result2 = curl_easy_getinfo(_curl, CURLINFO_RESPONSE_CODE, &responseCode);
+    if (result2 == CURLE_OK)
+    {
+        _status = static_cast<int>(responseCode);
+    }
+
     if (result == CURLE_OK)
     {
-        long value = 0;
-        CURLcode result = curl_easy_getinfo(_curl, CURLINFO_RESPONSE_CODE, &value);
-        if (result == CURLE_OK)
-        {
-            _status = static_cast<int>(value);
-        }
         if (_cancelled)
         {
             return _handler->onCancelled(*this);
@@ -157,7 +179,7 @@ bool HttpClientImpl::run(HttpClientHandler& handler)
 
     if (result == CURLE_ABORTED_BY_CALLBACK)
     {
-        return _handler->onSuccess(*this, 0);
+        return _handler->onSuccess(*this, _status);
     }
 
     if (!_errbuf[0])

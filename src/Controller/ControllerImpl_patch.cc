@@ -79,27 +79,38 @@ void ControllerImpl::downloadPatchInBackground(RefPtr<Host> host, RefPtr<PatchRe
     RefPtr<PatchDownloader> downloader = PatchDownloader::create();
     downloader->run(patchRecord->patchUrl, path);
     RefPtr<File> file = File::create(path.c_str());
-    if (!file->size())
+    if (!file->exists())
     {
+        Logger::instance().warn("%s: Not found. Download failed.", file->path());
         patchRecord->state = PatchState::DOWNLOAD_FAILURE;
         host->emit(XenObject::RECORD_UPDATED);
         return;
     }
-    Glib::ustring filename = Glib::ustring::compose("%1.xsupdate", patchRecord->label);
-    Glib::ustring cmd = Glib::ustring::compose("unzip \"%1\" \"%2\" -d \"%3\"", path, filename, dir);
-    TRACEPUT("cmd=\"%s\"", cmd.c_str());
-    system(cmd.c_str());
-    Glib::ustring path2 = Glib::ustring::compose("%1%2", dir, filename);
-    RefPtr<File> file2 = File::create(path2.c_str());
-    if (!file2->size())
+    else if (!file->size())
     {
+        Logger::instance().warn("%s: Empty. Download failed.", file->path());
         patchRecord->state = PatchState::DOWNLOAD_FAILURE;
         host->emit(XenObject::RECORD_UPDATED);
         return;
     }
+    RefPtr<File> file2 = patchRecord->unzipFile(path);
+    if (!file2)
+    {
+        Logger::instance().warn("%s: No patch file was found. Treated as download failure.", path.c_str());
+        patchRecord->state = PatchState::DOWNLOAD_FAILURE;
+        host->emit(XenObject::RECORD_UPDATED);
+        return;
+    }
+    else if (!file2->size())
+    {
+        Logger::instance().warn("%s: Empty. Download failed.", file2->path());
+        patchRecord->state = PatchState::DOWNLOAD_FAILURE;
+        host->emit(XenObject::RECORD_UPDATED);
+        return;
+    }
+    Logger::instance().info("%s: %'zu bytes extracted.", file2->path(), file2->size());
     patchRecord->state = PatchState::DOWNLOADED;
     host->emit(XenObject::RECORD_UPDATED);
-    TRACEPUT("%s: %zu bytes extracted.", path2.c_str(), file2->size());
 }
 
 
@@ -125,14 +136,24 @@ void ControllerImpl::uploadPatchInBackground(RefPtr<Host> host, RefPtr<PatchReco
     TRACE("ControllerImpl::uploadPatchInBackground");
     patchRecord->state = PatchState::UPLOAD_INPROGRESS;
     host->emit(XenObject::RECORD_UPDATED);
-    Glib::ustring filename = Glib::ustring::compose("%1.xsupdate", patchRecord->label);
-    Glib::ustring dir = Model::instance().getAppDir();
-    Glib::ustring path = Glib::ustring::compose("%1%2", dir, filename);
-    TRACEPUT("path=\"%s\"", path.c_str());
+    RefPtr<File> file = patchRecord->getFile();
+    if (!file)
+    {
+        Logger::instance().warn("%s: No patch file was found. Treated as upload failure.", patchRecord->label.c_str());
+        patchRecord->state = PatchState::UPLOAD_FAILURE;
+        host->emit(XenObject::RECORD_UPDATED);
+        return;
+    }
+    TRACEPUT("path=\"%s\"", file->path());
     RefPtr<PatchUploader> uploader = PatchUploader::create();
-    uploader->run(host->getSession(), path);
-    sleep(1); // in order for host to finish updating its internal patch information
-    patchRecord->state = PatchState::UPLOADED;
+    if (uploader->run(host->getSession(), file->path()))
+    {
+        patchRecord->state = PatchState::UPLOADED;
+    }
+    else
+    {
+        patchRecord->state = PatchState::UPLOAD_FAILURE;
+    }
     host->updatePatchList();
     host->emit(XenObject::RECORD_UPDATED);
 }

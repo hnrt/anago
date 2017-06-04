@@ -300,6 +300,19 @@ bool FileImpl::validate(volatile bool* abortFlag)
 }
 
 
+bool FileImpl::exists() const
+{
+    if (_infoOutOfDate)
+    {
+        if (!const_cast<FileImpl*>(this)->updateInfo())
+        {
+            return false;
+        }
+    }
+    return S_ISREG(_info.st_mode) ? true : false;
+}
+
+
 size_t FileImpl::size() const
 {
     if (_infoOutOfDate)

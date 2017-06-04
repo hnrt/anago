@@ -9,6 +9,7 @@
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
 #include "Controller/Controller.h"
+#include "File/File.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "Model/PatchBase.h"
@@ -447,11 +448,8 @@ void Host::updatePatchList()
         case PatchState::AVAILABLE:
         case PatchState::DOWNLOADED:
         {
-            Glib::ustring filename = Glib::ustring::compose("%1.xsupdate", (*i)->label);
-            Glib::ustring path = Glib::ustring::compose("%1%2", Model::instance().getAppDir(), filename);
-            struct stat sd = { 0 };
-            int rc = stat(path.c_str(), &sd);
-            (*i)->state = !rc && sd.st_size ? PatchState::DOWNLOADED : PatchState::AVAILABLE;
+            RefPtr<File> file = (*i)->getFile();
+            (*i)->state = file && file->size() ? PatchState::DOWNLOADED : PatchState::AVAILABLE;
             break;
         }
         default:

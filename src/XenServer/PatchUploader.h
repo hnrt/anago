@@ -26,7 +26,7 @@ namespace hnrt
         static RefPtr<PatchUploader> create();
 
         ~PatchUploader();
-        void run(const Session&, const Glib::ustring&);
+        bool run(Session&, const char*);
 
         virtual bool onSuccess(HttpClient&, int);
         virtual bool onFailure(HttpClient&, const char*);

@@ -34,6 +34,7 @@ namespace hnrt
         virtual const char* mode() const { return _mode; }
         virtual int error() const { return _error; }
         virtual void clearError() { _error = 0; }
+        virtual bool exists() const;
         virtual size_t size() const;
         virtual mode_t perm() const;
         virtual uid_t uid() const;

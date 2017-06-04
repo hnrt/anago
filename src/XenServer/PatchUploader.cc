@@ -30,40 +30,69 @@ PatchUploader::~PatchUploader()
 }
 
 
-void PatchUploader::run(const Session& session, const Glib::ustring& path)
+bool PatchUploader::run(Session& session, const char* path)
 {
-    TRACE("PatchUploader::run", "path=\"%s\"", path.c_str());
+    TRACE("PatchUploader::run", "path=\"%s\"", path);
 
-    _file = File::create(path.c_str(), "r");
+    bool retval = false;
 
-    if (!_file->open())
     {
-        Logger::instance().error("%s: %s", _file->path(), strerror(_file->error()));
-        _file.reset();
-        return;
+        _file = File::create(path, "r");
+
+        if (!_file->open())
+        {
+            Logger::instance().error("%s: %s", _file->path(), strerror(_file->error()));
+            goto done;
+        }
+
+        XenRef<xen_task, xen_task_free_t> task;
+        char name[] = { "pool_patch_upload" };
+        char desc[] = { "" };
+        if (!xen_task_create(session, &task, name, desc))
+        {
+            Logger::instance().error("xen_task_create failed.");
+            session.clearError();
+            goto done;
+        }
+
+        const ConnectSpec& cs = session.getConnectSpec();
+        Glib::ustring url = Glib::ustring::compose(
+            "https://%1/pool_patch_upload?task_id=%2&session_id=%3",
+            cs.hostname,
+            task.toString().c_str(),
+            session->session_id);
+
+        RefPtr<HttpClient> httpClient = HttpClient::create();
+        httpClient->init();
+        httpClient->setUrl(url.c_str());
+        httpClient->setMethod(HttpClient::PUT);
+        httpClient->setUpload(_file->size());
+        httpClient->removeExpectHeader();
+        httpClient->setVerbose(Logger::instance().getLevel() <= LogLevel::TRACE ? true : false);
+        retval = httpClient->run(*this);
+
+        if (!xen_task_destroy(session, task))
+        {
+            Logger::instance().error("xen_task_destroy failed.");
+            session.clearError();
+            goto done;
+        }
+
+        _file->close();
     }
 
-    const ConnectSpec& cs = session.getConnectSpec();
-    Glib::ustring url = Glib::ustring::compose("http://%1/pool_patch_upload?session_id=%2", cs.hostname, session->session_id);
-
-    RefPtr<HttpClient> httpClient = HttpClient::create();
-    httpClient->init();
-    httpClient->setUrl(url.c_str());
-    httpClient->setMethod(HttpClient::PUT);
-    httpClient->setUpload(_file->size());
-    httpClient->removeExpectHeader();
-    httpClient->run(*this);
-
-    _file->close();
+done:
 
     _file.reset();
+
+    return retval;
 }
 
 
 bool PatchUploader::onSuccess(HttpClient&, int status)
 {
     TRACE("PatchUploader::onSuccess", "status=%d", status);
-    return true;
+    return status == 200 ? true : false;
 }
 
 
