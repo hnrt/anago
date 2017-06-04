@@ -3,12 +3,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <curl/curl.h>
 #include <vector>
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
 #include "Controller/Controller.h"
 #include "Logger/Trace.h"
+#include "Protocol/HttpClient.h"
 #include "Util/Base64.h"
 #include "PerformanceMonitor.h"
 #include "Session.h"
@@ -74,14 +74,6 @@ void PerformanceMonitor::terminate()
 }
 
 
-static size_t receive(void* ptr, size_t size, size_t nmemb, PerformanceMonitor* pThis)
-{
-    size_t len = size * nmemb;
-    size_t ret = pThis->parse(ptr, len) ? len : 0;
-    return ret;
-}
-
-
 class Traverse
 {
 public:
@@ -133,7 +125,6 @@ void PerformanceMonitor::run()
     Glib::TimeVal tv;
 
     const ConnectSpec& cs = _session.getConnectSpec();
-    _location = cs.hostname;
     _authorization = cs.getBasicAuthString();
     _terminate = false;
 
@@ -151,12 +142,6 @@ void PerformanceMonitor::run()
             break;
         }
 
-        CURL* curl = curl_easy_init();
-        if (!curl)
-        {
-            continue;
-        }
-
         xmlDocPtr pDoc = NULL;
         xmlParserCtxtPtr pContext = NULL;
 
@@ -166,26 +151,19 @@ void PerformanceMonitor::run()
             Base64Decoder bd(_authorization.c_str());
             url.format("https://%s@%s/rrd_updates?host=true&start=%lu",
                        reinterpret_cast<const char*>(bd.getValue()),
-                       _location.c_str(),
+                       cs.hostname.c_str(),
                        _end + 1);
 
-            //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-            curl_easy_setopt(curl, CURLOPT_URL, url.str());
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receive);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-            curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-
-            //printf("%lu %s\n", time(NULL), url.str());
-
-            CURLcode result = curl_easy_perform(curl);
+            RefPtr<HttpClient> httpClinet = HttpClient::create();
+            httpClinet->init();
+            httpClinet->setUrl(url.str());
+            bool result = httpClinet->run(*this);
 
             url.clear();
 
             pContext = reinterpret_cast<xmlParserCtxtPtr>(InterlockedExchangePointer(&_context, reinterpret_cast<void*>(NULL)));
 
-            if (result == CURLE_OK)
+            if (result)
             {
                 if (pContext)
                 {
@@ -198,14 +176,12 @@ void PerformanceMonitor::run()
             }
             else
             {
-                Logger::instance().error("PerformanceMonitor: curl_error=%d", result);
+                Logger::instance().error("PerformanceMonitor: %s", httpClinet->getError());
             }
         }
         catch (...)
         {
         }
-
-        curl_easy_cleanup(curl);
 
         if (pContext)
         {
@@ -221,21 +197,16 @@ void PerformanceMonitor::run()
 }
 
 
-bool PerformanceMonitor::parse(void* ptr, size_t len)
+bool PerformanceMonitor::write(HttpClient&, const void* ptr, size_t len)
 {
-    //printf("#PerformanceMonitor::parse(%zu)\n", len);
-
     if (!_context)
     {
-        _context = xmlCreatePushParserCtxt(NULL, NULL, reinterpret_cast<char*>(ptr), len, "quux");
+        _context = xmlCreatePushParserCtxt(NULL, NULL, reinterpret_cast<char*>(const_cast<void*>(ptr)), len, "quux");
     }
     else if (len)
     {
-        xmlParseChunk(reinterpret_cast<xmlParserCtxtPtr>(_context), reinterpret_cast<char*>(ptr), len, 0);
+        xmlParseChunk(reinterpret_cast<xmlParserCtxtPtr>(_context), reinterpret_cast<char*>(const_cast<void*>(ptr)), len, 0);
     }
-
-    //printf("%.*s\n", static_cast<int>(len), reinterpret_cast<char*>(ptr));
-
     return true;
 }
 

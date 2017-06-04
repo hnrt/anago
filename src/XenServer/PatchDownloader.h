@@ -30,7 +30,7 @@ namespace hnrt
         virtual bool onSuccess(HttpClient&, int);
         virtual bool onFailure(HttpClient&, const char*);
         virtual bool onCancelled(HttpClient&);
-        virtual bool write(HttpClient&, void*, size_t);
+        virtual bool write(HttpClient&, const void*, size_t);
 
     private:
 

@@ -29,7 +29,7 @@ public:
     {
     }
 
-    virtual bool write(HttpClient&, void* ptr, size_t len)
+    virtual bool write(HttpClient&, const void* ptr, size_t len)
     {
         return _func(ptr, len, _handle) ? true : false;
     }

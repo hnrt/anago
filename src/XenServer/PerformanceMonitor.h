@@ -13,15 +13,18 @@
 #include <vector>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
+#include "Protocol/HttpClientHandler.h"
 
 
 namespace hnrt
 {
+    class HttpClient;
     class Session;
     class Scrambler;
 
     class PerformanceMonitor
         : public RefObj
+        , public HttpClientHandler
     {
     public:
 
@@ -38,8 +41,9 @@ namespace hnrt
         Session& getSession() const;
         void terminate();
         void run();
-        bool parse(void* ptr, size_t len);
-        ListEntry getEntry(const Glib::ustring& uuid);
+        ListEntry getEntry(const Glib::ustring&);
+
+        virtual bool write(HttpClient&, const void*, size_t);
 
     protected:
 
@@ -80,7 +84,6 @@ namespace hnrt
         void parseValues(unsigned long t, xmlNode* pNode, const std::vector<Legend>& columns);
 
         Session& _session;
-        Glib::ustring _location;
         Glib::ustring _authorization;
         Glib::Mutex _mutex;
         Glib::Cond _cond;

@@ -77,7 +77,7 @@ bool PatchDownloader::onCancelled(HttpClient&)
 }
 
 
-bool PatchDownloader::write(HttpClient&, void* ptr, size_t len)
+bool PatchDownloader::write(HttpClient&, const void* ptr, size_t len)
 {
     TRACE("PatchDownloader::write", "len=%zu", len);
 

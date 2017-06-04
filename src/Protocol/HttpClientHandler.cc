@@ -37,13 +37,13 @@ size_t HttpClientHandler::read(HttpClient&, void* ptr, size_t len)
 }
 
 
-bool HttpClientHandler::write(HttpClient&, void* ptr, size_t len)
+bool HttpClientHandler::write(HttpClient&, const void* ptr, size_t len)
 {
     if (Logger::instance().getLevel() <= LogLevel::TRACE)
     {
         StringBuffer buf;
-        char* p1 = reinterpret_cast<char*>(ptr);
-        char* p2 = p1 + len;
+        const char* p1 = reinterpret_cast<const char*>(ptr);
+        const char* p2 = p1 + len;
         while (p1 < p2)
         {
             switch (*p1)
