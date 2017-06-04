@@ -17,8 +17,9 @@
 #include <stdexcept>
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
-#include "Logger/Trace.h"
 #include "Exception/ConsoleException.h"
+#include "Logger/Trace.h"
+#include "Protocol/HttpClient.h"
 #include "ConsoleConnector.h"
 
 
@@ -30,7 +31,7 @@ using namespace hnrt;
 
 
 ConsoleConnector::ConsoleConnector()
-    : _curl(NULL)
+    : _httpClient(HttpClient::create())
     , _sockHost(-1)
     , _ibuf(IBUFSZ)
     , _obuf(OBUFSZ)
@@ -54,37 +55,19 @@ void ConsoleConnector::open(const char* location, const char* authorization)
     _statusCode = -1;
     _headerMap.clear();
 
-    _curl = curl_easy_init();
-    if (!_curl)
+    _httpClient->init();
+    _httpClient->setUrl(location);
+    _httpClient->setTcpNoDelay();
+    if (!_httpClient->connect())
     {
-        throw CommunicationConsoleException(CURLE_FAILED_INIT, "CURL unavailable.");
+        throw CommunicationConsoleException(_httpClient->getResult(), "%s", _httpClient->getError());
     }
 
-    //curl_easy_setopt(_curl, CURLOPT_VERBOSE, 1);
-    curl_easy_setopt(_curl, CURLOPT_URL, location);
-    curl_easy_setopt(_curl, CURLOPT_CONNECT_ONLY, 1);
-    curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYHOST, 0);
-    curl_easy_setopt(_curl, CURLOPT_NOPROGRESS, 1);
-    curl_easy_setopt(_curl, CURLOPT_TCP_NODELAY, 1);
-
-    CURLcode result = curl_easy_perform(_curl);
-    if (result != CURLE_OK)
+    _sockHost = _httpClient->getSocket();
+    if (_sockHost < 0)
     {
-        throw CommunicationConsoleException(result, "CURL failed. error=%d", result);
+        throw CommunicationConsoleException(_httpClient->getResult(), "Socket unavailable.");
     }
-
-    long lastSocket = -1;
-    curl_easy_getinfo(_curl, CURLINFO_LASTSOCKET, &lastSocket);
-    if (lastSocket < 0)
-    {
-        throw CommunicationConsoleException(CURLE_FAILED_INIT, "CURL: Socket unavailable.");
-    }
-    if (lastSocket > INT_MAX)
-    {
-        throw CommunicationConsoleException(CURLE_FAILED_INIT, "CURL: Invalid socket value.");
-    }
-    _sockHost = (int)lastSocket;
 
     Glib::ustring request = getRequest(location, authorization);
     _obuf.write(request.c_str(), request.bytes());
@@ -97,11 +80,7 @@ void ConsoleConnector::close()
 {
     TRACE(StringBuffer().format("ConsoleConnector@%zx::close", this));
 
-    CURL* curl = InterlockedExchangePointer(&_curl, reinterpret_cast<CURL*>(NULL));
-    if (curl)
-    {
-        curl_easy_cleanup(curl);
-    }
+    _httpClient->fini();
 }
 
 
@@ -117,30 +96,21 @@ ssize_t ConsoleConnector::recv()
         TRACEPUT("No space to receive.");
         return -1;
     }
-    size_t n = 0;
-    CURLcode result = curl_easy_recv(_curl, _ibuf.wPtr(), _ibuf.wLen(), &n);
-    _ibuf.wPos(_ibuf.wPos() + n);
-    if (result == CURLE_OK)
+    ssize_t n = _httpClient->recv(_ibuf.wPtr(), _ibuf.wLen());
+    if (n > 0)
     {
-        TRACEPUT("CURLE_OK %zu", n);
+        TRACEPUT("OK %zu", n);
+        _ibuf.wPos(_ibuf.wPos() + n);
         return n;
     }
-    else if (result == CURLE_AGAIN)
+    else if (n == 0)
     {
-        TRACEPUT("CURLE_AGAIN (no data to receive)");
+        TRACEPUT("AGAIN (no data to receive)");
         return 0;
-    }
-    else if (result == CURLE_UNSUPPORTED_PROTOCOL)
-    {
-        throw CommunicationConsoleException(result, "CURL: recv failed. error=UNSUPPORTED_PROTOCOL (possibly disconnected by host)");
-    }
-    else if (result == CURLE_BAD_FUNCTION_ARGUMENT)
-    {
-        throw CommunicationConsoleException(result, "CURL: recv failed. error=BAD_FUNCTION_ARGUMENT");
     }
     else
     {
-        throw CommunicationConsoleException(result, "CURL: recv failed. error=%d", result);
+        throw CommunicationConsoleException(_httpClient->getResult(), "Recv failed: %s", _httpClient->getError());
     }
 }
 
@@ -153,26 +123,21 @@ ssize_t ConsoleConnector::send()
         TRACEPUT("No data to send.");
         return -1;
     }
-    size_t n = 0;
-    CURLcode result = curl_easy_send(_curl, _obuf.rPtr(), _obuf.rLen(), &n);
-    if (result == CURLE_OK)
+    ssize_t n = _httpClient->send(_obuf.rPtr(), _obuf.rLen());
+    if (n > 0)
     {
-        TRACEPUT("CURLE_OK %zu", n);
+        TRACEPUT("OK %zu", n);
         _obuf.rPos(_obuf.rPos() + n);
         return n;
     }
-    else if (result == CURLE_AGAIN)
+    else if (n == 0)
     {
-        TRACEPUT("CURLE_AGAIN (busy)");
+        TRACEPUT("AGAIN (busy)");
         return 0;
-    }
-    else if (result == CURLE_UNSUPPORTED_PROTOCOL)
-    {
-        throw CommunicationConsoleException(result, "CURL: Send failed. error=UNSUPPORTED_PROTOCOL (possibly disconnected by host)");
     }
     else
     {
-        throw CommunicationConsoleException(result, "CURL: Send failed. error=%d", result);
+        throw CommunicationConsoleException(_httpClient->getResult(), "Send failed: %s", _httpClient->getError());
     }
 }
 

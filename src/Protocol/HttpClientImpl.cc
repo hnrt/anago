@@ -147,6 +147,12 @@ void HttpClientImpl::removeExpectHeader()
 }
 
 
+void HttpClientImpl::setTcpNoDelay(bool value)
+{
+    curl_easy_setopt(_curl, CURLOPT_TCP_NODELAY, value ? 1L : 0L);
+}
+
+
 void HttpClientImpl::setVerbose(bool value)
 {
     curl_easy_setopt(_curl, CURLOPT_VERBOSE, value ? 1L : 0L);
@@ -295,5 +301,72 @@ size_t HttpClientImpl::sendData(void* ptr, size_t size, size_t nmemb, HttpClient
         // CURL will freeze after this callback returns zero.
         // To avoid such situation, forcibly end the session by returning this:
         return CURL_READFUNC_ABORT;
+    }
+}
+
+
+bool HttpClientImpl::connect()
+{
+    curl_easy_setopt(_curl, CURLOPT_CONNECT_ONLY, 1L);
+    HttpClientHandler handler;
+    return run(handler);
+}
+
+
+int HttpClientImpl::getSocket() const
+{
+    long lastSocket = -1;
+    const_cast<HttpClientImpl*>(this)->_result = curl_easy_getinfo(_curl, CURLINFO_LASTSOCKET, &lastSocket);
+    if (_result != CURLE_OK)
+    {
+        return -1;
+    }
+    else if (0 < lastSocket && lastSocket <= INT_MAX)
+    {
+        return static_cast<int>(lastSocket);
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+
+ssize_t HttpClientImpl::recv(void* ptr, size_t len)
+{
+    size_t n = 0;
+    _result = curl_easy_recv(_curl, ptr, len, &n);
+    if (_result == CURLE_OK)
+    {
+        return n;
+    }
+    else if (_result == CURLE_AGAIN)
+    {
+        return 0;
+    }
+    else
+    {
+        snprintf(_errbuf, sizeof(_errbuf), "%s", curl_easy_strerror(_result));
+        return -1;
+    }
+}
+
+
+ssize_t HttpClientImpl::send(const void* ptr, size_t len)
+{
+    size_t n = 0;
+    _result = curl_easy_send(_curl, ptr, len, &n);
+    if (_result == CURLE_OK)
+    {
+        return n;
+    }
+    else if (_result == CURLE_AGAIN)
+    {
+        return 0;
+    }
+    else
+    {
+        snprintf(_errbuf, sizeof(_errbuf), "%s", curl_easy_strerror(_result));
+        return -1;
     }
 }

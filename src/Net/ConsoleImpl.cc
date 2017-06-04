@@ -4,10 +4,12 @@
 #define NO_TRACE
 
 
+#include <sys/time.h>
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
 #include "Exception/ConsoleException.h"
 #include "Logger/Trace.h"
+#include "Protocol/HttpClient.h"
 #include "Thread/ThreadManager.h"
 #include "View/ConsoleView.h"
 #include "ConsoleImpl.h"
@@ -98,7 +100,7 @@ ConsoleImpl::~ConsoleImpl()
 
 bool ConsoleImpl::isActive() const
 {
-    return _curl != NULL;
+    return _httpClient->isActive();
 }
 
 
@@ -299,14 +301,7 @@ void ConsoleImpl::rxMain()
     }
     catch (CommunicationConsoleException ex)
     {
-        if (ex.error() == CURLE_UNSUPPORTED_PROTOCOL)
-        {
-            Logger::instance().warn("ConsoleImpl::rxMain: %s", ex.what().c_str());
-        }
-        else
-        {
-            Logger::instance().error("ConsoleImpl::rxMain: %s", ex.what().c_str());
-        }
+        Logger::instance().warn("ConsoleImpl::rxMain: %s", ex.what().c_str());
         _state = STATE_ERROR;
     }
     catch (ConsoleException ex)

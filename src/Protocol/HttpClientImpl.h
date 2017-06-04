@@ -20,6 +20,7 @@ namespace hnrt
         virtual ~HttpClientImpl();
         virtual void init();
         virtual void fini();
+        virtual bool isActive() const { return _curl ? true : false; }
         virtual void setHttpVersion(const char*);
         virtual void setUrl(const char*);
         virtual void setMethod(Method);
@@ -28,6 +29,7 @@ namespace hnrt
         virtual void followLocation();
         virtual void setUpload(size_t);
         virtual void removeExpectHeader();
+        virtual void setTcpNoDelay(bool = true);
         virtual void setVerbose(bool = true);
         virtual bool run(HttpClientHandler&);
         virtual void cancel();
@@ -35,6 +37,10 @@ namespace hnrt
         virtual int getResult() const { return _result; }
         virtual const char* getError() const { return _errbuf; }
         virtual double getContentLength() const { return _contentLength; }
+        virtual bool connect();
+        virtual int getSocket() const;
+        virtual ssize_t recv(void*, size_t);
+        virtual ssize_t send(const void*, size_t);
 
     protected:
 

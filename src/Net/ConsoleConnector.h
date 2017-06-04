@@ -7,14 +7,17 @@
 
 #include <glibmm/thread.h>
 #include <glibmm/ustring.h>
-#include <curl/curl.h>
 #include <map>
 #include <list>
 #include "Base/ByteBuffer.h"
+#include "Base/RefObj.h"
+#include "Base/RefPtr.h"
 
 
 namespace hnrt
 {
+    class HttpClient;
+
     class ConsoleConnector
     {
     public:
@@ -42,7 +45,7 @@ namespace hnrt
         bool extendInputBuffer(size_t sizeHint = 0);
         bool extendOutputBuffer(size_t sizeHint = 0);
 
-        CURL* _curl;
+        RefPtr<HttpClient> _httpClient;
         int _sockHost;
         ByteBuffer _ibuf;
         ByteBuffer _obuf;
