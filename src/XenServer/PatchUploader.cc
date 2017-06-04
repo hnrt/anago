@@ -47,30 +47,22 @@ bool PatchUploader::run(Session& session, const char* path)
 
         XenRef<xen_task, xen_task_free_t> task;
         char name[] = { "pool_patch_upload" };
-        char desc[] = { "" };
+        char desc[] = { "x" };
         if (!xen_task_create(session, &task, name, desc))
         {
             Logger::instance().error("xen_task_create failed.");
             session.clearError();
             goto done;
         }
-        char* uuidTask = NULL;
-        xen_task_get_uuid(session, &uuidTask, task);
-        char* uuidSession = NULL;
-        xen_session_get_uuid(session, &uuidSession, session);
 
         const ConnectSpec& cs = session.getConnectSpec();
         Glib::ustring url = Glib::ustring::compose(
-            "https://%1/pool_patch_upload?task_id=%2&session_id=%3",
+            "https://%1/pool_patch_upload?session_id=%2&task_id=%3",
             cs.hostname,
-            uuidTask,
-            uuidSession);
-
-        xen_uuid_free(uuidTask);
-        xen_uuid_free(uuidSession);
+            task.toString(),
+            session->session_id);
 
         Glib::ustring pw = cs.descramblePassword();
-        printf("password=\"%s\"\n", pw.c_str());
 
         RefPtr<HttpClient> httpClient = HttpClient::create();
         httpClient->init();
