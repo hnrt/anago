@@ -8,6 +8,7 @@
 #include <curl/curl.h>
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
+#include "Protocol/HttpClient.h"
 #include "Host.h"
 #include "Session.h"
 #include "VirtualMachine.h"
@@ -38,42 +39,6 @@ VirtualMachineImporter::~VirtualMachineImporter()
 }
 
 
-static curlioerr IoControl(CURL *handle, curliocmd cmd, VirtualMachineImporter* pThis)
-{
-    TRACE(StringBuffer().format("IoControl(%d)", cmd));
-
-    (void)handle;
-
-    switch (cmd)
-    {
-    case CURLIOCMD_RESTARTREAD:
-        pThis->rewind();
-        break;
-
-    default:
-        return CURLIOE_UNKNOWNCMD;
-    }
-
-    return CURLIOE_OK;
-}
-
-
-static size_t SendData(void* ptr, size_t size, size_t nmemb, VirtualMachineImporter* pThis)
-{
-    size_t len = size * nmemb;
-    size_t ret = pThis->read(ptr, len);
-    return ret;
-}
-
-
-static size_t ReceiveData(void* ptr, size_t size, size_t nmemb, VirtualMachineImporter* pThis)
-{
-    size_t len = size * nmemb;
-    //fwrite(ptr, 1, len, stdout);
-    return len;
-}
-
-
 void VirtualMachineImporter::run(const char* path)
 {
     TRACE("VirtualMachineImporter::run", "path=\"%s\"", path);
@@ -83,9 +48,6 @@ void VirtualMachineImporter::run(const char* path)
     init(path);
 
     XenRef<xen_task, xen_task_free_t> task;
-
-    CURL* curl = NULL;
-    struct curl_slist *chunk = NULL;
 
     try
     {
@@ -110,12 +72,6 @@ void VirtualMachineImporter::run(const char* path)
 
         emit(XenObject::IMPORT_PENDING);
 
-        curl = curl_easy_init();
-        if (!curl)
-        {
-            throw StringBuffer().format("CURL initialize failed.");
-        }
-
         StringBuffer url;
         ConnectSpec cs = _session.getConnectSpec();
         url.format("http://%s/import?session_id=%s&task_id=%s",
@@ -123,50 +79,25 @@ void VirtualMachineImporter::run(const char* path)
 
         TRACEPUT("url=%s", url.str());
 
-        //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        //curl_easy_setopt(curl, CURLOPT_STDERR, stderr);
-        curl_easy_setopt(curl, CURLOPT_URL, url.str());
-        curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
-        curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, _xva->size());
-        curl_easy_setopt(curl, CURLOPT_READFUNCTION, SendData);
-        curl_easy_setopt(curl, CURLOPT_READDATA, this);
-        curl_easy_setopt(curl, CURLOPT_IOCTLFUNCTION, IoControl);
-        curl_easy_setopt(curl, CURLOPT_IOCTLDATA, this);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ReceiveData);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-
-        chunk = curl_slist_append(chunk, "Expect:");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
-
-        CURLcode result = curl_easy_perform(curl);
+        RefPtr<HttpClient> httpClient = HttpClient::create();
+        httpClient->init();
+        httpClient->setUrl(url.str());
+        httpClient->setUpload(_xva->size());
+        httpClient->removeExpectHeader();
+        bool result = httpClient->run(*this);
 
         if (_state != VirtualMachineOperationState::IMPORT_FAILURE &&
             _state != VirtualMachineOperationState::IMPORT_CANCELED)
         {
-            if (result == CURLE_OK)
+            if (result || (httpClient->getStatus() == 200 && _xva->size() == _xva->nbytes()))
             {
-            success:
                 Logger::instance().info("Imported %'zu bytes: %s", _xva->nbytes(), _xva->path());
                 _state = VirtualMachineOperationState::IMPORT_SUCCESS;
                 emit(XenObject::IMPORTED);
             }
             else
             {
-                if (result == CURLE_RECV_ERROR)
-                {
-                    long response = -1;
-                    if (curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response) == CURLE_OK)
-                    {
-                        if (response == 200 && _xva->size() == _xva->nbytes())
-                        {
-                            goto success;
-                        }
-                    }
-                }
-                throw StringBuffer().format("CURL: %d (%s)", (int)result, curl_easy_strerror(result));
+                throw StringBuffer().format("%s", httpClient->getError());
             }
         }
     }
@@ -181,16 +112,6 @@ void VirtualMachineImporter::run(const char* path)
         Logger::instance().warn("Unhandled exception caught.");
         _state = VirtualMachineOperationState::IMPORT_FAILURE;
         emit(XenObject::IMPORT_FAILED);
-    }
-
-    if (chunk)
-    {
-        curl_slist_free_all(chunk);
-    }
-
-    if (curl)
-    {
-        curl_easy_cleanup(curl);
     }
 
     if (task)
@@ -208,7 +129,7 @@ void VirtualMachineImporter::init(const char* path)
 }
 
 
-size_t VirtualMachineImporter::read(void* ptr, size_t len)
+size_t VirtualMachineImporter::read(HttpClient&, void* ptr, size_t len)
 {
     TRACE("VirtualMachineImporter::read", "ptr=%zx len=%zu", ptr, len);
 
@@ -249,7 +170,7 @@ size_t VirtualMachineImporter::read(void* ptr, size_t len)
 }
 
 
-void VirtualMachineImporter::rewind()
+void VirtualMachineImporter::rewind(HttpClient&)
 {
     _xva->rewind();
 }

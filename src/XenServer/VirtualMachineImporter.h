@@ -5,6 +5,7 @@
 #define HNRT_VIRTUALMACHINEIMPORTER_H
 
 
+#include "Protocol/HttpClientHandler.h"
 #include "VirtualMachinePorter.h"
 
 
@@ -12,6 +13,7 @@ namespace hnrt
 {
     class VirtualMachineImporter
         : public VirtualMachinePorter
+        , public HttpClientHandler
     {
     public:
 
@@ -19,8 +21,9 @@ namespace hnrt
 
         virtual ~VirtualMachineImporter();
         void run(const char*);
-        size_t read(void*, size_t);
-        void rewind();
+
+        virtual size_t read(HttpClient&, void*, size_t);
+        virtual void rewind(HttpClient&);
 
     protected:
 
