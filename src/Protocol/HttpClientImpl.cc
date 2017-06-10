@@ -142,6 +142,13 @@ void HttpClientImpl::setUpload(size_t nbytes)
 }
 
 
+void HttpClientImpl::removeHeader(const char* header)
+{
+    const char* colon = strchr(header, ':');
+    _headers = curl_slist_append(_headers, colon && !colon[1] ? header : StringBuffer().format("%s:", header).str());
+}
+
+
 void HttpClientImpl::removeExpectHeader()
 {
     _headers = curl_slist_append(_headers, "Expect:");

@@ -38,6 +38,7 @@ namespace hnrt
         virtual void setPost(const void*, size_t) = 0;
         virtual void followLocation() = 0;
         virtual void setUpload(size_t) = 0;
+        virtual void removeHeader(const char*) = 0;
         virtual void removeExpectHeader() = 0;
         virtual void setTcpNoDelay(bool = true) = 0;
         virtual void setVerbose(bool = true) = 0;
