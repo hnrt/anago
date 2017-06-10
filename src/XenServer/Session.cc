@@ -140,6 +140,17 @@ bool Session::connect()
     if (_ptr->ok)
     {
         InterlockedExchange(&_state, PRIMARY);
+        char* uuid = NULL;
+        if (xen_session_get_uuid(_ptr, &uuid, _ptr))
+        {
+            _uuid = uuid;
+            free(uuid);
+        }
+        else
+        {
+            Logger::instance().error("xen_session_get_uuid(P) failed.");
+            xen_session_clear_error(_ptr);
+        }
     }
     else
     {
@@ -169,6 +180,20 @@ bool Session::connect(const Session& other)
     {
         InterlockedExchange(&_state, SECONDARY);
         _objectStore = other._objectStore;
+#if 0
+        // always fails
+        char* uuid = NULL;
+        if (xen_session_get_uuid(_ptr, &uuid, _ptr))
+        {
+            _uuid = uuid;
+            free(uuid);
+        }
+        else
+        {
+            Logger::instance().error("xen_session_get_uuid(S) failed.");
+            xen_session_clear_error(_ptr);
+        }
+#endif
     }
     else
     {
@@ -213,6 +238,7 @@ bool Session::disconnect()
         _objectStore->clear();
         xen_session_logout(_ptr);
         _ptr = NULL;
+        _uuid.clear();
         retval = true; // only if primary is disconnected successfully.
         break;
     case SECONDARY_PENDING: // This is the case that secondary connect operation failed.
@@ -222,6 +248,7 @@ bool Session::disconnect()
     case SECONDARY:
         xen_session_local_logout(_ptr);
         _ptr = NULL;
+        _uuid.clear();
         break;
     default:
         break;
