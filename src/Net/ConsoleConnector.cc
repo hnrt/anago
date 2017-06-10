@@ -183,7 +183,7 @@ Glib::ustring ConsoleConnector::getRequest(const char* location, const char* aut
     StringBuffer request;
     Glib::ustring host, absPathAndQuery;
     parseLocation(location, host, absPathAndQuery);
-    request.format("CONNECT %s HTTP/1.1\r\n", absPathAndQuery.c_str());
+    request.format("CONNECT %s HTTP/1.0\r\n", absPathAndQuery.c_str());
     request.appendFormat("Host: %s\r\n", host.c_str());
     request.appendFormat("Authorization: Basic %s\r\n", authorization);
     request.appendFormat("Accept: */*\r\n\r\n");
