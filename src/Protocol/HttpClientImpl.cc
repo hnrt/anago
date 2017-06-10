@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
+#include "HttpClientDefaultHandler.h"
 #include "HttpClientImpl.h"
 
 
@@ -13,7 +14,7 @@ using namespace hnrt;
 
 HttpClientImpl::HttpClientImpl()
     : _curl(NULL)
-    , _chunk(NULL)
+    , _headers(NULL)
     , _handler(NULL)
     , _cancelled(false)
     , _status(0)
@@ -58,10 +59,10 @@ void HttpClientImpl::fini()
 {
     TRACE(StringBuffer().format("HttpClientImpl@%zx::fini", this));
 
-    if (_chunk)
+    if (_headers)
     {
-        curl_slist_free_all(_chunk);
-        _chunk = NULL;
+        curl_slist_free_all(_headers);
+        _headers = NULL;
     }
 
     if (_curl)
@@ -143,7 +144,7 @@ void HttpClientImpl::setUpload(size_t nbytes)
 
 void HttpClientImpl::removeExpectHeader()
 {
-    _chunk = curl_slist_append(_chunk, "Expect:");
+    _headers = curl_slist_append(_headers, "Expect:");
 }
 
 
@@ -170,9 +171,9 @@ bool HttpClientImpl::run(HttpClientHandler& handler)
     _contentLength = -1.0;
     memset(_errbuf, 0, sizeof(_errbuf));
 
-    if (_chunk)
+    if (_headers)
     {
-        curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _chunk);
+        curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _headers);
     }
 
     _result = curl_easy_perform(_curl);
@@ -308,7 +309,7 @@ size_t HttpClientImpl::sendData(void* ptr, size_t size, size_t nmemb, HttpClient
 bool HttpClientImpl::connect()
 {
     curl_easy_setopt(_curl, CURLOPT_CONNECT_ONLY, 1L);
-    HttpClientHandler handler;
+    HttpClientDefaultHandler handler;
     return run(handler);
 }
 

@@ -51,7 +51,7 @@ namespace hnrt
         static size_t sendData(void*, size_t, size_t, HttpClientImpl*);
 
         CURL* _curl;
-        struct curl_slist *_chunk;
+        struct curl_slist *_headers;
         HttpClientHandler* _handler;
         volatile bool _cancelled;
         CURLcode _result;

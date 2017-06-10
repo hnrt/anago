@@ -80,7 +80,12 @@ namespace hnrt
         RecordIterator getRecordIterator(const char*);
         RefPtr<PatchRecord> getRecord(const Glib::ustring&) const;
 
-        virtual bool write(HttpClient&, void* ptr, size_t len);
+        virtual bool onSuccess(HttpClient&, int) { return true; }
+        virtual bool onFailure(HttpClient&, const char*)  { return false; }
+        virtual bool onCancelled(HttpClient&)  { return false; }
+        virtual size_t read(HttpClient&, void*, size_t) { return 0; }
+        virtual bool write(HttpClient&, const void* ptr, size_t len);
+        virtual void rewind(HttpClient&) {}
 
     protected:
 

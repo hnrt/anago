@@ -22,7 +22,11 @@ namespace hnrt
         virtual ~VirtualMachineImporter();
         void run(const char*);
 
+        virtual bool onSuccess(HttpClient&, int) { return true; }
+        virtual bool onFailure(HttpClient&, const char*) { return false; }
+        virtual bool onCancelled(HttpClient&) { return false; }
         virtual size_t read(HttpClient&, void*, size_t);
+        virtual bool write(HttpClient&, const void*, size_t) { return false; }
         virtual void rewind(HttpClient&);
 
     protected:

@@ -29,9 +29,33 @@ public:
     {
     }
 
+    virtual bool onSuccess(HttpClient&, int)
+    {
+        return true;
+    }
+
+    virtual bool onFailure(HttpClient&, const char*)
+    {
+        return false;
+    }
+
+    virtual bool onCancelled(HttpClient&)
+    {
+        return false;
+    }
+
+    virtual size_t read(HttpClient&, void*, size_t)
+    {
+        return 0;
+    }
+
     virtual bool write(HttpClient&, const void* ptr, size_t len)
     {
         return _func(ptr, len, _handle) ? true : false;
+    }
+
+    virtual void rewind(HttpClient&)
+    {
     }
 
 private:

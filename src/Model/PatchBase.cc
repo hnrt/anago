@@ -681,7 +681,7 @@ done:
 }
 
 
-bool PatchBase::write(HttpClient&, void* ptr, size_t len)
+bool PatchBase::write(HttpClient&, const void* ptr, size_t len)
 {
     return _file->write(ptr, len);
 }
