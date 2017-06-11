@@ -35,9 +35,11 @@ namespace hnrt
 #if defined(_DEBUG) && !defined(NO_TRACE)
 #define TRACE(fun,...) Trace trace__(fun,##__VA_ARGS__)
 #define TRACEPUT(fmt,...) trace__.put(fmt,##__VA_ARGS__)
+#define TRACE1(fmt,...) hnrt::Logger::instance().trace(fmt,##__VA_ARGS__)
 #else
 #define TRACE(fun,...) (void)0
 #define TRACEPUT(fmt,...) (void)0
+#define TRACE1(fmt,...) (void)0
 #endif
 
 
