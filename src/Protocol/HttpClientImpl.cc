@@ -28,7 +28,10 @@ HttpClientImpl::~HttpClientImpl()
 {
     TRACE(StringBuffer().format("HttpClientImpl@%zx::dtor", this));
 
-    fini();
+    if (_curl)
+    {
+        fini();
+    }
 }
 
 
@@ -73,14 +76,37 @@ void HttpClientImpl::fini()
 }
 
 
+void HttpClientImpl::setMaxConnects(int count)
+{
+    TRACE1("HttpClientImpl@%zx: MAXCONNECTS=%d", this, count);
+    curl_easy_setopt(_curl, CURLOPT_MAXCONNECTS, static_cast<long>(count));
+}
+
+
+void HttpClientImpl::setFreshConnect(bool enabled)
+{
+    TRACE1("HttpClientImpl@%zx: FRESH_CONNECT=%d", this, enabled ? 1 : 0);
+    curl_easy_setopt(_curl, CURLOPT_FRESH_CONNECT, enabled ? 1L : 0L);
+}
+
+
+void HttpClientImpl::setForbidReuse(bool enabled)
+{
+    TRACE1("HttpClientImpl@%zx: FORBID_REUSE=%d", this, enabled ? 1 : 0);
+    curl_easy_setopt(_curl, CURLOPT_FORBID_REUSE, enabled ? 1L : 0L);
+}
+
+
 void HttpClientImpl::setHttpVersion(const char* version)
 {
     if (!strcmp(version, "1.1"))
     {
+        TRACE1("HttpClientImpl@%zx: HTTP_VERSION=1.1", this);
         curl_easy_setopt(_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
     }
     else if (!strcmp(version, "1.0"))
     {
+        TRACE1("HttpClientImpl@%zx: HTTP_VERSION=1.0", this);
         curl_easy_setopt(_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
     }
     else
@@ -92,6 +118,7 @@ void HttpClientImpl::setHttpVersion(const char* version)
 
 void HttpClientImpl::setUrl(const char* url)
 {
+    TRACE1("HttpClientImpl@%zx: URL=%s", this, url);
     curl_easy_setopt(_curl, CURLOPT_URL, url);
 }
 
@@ -101,11 +128,14 @@ void HttpClientImpl::setMethod(Method method)
     switch (method)
     {
     case GET:
+        TRACE1("HttpClientImpl@%zx: GET", this);
         break;
     case PUT:
+        TRACE1("HttpClientImpl@%zx: PUT", this);
         curl_easy_setopt(_curl, CURLOPT_PUT, 1L);
         break;
     case POST:
+        TRACE1("HttpClientImpl@%zx: POST", this);
         curl_easy_setopt(_curl, CURLOPT_POST, 1L);
         break;
     default:
@@ -116,6 +146,7 @@ void HttpClientImpl::setMethod(Method method)
 
 void HttpClientImpl::setCredentials(const char* username, const char* password)
 {
+    TRACE1("HttpClientImpl@%zx: username=%s password=%s", this, username, password);
     curl_easy_setopt(_curl, CURLOPT_USERNAME, username);
     curl_easy_setopt(_curl, CURLOPT_PASSWORD, password);
 }
@@ -123,6 +154,7 @@ void HttpClientImpl::setCredentials(const char* username, const char* password)
 
 void HttpClientImpl::setPost(const void* data, size_t size)
 {
+    TRACE1("HttpClientImpl@%zx: POST %'zu %s", this, size, (const char*)data);
     curl_easy_setopt(_curl, CURLOPT_POST, 1L);
     curl_easy_setopt(_curl, CURLOPT_POSTFIELDS, data);
     curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, size);
@@ -131,12 +163,14 @@ void HttpClientImpl::setPost(const void* data, size_t size)
 
 void HttpClientImpl::followLocation()
 {
+    TRACE1("HttpClientImpl@%zx: FOLLOWLOCATION=1", this);
     curl_easy_setopt(_curl, CURLOPT_FOLLOWLOCATION, 1L);
 }
 
 
 void HttpClientImpl::setUpload(size_t nbytes)
 {
+    TRACE1("HttpClientImpl@%zx: UPLOAD size=%'zu", this, nbytes);
     curl_easy_setopt(_curl, CURLOPT_UPLOAD, 1L);
     curl_easy_setopt(_curl, CURLOPT_INFILESIZE_LARGE, static_cast<curl_off_t>(nbytes));
 }
@@ -144,6 +178,7 @@ void HttpClientImpl::setUpload(size_t nbytes)
 
 void HttpClientImpl::removeHeader(const char* header)
 {
+    TRACE1("HttpClientImpl@%zx::removeHeader(%s)", this, header);
     const char* colon = strchr(header, ':');
     _headers = curl_slist_append(_headers, colon && !colon[1] ? header : StringBuffer().format("%s:", header).str());
 }
@@ -151,19 +186,21 @@ void HttpClientImpl::removeHeader(const char* header)
 
 void HttpClientImpl::removeExpectHeader()
 {
-    _headers = curl_slist_append(_headers, "Expect:");
+    removeHeader("Expect:");
 }
 
 
-void HttpClientImpl::setTcpNoDelay(bool value)
+void HttpClientImpl::setTcpNoDelay(bool enabled)
 {
-    curl_easy_setopt(_curl, CURLOPT_TCP_NODELAY, value ? 1L : 0L);
+    TRACE1("HttpClientImpl@%zx: TCP_NODELAY=%d", this, enabled ? 1 : 0);
+    curl_easy_setopt(_curl, CURLOPT_TCP_NODELAY, enabled ? 1L : 0L);
 }
 
 
-void HttpClientImpl::setVerbose(bool value)
+void HttpClientImpl::setVerbose(bool enabled)
 {
-    curl_easy_setopt(_curl, CURLOPT_VERBOSE, value ? 1L : 0L);
+    TRACE1("HttpClientImpl@%zx: VERBOSE=%d", this, enabled ? 1 : 0);
+    curl_easy_setopt(_curl, CURLOPT_VERBOSE, enabled ? 1L : 0L);
     curl_easy_setopt(_curl, CURLOPT_STDERR, stderr);
 }
 
@@ -190,6 +227,11 @@ bool HttpClientImpl::run(HttpClientHandler& handler)
     if (result2 == CURLE_OK)
     {
         _status = static_cast<int>(responseCode);
+        TRACEPUT("RESPONSE_CODE=%d", _status);
+    }
+    else
+    {
+        TRACEPUT("RESPONSE_CODE not available: %d (%s)", result2, curl_easy_strerror(result2));
     }
 
     if (_result == CURLE_OK)
@@ -248,7 +290,7 @@ curlioerr HttpClientImpl::ioControl(CURL* handle, curliocmd cmd, HttpClientImpl*
 
 size_t HttpClientImpl::receiveData(void* ptr, size_t size, size_t nmemb, HttpClientImpl* pThis)
 {
-    TRACE("HttpClientImpl::receiveData", "size=%zu nmemb=%zu", size, nmemb);
+    TRACE(StringBuffer().format("HttpClientImpl@%zx::receiveData", pThis), "size=%zu nmemb=%zu", size, nmemb);
 
     if (pThis->_contentLength < 0.0)
     {
@@ -284,16 +326,18 @@ size_t HttpClientImpl::receiveData(void* ptr, size_t size, size_t nmemb, HttpCli
 
 size_t HttpClientImpl::sendData(void* ptr, size_t size, size_t nmemb, HttpClientImpl* pThis)
 {
-    TRACE("HttpClientImpl::sendData", "size=%zu nmemb=%zu", size, nmemb);
+    TRACE(StringBuffer().format("HttpClientImpl@%zx::sendData", pThis), "size=%zu nmemb=%zu", size, nmemb);
 
     if (pThis->_cancelled)
     {
+        TRACEPUT("Cancelled by user.");
         return CURL_READFUNC_ABORT;
     }
 
     size_t len = size * nmemb;
     if (!len)
     {
+        TRACEPUT("return=0");
         return 0;
     }
 
@@ -301,6 +345,7 @@ size_t HttpClientImpl::sendData(void* ptr, size_t size, size_t nmemb, HttpClient
     TRACEPUT("read=%zu", ret);
     if (ret)
     {
+        TRACEPUT("return=%'zu", ret / size);
         return ret / size;
     }
     else
@@ -308,6 +353,7 @@ size_t HttpClientImpl::sendData(void* ptr, size_t size, size_t nmemb, HttpClient
         // In the scenario to upload data to XenServer,
         // CURL will freeze after this callback returns zero.
         // To avoid such situation, forcibly end the session by returning this:
+        TRACEPUT("Cancelled for workaround.");
         return CURL_READFUNC_ABORT;
     }
 }
