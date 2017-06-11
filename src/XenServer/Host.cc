@@ -16,6 +16,7 @@
 #include "Model/PatchRecord.h"
 #include "Host.h"
 #include "Session.h"
+#include "VirtualDiskImage.h"
 #include "XenObjectStore.h"
 #include "XenRef.h"
 
@@ -441,6 +442,7 @@ static void UpdateState(std::list<RefPtr<PatchRecord> >& patchList, XenPtr<xen_p
 
 void Host::updatePatchList()
 {
+    TRACE(StringBuffer().format("Host@%zx::updatePatchList", this));
     for (std::list<RefPtr<PatchRecord> >::iterator i = _patchList.begin(); i != _patchList.end(); i++)
     {
         switch ((*i)->state)
@@ -456,11 +458,73 @@ void Host::updatePatchList()
             break;
         }
     }
+    XenPtr<xen_pool_update_set> poolUpdateSet;
+    if (xen_pool_update_get_all(_session, poolUpdateSet.address()))
+    {
+        if (poolUpdateSet)
+        {
+            TRACEPUT("pool-update: size=%zu", poolUpdateSet->size);
+            for (size_t i = 0; i < poolUpdateSet->size; i++)
+            {
+                if (!poolUpdateSet->contents[i])
+                {
+                    continue;
+                }
+                XenPtr<xen_pool_update_record> poolUpdateRecord;
+                if (!xen_pool_update_get_record(_session, poolUpdateRecord.address(), poolUpdateSet->contents[i]))
+                {
+                    TRACEPUT("pool-update: Unavailable: %s", (char*)poolUpdateSet->contents[i]);
+                    _session.clearError();
+                    continue;
+                }
+                TRACEPUT("pool-update: uuid=%s", poolUpdateRecord->uuid);
+                for (std::list<RefPtr<PatchRecord> >::iterator j = _patchList.begin(); j != _patchList.end(); j++)
+                {
+                    if ((*j)->uuid == poolUpdateRecord->uuid)
+                    {
+                        if (poolUpdateRecord->hosts)
+                        {
+                            TRACEPUT("hosts: size=%zu", poolUpdateRecord->hosts->size);
+                            for (size_t k = 0; k < poolUpdateRecord->hosts->size; k++)
+                            {
+                                if (poolUpdateRecord->hosts->contents[k])
+                                {
+                                    if (poolUpdateRecord->hosts->contents[k]->is_record)
+                                    {
+                                        TRACEPUT("xen_host_record_opt: is_record=true not supported.");
+                                    }
+                                    else if (poolUpdateRecord->hosts->contents[k]->u.handle)
+                                    {
+                                        TRACEPUT("hosts: %s", (char*)poolUpdateRecord->hosts->contents[k]->u.handle);
+                                        if (_refid == (char*)poolUpdateRecord->hosts->contents[k]->u.handle)
+                                        {
+                                            TRACEPUT("Matched.");
+                                            (*j)->state = PatchState::APPLIED;
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        TRACEPUT("xen_host_record_opt: handle=null");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        _session.clearError();
+    }
     XenPtr<xen_pool_patch_set> poolPatchSet;
     if (xen_pool_patch_get_all(_session, poolPatchSet.address()))
     {
         if (poolPatchSet)
         {
+            TRACEPUT("pool-patch: size=%zu", poolPatchSet->size);
             for (size_t i = 0; i < poolPatchSet->size; i++)
             {
                 if (!poolPatchSet->contents[i])
@@ -470,9 +534,11 @@ void Host::updatePatchList()
                 XenPtr<xen_pool_patch_record> poolPatchRecord;
                 if (!xen_pool_patch_get_record(_session, poolPatchRecord.address(), poolPatchSet->contents[i]))
                 {
+                    TRACEPUT("pool-patch: Unavailable: %s", (char*)poolPatchSet->contents[i]);
                     _session.clearError();
                     continue;
                 }
+                TRACEPUT("pool-patch: uuid=%s size=%zu", poolPatchRecord->uuid, poolPatchRecord->size);
                 for (std::list<RefPtr<PatchRecord> >::iterator j = _patchList.begin(); j != _patchList.end(); j++)
                 {
                     if ((*j)->uuid == poolPatchRecord->uuid)
@@ -519,6 +585,7 @@ void Host::updatePatchList()
                     _session.clearError();
                     continue;
                 }
+                TRACEPUT("host-patch: uuid=%s size=%zu", poolPatchRecord->uuid, poolPatchRecord->size);
                 for (std::list<RefPtr<PatchRecord> >::iterator j = _patchList.begin(); j != _patchList.end(); j++)
                 {
                     if ((*j)->uuid == poolPatchRecord->uuid)
@@ -566,17 +633,39 @@ RefPtr<PatchRecord> Host::getPatchRecord(const Glib::ustring& uuid) const
 
 bool Host::applyPatch(const Glib::ustring& uuid)
 {
-    XenRef<xen_pool_patch, xen_pool_patch_free_t> patchRefid;
-    if (!xen_pool_patch_get_by_uuid(_session, &patchRefid, const_cast<char*>(uuid.c_str())))
+    XenRef<xen_pool_update, xen_pool_update_free_t> updateHandle;
+    if (xen_pool_update_get_by_uuid(_session, &updateHandle, const_cast<char*>(uuid.c_str())))
     {
-        emit(ERROR);
-        return false;
+        TRACE1("Host@%zx::applyPatch: update-handle=%s", this, updateHandle.toString().c_str());
+        if (xen_pool_update_apply(_session, updateHandle, _handle))
+        {
+            return true;
+        }
+        else
+        {
+            emit(ERROR);
+            return false;
+        }
     }
-    char* result = NULL;
-    if (xen_pool_patch_apply(_session, &result, patchRefid, _handle))
+    else
     {
-        free(result);
-        return true;
+        _session.clearError();
+    }
+    XenRef<xen_pool_patch, xen_pool_patch_free_t> patchHandle;
+    if (xen_pool_patch_get_by_uuid(_session, &patchHandle, const_cast<char*>(uuid.c_str())))
+    {
+        TRACE1("Host@%zx::applyPatch: update-handle=%s", this, patchHandle.toString().c_str());
+        char* result = NULL;
+        if (xen_pool_patch_apply(_session, &result, patchHandle, _handle))
+        {
+            free(result);
+            return true;
+        }
+        else
+        {
+            emit(ERROR);
+            return false;
+        }
     }
     else
     {
@@ -588,15 +677,35 @@ bool Host::applyPatch(const Glib::ustring& uuid)
 
 bool Host::cleanPatch(const Glib::ustring& uuid)
 {
-    XenRef<xen_pool_patch, xen_pool_patch_free_t> patchRefid;
-    if (!xen_pool_patch_get_by_uuid(_session, &patchRefid, const_cast<char*>(uuid.c_str())))
+    XenRef<xen_pool_update, xen_pool_update_free_t> updateHandle;
+    if (xen_pool_update_get_by_uuid(_session, &updateHandle, const_cast<char*>(uuid.c_str())))
     {
-        emit(ERROR);
-        return false;
+        if (xen_pool_update_pool_clean(_session, updateHandle))
+        {
+            return true;
+        }
+        else
+        {
+            emit(ERROR);
+            return false;
+        }
     }
-    if (xen_pool_patch_clean(_session, patchRefid))
+    else
     {
-        return true;
+        _session.clearError();
+    }
+    XenRef<xen_pool_patch, xen_pool_patch_free_t> patchHandle;
+    if (xen_pool_patch_get_by_uuid(_session, &patchHandle, const_cast<char*>(uuid.c_str())))
+    {
+        if (xen_pool_patch_pool_clean(_session, patchHandle))
+        {
+            return true;
+        }
+        else
+        {
+            emit(ERROR);
+            return false;
+        }
     }
     else
     {
