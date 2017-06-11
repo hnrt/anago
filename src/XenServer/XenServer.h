@@ -71,6 +71,8 @@ namespace hnrt
         XenPtrFree(xen_pool_set)
         XenPtrFree(xen_pool_patch_record)
         XenPtrFree(xen_pool_patch_set)
+        XenPtrFree(xen_pool_update_record)
+        XenPtrFree(xen_pool_update_set)
         XenPtrFree(xen_sr_record)
         XenPtrFree(xen_sr_set)
         XenPtrFree(xen_string_set)

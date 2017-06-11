@@ -78,6 +78,7 @@ namespace hnrt
     XenRefFree(xen_network);
     XenRefFree(xen_pool);
     XenRefFree(xen_pool_patch);
+    XenRefFree(xen_pool_update);
     XenRefFree(xen_pbd);
     XenRefFree(xen_pif);
     XenRefFree(xen_secret);
