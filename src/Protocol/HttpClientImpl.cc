@@ -1,9 +1,11 @@
 // Copyright (C) 2017 Hideaki Narita
 
 
+#include <ctype.h>
+#include <errno.h>
 #include <string.h>
 #include <stdexcept>
-#include "Base/StringBuffer.h"
+#include <sys/select.h>
 #include "Logger/Trace.h"
 #include "HttpClientDefaultHandler.h"
 #include "HttpClientImpl.h"
@@ -16,7 +18,9 @@ HttpClientImpl::HttpClientImpl()
     : _curl(NULL)
     , _headers(NULL)
     , _handler(NULL)
+    , _timeout(0)
     , _cancelled(false)
+    , _socket(-1)
     , _status(0)
     , _contentLength(-1.0)
 {
@@ -62,6 +66,9 @@ void HttpClientImpl::fini()
 {
     TRACE(StringBuffer().format("HttpClientImpl@%zx::fini", this));
 
+    _responseHeaderMap.clear();
+    _responseBody.setLength(0);
+
     if (_headers)
     {
         curl_slist_free_all(_headers);
@@ -72,7 +79,15 @@ void HttpClientImpl::fini()
     {
         curl_easy_cleanup(_curl);
         _curl = NULL;
+        _socket = -1;
     }
+}
+
+
+void HttpClientImpl::setTimeout(long timeout)
+{
+    TRACE1("HttpClientImpl@%zx: TIMEOUT=%ld", this, timeout);
+    _timeout = (timeout > 0) ? timeout : 0;
 }
 
 
@@ -210,7 +225,9 @@ bool HttpClientImpl::run(HttpClientHandler& handler)
     TRACE(StringBuffer().format("HttpClientImpl@%zx::run", this));
 
     _handler = &handler;
+    _expiry.now().addMilliseconds(_timeout);
     _cancelled = false;
+    _socket = -1;
     _status = 0;
     _contentLength = -1.0;
     memset(_errbuf, 0, sizeof(_errbuf));
@@ -268,6 +285,34 @@ void HttpClientImpl::cancel()
 }
 
 
+long HttpClientImpl::remainingTime() const
+{
+    if (_timeout > 0)
+    {
+        Time now;
+        return _expiry.minus(now) / 1000L;
+    }
+    else
+    {
+        return 365L * 24L * 60L * 60L * 1000L;
+    }
+}
+
+
+bool HttpClientImpl::timedOut() const
+{
+    if (_timeout > 0)
+    {
+        Time now;
+        return _expiry <= now;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
 curlioerr HttpClientImpl::ioControl(CURL* handle, curliocmd cmd, HttpClientImpl* pThis)
 {
     TRACE(StringBuffer().format("HttpClientImpl::ioControl@%zx", pThis), "cmd=%d", (int)cmd);
@@ -291,6 +336,12 @@ curlioerr HttpClientImpl::ioControl(CURL* handle, curliocmd cmd, HttpClientImpl*
 size_t HttpClientImpl::receiveData(void* ptr, size_t size, size_t nmemb, HttpClientImpl* pThis)
 {
     TRACE(StringBuffer().format("HttpClientImpl@%zx::receiveData", pThis), "size=%zu nmemb=%zu", size, nmemb);
+
+    if (pThis->timedOut())
+    {
+        TRACEPUT("Timed out.");
+        return 0;
+    }
 
     if (pThis->_contentLength < 0.0)
     {
@@ -327,6 +378,12 @@ size_t HttpClientImpl::receiveData(void* ptr, size_t size, size_t nmemb, HttpCli
 size_t HttpClientImpl::sendData(void* ptr, size_t size, size_t nmemb, HttpClientImpl* pThis)
 {
     TRACE(StringBuffer().format("HttpClientImpl@%zx::sendData", pThis), "size=%zu nmemb=%zu", size, nmemb);
+
+    if (pThis->timedOut())
+    {
+        TRACEPUT("Timed out.");
+        return CURL_READFUNC_ABORT;
+    }
 
     if (pThis->_cancelled)
     {
@@ -367,22 +424,84 @@ bool HttpClientImpl::connect()
 }
 
 
-int HttpClientImpl::getSocket() const
+int HttpClientImpl::getSocket()
 {
-    long lastSocket = -1;
-    const_cast<HttpClientImpl*>(this)->_result = curl_easy_getinfo(_curl, CURLINFO_LASTSOCKET, &lastSocket);
-    if (_result != CURLE_OK)
+    if (_socket < 0)
     {
+        long lastSocket = -1;
+        const_cast<HttpClientImpl*>(this)->_result = curl_easy_getinfo(_curl, CURLINFO_LASTSOCKET, &lastSocket);
+        if (_result != CURLE_OK)
+        {
+            snprintf(_errbuf, sizeof(_errbuf), "%s", curl_easy_strerror(_result));
+            return -1;
+        }
+        else if (0 < lastSocket && lastSocket <= INT_MAX)
+        {
+            _socket = static_cast<int>(lastSocket);
+        }
+        else
+        {
+            snprintf(_errbuf, sizeof(_errbuf), "Bad socket(%ld)", lastSocket);
+            return -1;
+        }
+    }
+    return _socket;
+}
+
+
+int HttpClientImpl::canRecv(long timeoutInMilliseconds)
+{
+    TRACE(StringBuffer().format("HttpClientImpl@%zx::canRecv", this), "timeout=%ld", timeoutInMilliseconds);
+    if (_socket < 0 && getSocket() < 0)
+    {
+        TRACEPUT("return=-1 (Socket unavailable.)");
         return -1;
     }
-    else if (0 < lastSocket && lastSocket <= INT_MAX)
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(_socket, &fds);
+    struct timeval timeout;
+    timeout.tv_sec = timeoutInMilliseconds / 1000L;
+    timeout.tv_usec = (timeoutInMilliseconds % 1000L) * 1000L;
+    int rc = select(_socket + 1, &fds, NULL, NULL, &timeout);
+    if (rc < 0)
     {
-        return static_cast<int>(lastSocket);
+        snprintf(_errbuf, sizeof(_errbuf), "%s", strerror(errno));
+        TRACEPUT("return=%d (%s)", rc, _errbuf);
     }
     else
     {
+        TRACEPUT("return=%d", rc);
+    }
+    return rc;
+}
+
+
+int HttpClientImpl::canSend(long timeoutInMilliseconds)
+{
+    TRACE(StringBuffer().format("HttpClientImpl@%zx::canSend", this), "timeout=%ld", timeoutInMilliseconds);
+    if (_socket < 0 && getSocket() < 0)
+    {
+        TRACEPUT("return=-1 (Socket unavailable.)");
         return -1;
     }
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(_socket, &fds);
+    struct timeval timeout;
+    timeout.tv_sec = timeoutInMilliseconds / 1000L;
+    timeout.tv_usec = (timeoutInMilliseconds % 1000L) * 1000L;
+    int rc = select(_socket + 1, NULL, &fds, NULL, &timeout);
+    if (rc < 0)
+    {
+        snprintf(_errbuf, sizeof(_errbuf), "%s", strerror(errno));
+        TRACEPUT("return=%d (%s)", rc, _errbuf);
+    }
+    else
+    {
+        TRACEPUT("return=%d", rc);
+    }
+    return rc;
 }
 
 
@@ -423,4 +542,354 @@ ssize_t HttpClientImpl::send(const void* ptr, size_t len)
         snprintf(_errbuf, sizeof(_errbuf), "%s", curl_easy_strerror(_result));
         return -1;
     }
+}
+
+
+#define SP ' '
+#define HT '\t'
+#define CR '\r'
+#define LF '\n'
+#define DEL 127
+
+
+inline static bool isControl(int c)
+{
+    return (0 <= c && c <= 31) || c == DEL;
+}
+
+
+inline static bool isSeparator(int c)
+{
+    switch (c)
+    {
+    case '(':
+    case ')':
+    case '<':
+    case '>':
+    case '@':
+    case ',':
+    case ';':
+    case ':':
+    case '\\':
+    case '\"':
+    case '/':
+    case '[':
+    case ']':
+    case '?':
+    case '=':
+    case '{':
+    case '}':
+    case SP:
+    case HT:
+        return true;
+    default:
+        return false;
+    }
+}
+
+
+inline static bool isWhitespace(int c)
+{
+    return c == SP || c == HT;
+}
+
+
+inline static bool isTokenChar(int c)
+{
+    return !isControl(c) && !isSeparator(c);
+}
+
+
+static bool ParseResponse(int c, int& state, HttpClientImpl::Response& response)
+{
+    TRACE1(c >= SP ? "ParseRespose(c=%c state=%d)" : "ParseRespose(c=0x%02x state=%d)", c, state);
+    switch (state)
+    {
+    case 0:
+        response.version.major = 0;
+        response.version.minor = 0;
+        response.statusCode = 0;
+        response.reason.setLength(0);
+        response.headerMap.clear();
+        response.body.setLength(0);
+        if (c == 'H')
+            state = 1;
+        else
+            return false;
+        break;
+    case 1:
+        if (c == 'T')
+            state = 2;
+        else
+            return false;
+        break;
+    case 2:
+        if (c == 'T')
+            state = 3;
+        else
+            return false;
+        break;
+    case 3:
+        if (c == 'P')
+            state = 4;
+        else
+            return false;
+        break;
+    case 4:
+        if (c == '/')
+            state = 5;
+        else
+            return false;
+        break;
+    case 5:
+        response.val.setLength(0);
+        if (isdigit(c))
+        {
+            response.val.append((char)c);
+            state = 6;
+        }
+        else
+            return false;
+        break;
+    case 6:
+        if (isdigit(c))
+            response.val.append((char)c);
+        else if (c == '.')
+        {
+            response.version.major = (int)strtoul(response.val.str(), NULL, 10);
+            state = 7;
+        }
+        else
+            return false;
+        break;
+    case 7:
+        response.val.setLength(0);
+        if (isdigit(c))
+        {
+            response.val.append((char)c);
+            state = 8;
+        }
+        else
+            return false;
+        break;
+    case 8:
+        if (isdigit(c))
+            response.val.append((char)c);
+        else if (c == SP)
+        {
+            response.version.minor = (int)strtoul(response.val.str(), NULL, 10);
+            state = 10;
+        }
+        else
+            return false;
+        break;
+    case 10:
+        response.val.setLength(0);
+        if (isdigit(c))
+        {
+            response.val.append((char)c);
+            state = 11;
+        }
+        else
+            return false;
+        break;
+    case 11:
+        if (isdigit(c))
+        {
+            response.val.append((char)c);
+            state = 12;
+        }
+        else
+            return false;
+        break;
+    case 12:
+        if (isdigit(c))
+        {
+            response.val.append((char)c);
+            state = 13;
+        }
+        else
+            return false;
+        break;
+    case 13:
+        if (c == SP)
+        {
+            response.statusCode = (int)strtoul(response.val.str(), NULL, 10);
+            state = 20;
+        }
+        else
+            return false;
+        break;
+    case 20:
+        if (c == CR)
+            state = 21;
+        else if (isWhitespace(c) || !isControl(c))
+            response.reason.append((char)c);
+        else
+            return false;
+        break;
+    case 21:
+        if (c == LF)
+            state = 30;
+        else
+            return false;
+        break;
+    case 30:
+        if (c == CR)
+        {
+            state = 39;
+            break;
+        }
+        response.key.setLength(0);
+        if (isTokenChar(c))
+        {
+            response.key.append((char)c);
+            state = 31;
+        }
+        else
+            return false;
+        break;
+    case 31:
+        if (c == ':')
+            state = 32;
+        else if (isTokenChar(c))
+            response.key.append((char)c);
+        else
+            return false;
+        break;
+    case 32:
+        response.val.setLength(0);
+        if (c == CR)
+            state = 34;
+        else if (isWhitespace(c))
+            /* skip leading whitespaces */ ;
+        else if (!isControl(c))
+        {
+            response.val.append((char)c);
+            state = 33;
+        }
+        else
+            return false;
+        break;
+    case 33:
+        if (c == CR)
+            state = 34;
+        else if (isWhitespace(c) || !isControl(c))
+            response.val.append((char)c);
+        else
+            return false;
+        break;
+    case 34:
+        if (c == LF)
+        {
+            HttpClient::Header header;
+            header.key = response.key.str();
+            header.value = response.val.str();
+            Glib::ustring key = header.key.lowercase();
+            HttpClient::HeaderMap::iterator iter = response.headerMap.find(key);
+            if (iter != response.headerMap.end())
+            {
+                response.headerMap.erase(iter);
+            }
+            response.headerMap.insert(HttpClient::HeaderMapEntry(key, header));
+            state = 30;
+        }
+        else
+            return false;
+        break;
+    case 39:
+        if (c == LF)
+        {
+            state = 40;
+        }
+        else
+            return false;
+        break;
+    case 40:
+        response.body.append((char)c);
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
+
+bool HttpClientImpl::recvResponse()
+{
+    TRACE(StringBuffer().format("HttpClientImpl@%zx::recvResponse", this).str());
+    int state = 0;
+    HttpClientImpl::Response response(*this);
+    while (state < 40)
+    {
+        long timeout = remainingTime();
+        if (timeout <= 0)
+        {
+            Logger::instance().warn("HttpClientImpl::recvResponse: Timed out.");
+            break;
+        }
+        int rc = canRecv(timeout);
+        if (rc < 0)
+        {
+            Logger::instance().warn("%s", _errbuf);
+            break;
+        }
+        else if (rc == 0)
+        {
+            Logger::instance().warn("HttpClientImpl::recvResponse: Timed out.");
+            break;
+        }
+        char tmp[256];
+        ssize_t n = this->recv(tmp, sizeof(tmp));
+        if (n == 0)
+        {
+            Logger::instance().warn("HttpClientImpl::recvResponse: Busy.");
+            continue;
+        }
+        else if (n > 0)
+        {
+            char* s1 = tmp;
+            char* s2 = s1 + n;
+            while (s1 < s2)
+            {
+                if (!ParseResponse(*s1 & 0xff, state, response))
+                {
+                    goto done;
+                }
+                s1++;
+            }
+        }
+        else
+        {
+            Logger::instance().error("CLI: Recv failed.");
+            return false;
+        }
+    }
+done:
+    TRACEPUT("state=%d", state);
+    return state == 40;
+}
+
+
+const HttpClient::HeaderMap& HttpClientImpl::getResponseHeaderMap() const
+{
+    return _responseHeaderMap;
+}
+
+
+int HttpClientImpl::getResponseBodyLength() const
+{
+    return _responseBody.len();
+}
+
+
+int HttpClientImpl::getResponseBody(void* ptr, size_t len) const
+{
+    size_t lenReturn = _responseBody.len();
+    if (lenReturn > len)
+    {
+        lenReturn = len;
+    }
+    memcpy(ptr, _responseBody.str(), lenReturn);
+    return static_cast<int>(lenReturn);
 }

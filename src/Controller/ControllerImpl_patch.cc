@@ -1,10 +1,12 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include "Base/StringBuffer.h"
 #include "File/File.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "Model/PatchRecord.h"
+#include "Protocol/ThinClientInterface.h"
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "XenServer/PatchDownloader.h"
@@ -183,7 +185,17 @@ void ControllerImpl::applyPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecor
     host->emit(XenObject::RECORD_UPDATED);
     XenObject::Busy busy(*host);
     Session::Lock lock(host->getSession());
-    bool result = host->applyPatch(patchRecord->uuid);
+    const ConnectSpec& cs = host->getSession().getConnectSpec();
+    Glib::ustring pw = cs.descramblePassword();
+    RefPtr<ThinClientInterface> cli = ThinClientInterface::create();
+    cli->init();
+    cli->setHostname(cs.hostname.c_str());
+    cli->setUsername(cs.username.c_str());
+    cli->setPassword(pw.c_str());
+    bool result = cli->run("update-pool-apply",
+                           StringBuffer().format("uuid=%s", patchRecord->uuid.c_str()).str(),
+                           NULL);
+    pw.clear();
     patchRecord->state = result ? PatchState::APPLIED : PatchState::APPLY_FAILURE;
     host->emit(XenObject::RECORD_UPDATED);
 }
