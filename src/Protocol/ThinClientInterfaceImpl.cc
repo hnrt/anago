@@ -72,6 +72,24 @@ void ThinClientInterfaceImpl::setTimeout(long value)
 }
 
 
+void ThinClientInterfaceImpl::setPrintCallback(const sigc::slot<void, ThinClientInterface&>& printCb)
+{
+    _printCb = printCb;
+}
+
+
+void ThinClientInterfaceImpl::setPrintErrorCallback(const sigc::slot<void, ThinClientInterface&>& printErrorCb)
+{
+    _printErrorCb = printErrorCb;
+}
+
+
+void ThinClientInterfaceImpl::setExitCallback(const sigc::slot<void, ThinClientInterface&>& exitCb)
+{
+    _exitCb = exitCb;
+}
+
+
 static bool Send(HttpClient& httpClient, const void* ptr, size_t len)
 {
     const char* s1 = (const char*)ptr;
@@ -84,26 +102,29 @@ static bool Send(HttpClient& httpClient, const void* ptr, size_t len)
             Logger::instance().warn("CLI: Timed out.");
             return false;
         }
-        int rc = httpClient.canSend(timeout);
-        if (rc < 0)
-        {
-            Logger::instance().warn("CLI: %s", httpClient.getError());
-            return false;
-        }
-        else if (rc == 0)
-        {
-            Logger::instance().warn("CLI: Timed out.");
-            return false;
-        }
         ssize_t n = httpClient.send(s1, s2 - s1);
         if (n > 0)
         {
+            Logger::instance().trace("httpClient.send: %'zu bytes", n);
             s1 += n;
         }
         else if (n < 0)
         {
             Logger::instance().error("CLI: Send failed.");
             return false;
+        }
+        else
+        {
+            if (timeout > 100)
+            {
+                timeout = 100;
+            }
+            int rc = httpClient.canSend(timeout);
+            if (rc < 0)
+            {
+                Logger::instance().warn("CLI: %s", httpClient.getError());
+                return false;
+            }
         }
     }
     return true;
@@ -175,26 +196,29 @@ static bool Recv(HttpClient& httpClient, void* ptr, size_t len)
             Logger::instance().warn("CLI: Timed out.");
             return false;
         }
-        int rc = httpClient.canRecv(timeout);
-        if (rc < 0)
-        {
-            Logger::instance().warn("CLI: %s", httpClient.getError());
-            return false;
-        }
-        else if (rc == 0)
-        {
-            Logger::instance().warn("CLI: Timed out.");
-            return false;
-        }
         ssize_t n = httpClient.recv(r1, r2 - r1);
         if (n > 0)
         {
+            Logger::instance().trace("httpClient.recv: %'zu bytes", n);
             r1 += n;
         }
         else if (n < 0)
         {
             Logger::instance().error("CLI: Recv failed.");
             return false;
+        }
+        else
+        {
+            if (timeout > 100)
+            {
+                timeout = 100;
+            }
+            int rc = httpClient.canRecv(timeout);
+            if (rc < 0)
+            {
+                Logger::instance().warn("CLI: %s", httpClient.getError());
+                return false;
+            }
         }
     }
     return true;
@@ -728,14 +752,28 @@ bool ThinClientInterfaceImpl::run(const char* arg, ...)
             switch (command2)
             {
             case PRINT:
-                if (!Print(*httpClient, _output, trace))
+                if (Print(*httpClient, _output, trace))
+                {
+                    if (!_printCb.empty())
+                    {
+                        _printCb(*this);
+                    }
+                }
+                else
                 {
                     goto done;
                 }
                 break;
 
             case PRINT_STDERR:
-                if (!PrintStderr(*httpClient, _errorOutput, trace))
+                if (PrintStderr(*httpClient, _errorOutput, trace))
+                {
+                    if (!_printErrorCb.empty())
+                    {
+                        _printErrorCb(*this);
+                    }
+                }
+                else
                 {
                     goto done;
                 }
@@ -749,12 +787,19 @@ bool ThinClientInterfaceImpl::run(const char* arg, ...)
                 break;
 
             case EXIT:
-                if (!Recv(*httpClient, _exitCode))
+                if (Recv(*httpClient, _exitCode))
+                {
+                    trace.put("EXIT: %d", _exitCode);
+                    next = false;
+                    if (!_exitCb.empty())
+                    {
+                        _exitCb(*this);
+                    }
+                }
+                else
                 {
                     goto done;
                 }
-                trace.put("EXIT: %d", _exitCode);
-                next = false;
                 break;
 
             case ERROR:

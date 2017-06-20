@@ -6,6 +6,7 @@
 
 
 #include <stddef.h>
+#include <sigc++/sigc++.h>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
 
@@ -26,6 +27,9 @@ namespace hnrt
         virtual void setUsername(const char*) = 0;
         virtual void setPassword(const char*) = 0;
         virtual void setTimeout(long) = 0;
+        virtual void setPrintCallback(const sigc::slot<void, ThinClientInterface&>&) = 0;
+        virtual void setPrintErrorCallback(const sigc::slot<void, ThinClientInterface&>&) = 0;
+        virtual void setExitCallback(const sigc::slot<void, ThinClientInterface&>&) = 0;
         virtual bool run(const char*, ...) = 0;
         virtual void cancel() = 0;
         virtual const Glib::ustring& getOutput() const = 0;

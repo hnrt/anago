@@ -58,6 +58,9 @@ namespace hnrt
         virtual void setUsername(const char*);
         virtual void setPassword(const char*);
         virtual void setTimeout(long);
+        virtual void setPrintCallback(const sigc::slot<void, ThinClientInterface&>&);
+        virtual void setPrintErrorCallback(const sigc::slot<void, ThinClientInterface&>&);
+        virtual void setExitCallback(const sigc::slot<void, ThinClientInterface&>&);
         virtual bool run(const char*, ...);
         virtual void cancel() { _cancel = true; }
         virtual const Glib::ustring& getOutput() const { return _output; }
@@ -77,6 +80,9 @@ namespace hnrt
         Glib::ustring _output;
         Glib::ustring _errorOutput;
         int _exitCode;
+        sigc::slot<void, ThinClientInterface&> _printCb;
+        sigc::slot<void, ThinClientInterface&> _printErrorCb;
+        sigc::slot<void, ThinClientInterface&> _exitCb;
     };
 }
 

@@ -828,25 +828,9 @@ bool HttpClientImpl::recvResponse()
             Logger::instance().warn("HttpClientImpl::recvResponse: Timed out.");
             break;
         }
-        int rc = canRecv(timeout);
-        if (rc < 0)
-        {
-            Logger::instance().warn("%s", _errbuf);
-            break;
-        }
-        else if (rc == 0)
-        {
-            Logger::instance().warn("HttpClientImpl::recvResponse: Timed out.");
-            break;
-        }
         char tmp[256];
         ssize_t n = this->recv(tmp, sizeof(tmp));
-        if (n == 0)
-        {
-            Logger::instance().warn("HttpClientImpl::recvResponse: Busy.");
-            continue;
-        }
-        else if (n > 0)
+        if (n > 0)
         {
             char* s1 = tmp;
             char* s2 = s1 + n;
@@ -859,10 +843,23 @@ bool HttpClientImpl::recvResponse()
                 s1++;
             }
         }
-        else
+        else if (n < 0)
         {
             Logger::instance().error("CLI: Recv failed.");
             return false;
+        }
+        else
+        {
+            if (timeout > 100)
+            {
+                timeout = 100;
+            }
+            int rc = canRecv(timeout);
+            if (rc < 0)
+            {
+                Logger::instance().warn("%s", _errbuf);
+                break;
+            }
         }
     }
 done:

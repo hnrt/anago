@@ -1,14 +1,17 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
+#include <libintl.h>
 #include "Base/StringBuffer.h"
 #include "File/File.h"
 #include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "Model/PatchRecord.h"
 #include "Protocol/ThinClientInterface.h"
+#include "View/View.h"
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
+#include "XenServer/Patch.h"
 #include "XenServer/PatchDownloader.h"
 #include "XenServer/PatchUploader.h"
 #include "ControllerImpl.h"
@@ -136,8 +139,6 @@ void ControllerImpl::uploadPatch(const Glib::ustring& uuid)
 void ControllerImpl::uploadPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecord> patchRecord)
 {
     TRACE("ControllerImpl::uploadPatchInBackground");
-    patchRecord->state = PatchState::UPLOAD_INPROGRESS;
-    host->emit(XenObject::RECORD_UPDATED);
     RefPtr<File> file = patchRecord->getFile();
     if (!file)
     {
@@ -147,15 +148,10 @@ void ControllerImpl::uploadPatchInBackground(RefPtr<Host> host, RefPtr<PatchReco
         return;
     }
     TRACEPUT("path=\"%s\"", file->path());
-    RefPtr<PatchUploader> uploader = PatchUploader::create();
-    if (uploader->run(host->getSession(), file->path()))
-    {
-        patchRecord->state = PatchState::UPLOADED;
-    }
-    else
-    {
-        patchRecord->state = PatchState::UPLOAD_FAILURE;
-    }
+    RefPtr<Patch> patch = Patch::create(host->getSession(), patchRecord);
+    patch->init();
+    patch->upload(file->path());
+    patch->fini();
     host->updatePatchList();
     host->emit(XenObject::RECORD_UPDATED);
 }
@@ -181,22 +177,13 @@ void ControllerImpl::applyPatch(const Glib::ustring& uuid)
 void ControllerImpl::applyPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecord> patchRecord)
 {
     TRACE("ControllerImpl::applyPatchInBackground");
-    patchRecord->state = PatchState::APPLY_INPROGRESS;
-    host->emit(XenObject::RECORD_UPDATED);
     XenObject::Busy busy(*host);
     Session::Lock lock(host->getSession());
-    const ConnectSpec& cs = host->getSession().getConnectSpec();
-    Glib::ustring pw = cs.descramblePassword();
-    RefPtr<ThinClientInterface> cli = ThinClientInterface::create();
-    cli->init();
-    cli->setHostname(cs.hostname.c_str());
-    cli->setUsername(cs.username.c_str());
-    cli->setPassword(pw.c_str());
-    bool result = cli->run("update-pool-apply",
-                           StringBuffer().format("uuid=%s", patchRecord->uuid.c_str()).str(),
-                           NULL);
-    pw.clear();
-    patchRecord->state = result ? PatchState::APPLIED : PatchState::APPLY_FAILURE;
+    RefPtr<Patch> patch = Patch::create(host->getSession(), patchRecord);
+    patch->init();
+    patch->apply();
+    patch->fini();
+    host->updatePatchList();
     host->emit(XenObject::RECORD_UPDATED);
 }
 
