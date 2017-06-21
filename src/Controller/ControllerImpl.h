@@ -17,6 +17,7 @@
 namespace hnrt
 {
     class Host;
+    class Patch;
     class PatchRecord;
     class PerformanceMonitor;
     class ThreadManager;
@@ -127,8 +128,8 @@ namespace hnrt
         void addCifsInBackground(RefPtr<Host>, CifsSpec);
         void deleteCifsInBackground(RefPtr<StorageRepository>);
         void downloadPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
-        void uploadPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
-        void applyPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
+        void uploadPatchInBackground(RefPtr<Patch>);
+        void applyPatchInBackground(RefPtr<Patch>);
         void cleanPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
 
         ThreadManager& _tm;

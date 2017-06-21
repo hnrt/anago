@@ -12,6 +12,7 @@
 
 namespace hnrt
 {
+    class Patch;
     class Session;
     class VirtualMachine;
     class VirtualMachineSpec;
@@ -61,6 +62,7 @@ namespace hnrt
         virtual bool getSize(int64_t&) = 0;
         virtual bool getNicToAttach(const VirtualMachine&, Glib::ustring&, Glib::ustring&) = 0;
         virtual bool getCifsToCreate(CifsSpec&) = 0;
+        virtual void showStatus(Patch&) = 0;
     };
 }
 

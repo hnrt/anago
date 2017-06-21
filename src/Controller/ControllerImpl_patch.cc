@@ -13,7 +13,6 @@
 #include "XenServer/Session.h"
 #include "XenServer/Patch.h"
 #include "XenServer/PatchDownloader.h"
-#include "XenServer/PatchUploader.h"
 #include "ControllerImpl.h"
 
 
@@ -132,28 +131,18 @@ void ControllerImpl::uploadPatch(const Glib::ustring& uuid)
     {
         return;
     }
-    schedule(sigc::bind<RefPtr<Host>, RefPtr<PatchRecord> >(sigc::mem_fun(*this, &ControllerImpl::uploadPatchInBackground), host, record));
+    RefPtr<Patch> patch = Patch::create(host->getSession(), record);
+    schedule(sigc::bind<RefPtr<Patch> >(sigc::mem_fun(*this, &ControllerImpl::uploadPatchInBackground), patch));
+    View::instance().showStatus(*patch);
 }
 
 
-void ControllerImpl::uploadPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecord> patchRecord)
+void ControllerImpl::uploadPatchInBackground(RefPtr<Patch> patch)
 {
     TRACE("ControllerImpl::uploadPatchInBackground");
-    RefPtr<File> file = patchRecord->getFile();
-    if (!file)
-    {
-        Logger::instance().warn("%s: No patch file was found. Treated as upload failure.", patchRecord->label.c_str());
-        patchRecord->state = PatchState::UPLOAD_FAILURE;
-        host->emit(XenObject::RECORD_UPDATED);
-        return;
-    }
-    TRACEPUT("path=\"%s\"", file->path());
-    RefPtr<Patch> patch = Patch::create(host->getSession(), patchRecord);
     patch->init();
-    patch->upload(file->path());
+    patch->upload();
     patch->fini();
-    host->updatePatchList();
-    host->emit(XenObject::RECORD_UPDATED);
 }
 
 
@@ -170,21 +159,18 @@ void ControllerImpl::applyPatch(const Glib::ustring& uuid)
     {
         return;
     }
-    schedule(sigc::bind<RefPtr<Host>, RefPtr<PatchRecord> >(sigc::mem_fun(*this, &ControllerImpl::applyPatchInBackground), host, record));
+    RefPtr<Patch> patch = Patch::create(host->getSession(), record);
+    schedule(sigc::bind<RefPtr<Patch> >(sigc::mem_fun(*this, &ControllerImpl::applyPatchInBackground), patch));
+    View::instance().showStatus(*patch);
 }
 
 
-void ControllerImpl::applyPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecord> patchRecord)
+void ControllerImpl::applyPatchInBackground(RefPtr<Patch> patch)
 {
     TRACE("ControllerImpl::applyPatchInBackground");
-    XenObject::Busy busy(*host);
-    Session::Lock lock(host->getSession());
-    RefPtr<Patch> patch = Patch::create(host->getSession(), patchRecord);
     patch->init();
     patch->apply();
     patch->fini();
-    host->updatePatchList();
-    host->emit(XenObject::RECORD_UPDATED);
 }
 
 

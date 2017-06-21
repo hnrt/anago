@@ -2,6 +2,7 @@
 
 
 #include "Base/StringBuffer.h"
+#include "File/File.h"
 #include "Logger/Trace.h"
 #include "Model/PatchRecord.h"
 #include "Protocol/ThinClientInterface.h"
@@ -67,14 +68,29 @@ RefPtr<PatchRecord> Patch::getRecord() const
 }
 
 
-bool Patch::upload(const char* path)
+bool Patch::upload()
 {
-    TRACE(StringBuffer().format("Patch@%zx::upload", this), "path=\"%s\"", path);
+    TRACE(StringBuffer().format("Patch@%zx::upload", this));
+
+    RefPtr<File> file = _record->getFile();
+    if (!file)
+    {
+        Logger::instance().warn("%s: No patch file was found. Treated as upload failure.", _record->label.c_str());
+        _record->state = PatchState::UPLOAD_FAILURE;
+        emit(XenObject::PATCH_UPLOAD_FILE_ERROR);
+        return false;
+    }
+
+    _path = file->path();
+
+    TRACEPUT("path=\"%s\"", file->path());
 
     _record->state = PatchState::UPLOAD_INPROGRESS;
 
+    emit(XenObject::PATCH_UPLOAD_PENDING);
+
     bool retval = _cli->run("update-upload",
-                            StringBuffer().format("file-name=%s", path).str(),
+                            Glib::ustring::compose("file-name=%1", _path).c_str(),
                             NULL);
 
     _record->state = retval ? PatchState::UPLOADED : PatchState::UPLOAD_FAILURE;
@@ -91,8 +107,10 @@ bool Patch::apply()
 
     _record->state = PatchState::APPLY_INPROGRESS;
 
+    emit(XenObject::PATCH_APPLY_PENDING);
+
     bool retval = _cli->run("update-pool-apply",
-                            StringBuffer().format("uuid=%s", _uuid.c_str()).str(),
+                            Glib::ustring::compose("uuid=%1", _uuid).c_str(),
                             NULL);
 
     _record->state = retval ? PatchState::APPLIED : PatchState::APPLY_FAILURE;
@@ -100,6 +118,24 @@ bool Patch::apply()
     TRACEPUT("return=%s", retval ? "true" : "false");
 
     return retval;
+}
+
+
+const Glib::ustring& Patch::getOutput() const
+{
+    return _cli->getOutput();
+}
+
+
+const Glib::ustring& Patch::getErrorOutput() const
+{
+    return _cli->getErrorOutput();
+}
+
+
+int Patch::getExitCode() const
+{
+    return _cli->getExitCode();
 }
 
 

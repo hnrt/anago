@@ -52,6 +52,7 @@ namespace hnrt
         virtual bool getSize(int64_t&);
         virtual bool getNicToAttach(const VirtualMachine&, Glib::ustring&, Glib::ustring&);
         virtual bool getCifsToCreate(CifsSpec&);
+        virtual void showStatus(Patch&);
 
     private:
 

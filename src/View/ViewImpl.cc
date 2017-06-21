@@ -30,6 +30,7 @@
 #include "ImportVmDialog.h"
 #include "MemoryDialog.h"
 #include "NameDialog.h"
+#include "OperationStatusDialog.h"
 #include "PixStore.h"
 #include "ResizeDialog.h"
 #include "ShadowMemoryDialog.h"
@@ -591,4 +592,11 @@ bool ViewImpl::getCifsToCreate(CifsSpec& spec)
     {
         return false;
     }
+}
+
+
+void ViewImpl::showStatus(Patch& patch)
+{
+    OperationStatusDialog dialog(_mainWindow, patch);
+    dialog.run();
 }
