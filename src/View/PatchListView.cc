@@ -5,9 +5,14 @@
 #include <stdio.h>
 #include <string.h>
 #include "Base/StringBuffer.h"
+#include "Controller/SignalManager.h"
+#include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "Model/PatchBase.h"
+#include "XenServer/Patch.h"
+#include "XenServer/XenObject.h"
 #include "PatchListView.h"
+#include "View.h"
 
 
 using namespace hnrt;
@@ -37,6 +42,8 @@ PatchListView::PatchListView()
     set_rules_hint(true);
     Glib::RefPtr<Gtk::TreeSelection> selection = get_selection();
     selection->set_mode(Gtk::SELECTION_SINGLE);
+    SignalManager::instance().xenObjectSignal(XenObject::PATCH_UPLOAD_PENDING).connect(sigc::mem_fun(*this, &PatchListView::onNotify));
+    SignalManager::instance().xenObjectSignal(XenObject::PATCH_APPLY_PENDING).connect(sigc::mem_fun(*this, &PatchListView::onNotify));
 }
 
 
@@ -180,4 +187,64 @@ Gtk::ScrolledWindow* PatchListView::createScrolledWindow()
     pW->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
     pW->set_shadow_type(Gtk::SHADOW_IN);
     return pW;
+}
+
+
+void PatchListView::onNotify(RefPtr<XenObject> object, int what)
+{
+    TRACE(StringBuffer().format("PatchListView@%zx::onNotify", this), "what=%s", GetNotificationText(what));
+    RefPtr<Patch> patch = RefPtr<Patch>::castStatic(object);
+    RefPtr<PatchRecord> patchRecord = patch->getRecord();
+    Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
+    while (iter)
+    {
+        Gtk::TreeModel::Row row = *iter;
+        if (row[_record.colId] == patchRecord->uuid)
+        {
+            switch (what)
+            {
+            case XenObject::PATCH_UPLOAD_PENDING:
+            case XenObject::PATCH_APPLY_PENDING:
+                SignalManager::instance().xenObjectSignal(*object).connect(sigc::mem_fun(*this, &PatchListView::onNotify));
+                break;
+            case XenObject::PATCH_UPLOAD_FILE_ERROR:
+                View::instance().showWarning(gettext("Unable to open file."));
+                break;
+            case XenObject::PATCH_UPLOAD_PRINT:
+            case XenObject::PATCH_APPLY_PRINT:
+                break;
+            case XenObject::PATCH_UPLOAD_PRINT_ERROR:
+            case XenObject::PATCH_APPLY_PRINT_ERROR:
+                break;
+            case XenObject::PATCH_UPLOAD_EXIT:
+            case XenObject::PATCH_APPLY_EXIT:
+            {
+                Glib::ustring msg1 = patch->getOutput();
+                Glib::ustring msg2 = patch->getErrorOutput();
+                if (msg2.empty())
+                {
+                    if (!msg1.empty())
+                    {
+                        View::instance().showInfo(msg1);
+                    }
+                }
+                else if (msg1.empty())
+                {
+                    View::instance().showWarning(msg2);
+                }
+                else
+                {
+                    View::instance().showWarning(msg1 + "\n" + msg2);
+                }
+                break;
+            }
+            default:
+                break;
+            }
+            row[_record.colStatus] = patchRecord->state;
+            row[_record.colDisplayStatus] = GetDisplayStatus(patchRecord->state);
+            break;
+        }
+        iter++;
+    }
 }

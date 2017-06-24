@@ -8,7 +8,6 @@
 #include "Protocol/ThinClientInterface.h"
 #include "Patch.h"
 #include "Session.h"
-#include "XenObjectStore.h"
 
 
 using namespace hnrt;
@@ -48,17 +47,18 @@ void Patch::init()
     _cli->setPrintErrorCallback(sigc::mem_fun(*this, &Patch::printError));
     _cli->setExitCallback(sigc::mem_fun(*this, &Patch::exit));
     pw.clear();
-    RefPtr<Patch> object(this, 1);
-    _session.getStore().add(object);
+    _output.clear();
+    _errorOutput.clear();
+    _exitCode = -1;
+    emit(XenObject::CREATED);
 }
 
 
 void Patch::fini()
 {
-    RefPtr<Patch> object(this, 1);
-    _session.getStore().remove(_uuid, _type);
     _cli->fini();
     _cli.reset();
+    emit(XenObject::DESTROYED);
 }
 
 
@@ -121,26 +121,37 @@ bool Patch::apply()
 }
 
 
-const Glib::ustring& Patch::getOutput() const
+Glib::ustring Patch::getOutput()
 {
-    return _cli->getOutput();
+    Glib::Mutex::Lock lock(_mutex);
+    return _output;
 }
 
 
-const Glib::ustring& Patch::getErrorOutput() const
+Glib::ustring Patch::getErrorOutput()
 {
-    return _cli->getErrorOutput();
+    Glib::Mutex::Lock lock(_mutex);
+    return _errorOutput;
 }
 
 
-int Patch::getExitCode() const
+int Patch::getExitCode()
 {
-    return _cli->getExitCode();
+    Glib::Mutex::Lock lock(_mutex);
+    return _exitCode;
 }
 
 
 void Patch::print(ThinClientInterface& cli)
 {
+    {
+        Glib::Mutex::Lock lock(_mutex);
+        if (!_output.empty())
+        {
+            _output.append("\n");
+        }
+        _output.append(cli.getOutput());
+    }
     switch (_record->state)
     {
     case PatchState::UPLOAD_INPROGRESS:
@@ -157,6 +168,14 @@ void Patch::print(ThinClientInterface& cli)
 
 void Patch::printError(ThinClientInterface& cli)
 {
+    {
+        Glib::Mutex::Lock lock(_mutex);
+        if (!_errorOutput.empty())
+        {
+            _errorOutput.append("\n");
+        }
+        _errorOutput.append(cli.getErrorOutput());
+    }
     switch (_record->state)
     {
     case PatchState::UPLOAD_INPROGRESS:
@@ -173,6 +192,10 @@ void Patch::printError(ThinClientInterface& cli)
 
 void Patch::exit(ThinClientInterface& cli)
 {
+    {
+        Glib::Mutex::Lock lock(_mutex);
+        _exitCode = cli.getExitCode();
+    }
     switch (_record->state)
     {
     case PatchState::UPLOAD_INPROGRESS:

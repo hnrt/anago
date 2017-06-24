@@ -17,6 +17,7 @@ const char* GetXenObjectTypeText(const XenObject& object)
     CASE(NETWORK);
     CASE(PBD);
     CASE(PIF);
+    CASE(PATCH);
     CASE(POOL);
     CASE(POOL_PATCH);
     CASE(SESSION);

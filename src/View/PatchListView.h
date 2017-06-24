@@ -7,6 +7,7 @@
 
 #include <time.h>
 #include <gtkmm.h>
+#include "Base/RefPtr.h"
 #include "Model/PatchRecord.h"
 #include "Model/PatchState.h"
 #include "XenServer/Api.h"
@@ -15,6 +16,8 @@
 
 namespace hnrt
 {
+    class XenObject;
+
     class PatchListView
         : public Gtk::TreeView
     {
@@ -74,6 +77,7 @@ namespace hnrt
         PatchListView(const PatchListView&);
         void operator =(const PatchListView&);
         virtual bool on_button_press_event(GdkEventButton*);
+        void onNotify(RefPtr<XenObject>, int);
 
         Record _record;
         Glib::RefPtr<Gtk::ListStore> _store;

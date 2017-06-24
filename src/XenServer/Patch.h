@@ -26,9 +26,9 @@ namespace hnrt
         RefPtr<PatchRecord> getRecord() const;
         bool upload();
         bool apply();
-        const Glib::ustring& getOutput() const;
-        const Glib::ustring& getErrorOutput() const;
-        int getExitCode() const;
+        Glib::ustring getOutput();
+        Glib::ustring getErrorOutput();
+        int getExitCode();
         const Glib::ustring& getPath() const { return _path; }
 
     protected:
@@ -43,6 +43,9 @@ namespace hnrt
         RefPtr<PatchRecord> _record;
         RefPtr<ThinClientInterface> _cli;
         Glib::ustring _path;
+        Glib::ustring _output;
+        Glib::ustring _errorOutput;
+        int _exitCode;
     };
 }
 

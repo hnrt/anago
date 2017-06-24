@@ -73,6 +73,7 @@ void SignalManagerImpl::clear()
 
 SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(int notification)
 {
+    TRACE("SignalManagerImpl::xenObjectSignal", "notification=%s", GetNotificationText(notification));
     if (ThreadManager::instance().isMain())
     {
         NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
@@ -93,6 +94,7 @@ SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(int notificati
 
 SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(const XenObject& object)
 {
+    TRACE("SignalManagerImpl::xenObjectSignal", "object=%zx", &object);
     if (ThreadManager::instance().isMain())
     {
         void* key = const_cast<XenObject*>(&object);
@@ -129,13 +131,6 @@ void SignalManagerImpl::onNotify()
     {
         TRACEPUT("%s@%zx %s", GetXenObjectTypeText(*object), object.ptr(), GetNotificationText(notification));
         {
-            NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
-            if (iter != _notificationXenObjectSignalMap.end())
-            {
-                iter->second.emit(object, notification);
-            }
-        }
-        {
             XenObjectSignalMap::iterator iter = _xenObjectSignalMap.find(object.ptr());
             if (iter != _xenObjectSignalMap.end())
             {
@@ -144,6 +139,15 @@ void SignalManagerImpl::onNotify()
                 {
                     _xenObjectSignalMap.erase(iter);
                 }
+                return;
+            }
+        }
+        {
+            NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
+            if (iter != _notificationXenObjectSignalMap.end())
+            {
+                iter->second.emit(object, notification);
+                return;
             }
         }
     }

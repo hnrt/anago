@@ -8,7 +8,6 @@
 #include "Model/Model.h"
 #include "Model/PatchRecord.h"
 #include "Protocol/ThinClientInterface.h"
-#include "View/View.h"
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "XenServer/Patch.h"
@@ -133,7 +132,6 @@ void ControllerImpl::uploadPatch(const Glib::ustring& uuid)
     }
     RefPtr<Patch> patch = Patch::create(host->getSession(), record);
     schedule(sigc::bind<RefPtr<Patch> >(sigc::mem_fun(*this, &ControllerImpl::uploadPatchInBackground), patch));
-    View::instance().showStatus(*patch);
 }
 
 
@@ -161,7 +159,6 @@ void ControllerImpl::applyPatch(const Glib::ustring& uuid)
     }
     RefPtr<Patch> patch = Patch::create(host->getSession(), record);
     schedule(sigc::bind<RefPtr<Patch> >(sigc::mem_fun(*this, &ControllerImpl::applyPatchInBackground), patch));
-    View::instance().showStatus(*patch);
 }
 
 
