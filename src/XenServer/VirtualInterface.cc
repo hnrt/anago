@@ -2,7 +2,6 @@
 
 
 #include <libintl.h>
-#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Session.h"
 #include "VirtualInterface.h"
@@ -25,13 +24,13 @@ VirtualInterface::VirtualInterface(Session& session, xen_vif handle, const XenPt
     : XenObject(XenObject::VIF, session, handle, record->uuid, "VIF")
     , _record(record)
 {
-    Trace trace(StringBuffer().format("VIF@%zx::ctor", this));
+    Trace trace(this, "VIF::ctor");
 }
 
 
 VirtualInterface::~VirtualInterface()
 {
-    Trace trace(StringBuffer().format("VIF@%zx::dtor", this));
+    Trace trace(this, "VIF::dtor");
 }
 
 

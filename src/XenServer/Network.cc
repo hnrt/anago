@@ -1,7 +1,6 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
-#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Network.h"
 #include "Session.h"
@@ -25,13 +24,13 @@ Network::Network(Session& session, xen_network handle, const XenPtr<xen_network_
     : XenObject(XenObject::NETWORK, session, handle, record->uuid, record->name_label)
     , _record(record)
 {
-    Trace trace(StringBuffer().format("NETWORK@%zx::ctor", this));
+    Trace trace(this, "NETWORK::ctor");
 }
 
 
 Network::~Network()
 {
-    Trace trace(StringBuffer().format("NETWORK@%zx::dtor", this));
+    Trace trace(this, "NETWORK::dtor");
 }
 
 

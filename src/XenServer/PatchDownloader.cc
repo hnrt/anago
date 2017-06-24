@@ -18,19 +18,19 @@ RefPtr<PatchDownloader> PatchDownloader::create()
 
 PatchDownloader::PatchDownloader()
 {
-    TRACE("PatchDownloader::ctor");
+    TRACEFUN(this, "PatchDownloader::ctor");
 }
 
 
 PatchDownloader::~PatchDownloader()
 {
-    TRACE("PatchDownloader::dtor");
+    TRACEFUN(this, "PatchDownloader::dtor");
 }
 
 
 void PatchDownloader::run(const Glib::ustring& url, const Glib::ustring& path)
 {
-    TRACE("PatchDownloader::run", "url=\"%s\" path=\"%s\"", url.c_str(), path.c_str());
+    TRACEFUN(this, "PatchDownloader::run(%s,%s)", url.c_str(), path.c_str());
 
     _file = File::create(path.c_str(), "w");
 
@@ -79,7 +79,7 @@ bool PatchDownloader::onCancelled(HttpClient&)
 
 bool PatchDownloader::write(HttpClient&, const void* ptr, size_t len)
 {
-    TRACE("PatchDownloader::write", "len=%zu", len);
+    TRACEFUN(this, "PatchDownloader::write(%zx,%zu)", ptr, len);
 
     if (len)
     {

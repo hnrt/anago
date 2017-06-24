@@ -30,14 +30,14 @@ PerformanceMonitor::PerformanceMonitor(Session& session)
     , _doc(NULL)
     , _end(static_cast<unsigned long>(time(NULL)) - 1)
 {
-    Trace trace("PerformanceMonitor::ctor");
+    TRACEFUN(this, "PerformanceMonitor::ctor");
     _session.incRef();
 }
 
 
 PerformanceMonitor::~PerformanceMonitor()
 {
-    Trace trace("PerformanceMonitor::dtor");
+    TRACEFUN(this, "PerformanceMonitor::dtor");
 
     if (_doc)
     {

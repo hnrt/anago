@@ -16,6 +16,7 @@
 
 namespace hnrt
 {
+    class Host;
     class XenObject;
 
     class PatchListView
@@ -23,7 +24,7 @@ namespace hnrt
     {
     public:
 
-        PatchListView();
+        PatchListView(const Host&);
         void clear();
         void set(const PatchRecord&);
         Gtk::ScrolledWindow* createScrolledWindow();
@@ -79,6 +80,7 @@ namespace hnrt
         virtual bool on_button_press_event(GdkEventButton*);
         void onNotify(RefPtr<XenObject>, int);
 
+        const Host& _host;
         Record _record;
         Glib::RefPtr<Gtk::ListStore> _store;
         PatchMenu _menu;

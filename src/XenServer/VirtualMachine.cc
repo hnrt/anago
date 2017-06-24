@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Macros.h"
 #include "Session.h"
@@ -32,7 +31,7 @@ VirtualMachine::VirtualMachine(Session& session, xen_vm handle, const XenPtr<xen
     : XenObject(XenObject::VM, session, handle, record->uuid, record->name_label)
     , _record(record)
 {
-    Trace trace(StringBuffer().format("VM@%zx::ctor", this), "name=\"%s\"", record->name_label);
+    Trace trace(this, "VM::ctor(%s)", record->name_label);
     _displayStatus = XenServer::getPowerStateText(_record->power_state);
     if (!record->is_a_template &&
         !record->is_control_domain &&
@@ -58,7 +57,7 @@ VirtualMachine::VirtualMachine(Session& session, xen_vm handle, const XenPtr<xen
 
 VirtualMachine::~VirtualMachine()
 {
-    Trace trace(StringBuffer().format("VM@%zx::dtor", this));
+    Trace trace(this, "VM::dtor");
 }
 
 

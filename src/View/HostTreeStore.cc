@@ -42,7 +42,7 @@ bool HostTreeStore::row_draggable_vfunc(const Gtk::TreeModel::Path& path) const
 
 bool HostTreeStore::row_drop_possible_vfunc(const Gtk::TreeModel::Path& destPath, const Gtk::SelectionData& selectionData) const
 {
-    Trace trace("HostTreeStore::row_drop_possible_vfunc");
+    Trace trace(this, "HostTreeStore::row_drop_possible_vfunc");
 
     Glib::RefPtr<Gtk::TreeModel> srcModel;
     Gtk::TreePath srcPath;

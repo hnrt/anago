@@ -22,7 +22,7 @@ using namespace hnrt;
 
 void ModelImpl::load()
 {
-    Trace trace("ModelImpl::load");
+    Trace trace(NULL, "ModelImpl::load");
 
     FILE* fp = NULL;
 
@@ -76,7 +76,7 @@ void ModelImpl::load()
 
 void ModelImpl::loadV1(const RefPtr<Json>& json)
 {
-    Trace trace("ModelImpl::loadV1");
+    Trace trace(NULL, "ModelImpl::loadV1");
 
     json->get("UI.width", _width);
     json->get("UI.height", _height);
@@ -97,7 +97,7 @@ void ModelImpl::loadV1(const RefPtr<Json>& json)
 
 void ModelImpl::loadV1Server(const RefPtr<Json>& value)
 {
-    Trace trace("ModelImpl::loadV1Server");
+    Trace trace(NULL, "ModelImpl::loadV1Server");
 
     ConnectSpec cs;
     if (cs.fromJson(value))
@@ -109,7 +109,7 @@ void ModelImpl::loadV1Server(const RefPtr<Json>& value)
 
 void ModelImpl::loadV1Console(const RefPtr<Json>& value)
 {
-    Trace trace("ModelImpl::loadV1Console");
+    Trace trace(NULL, "ModelImpl::loadV1Console");
 
     ConsoleInfo info;
     if (info.fromJson(value))

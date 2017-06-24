@@ -26,9 +26,10 @@ RefPtr<Notebook> HostNotebook::create(const RefPtr<Host>& host)
 
 HostNotebook::HostNotebook(const RefPtr<Host>& host)
     : _genLvMenu(HostMenu::NAME_VALUE)
+    , _patLv(*host)
     , _host(host)
 {
-    Trace trace(StringBuffer().format("HostNotebook@%zx::ctor(%s)", this, _host->getSession().getConnectSpec().hostname.c_str()));
+    Trace trace(this, "HostNotebook::ctor(%s)", _host->getSession().getConnectSpec().hostname.c_str());
 
     _genBox.pack_start(*Gtk::manage(_genLv.createScrolledWindow()));
     _genLv.setMenu(&_genLvMenu);
@@ -73,7 +74,7 @@ HostNotebook::HostNotebook(const RefPtr<Host>& host)
 
 HostNotebook::~HostNotebook()
 {
-    Trace trace(StringBuffer().format("HostNotebook@%zx::dtor(%s)", this, _host->getSession().getConnectSpec().hostname.c_str()));
+    Trace trace(this, "HostNotebook::dtor(%s)", _host->getSession().getConnectSpec().hostname.c_str());
 
     _connectionSession.disconnect();
     _connectionHost.disconnect();
@@ -88,7 +89,7 @@ void HostNotebook::onAutoConnectChanged()
 
 void HostNotebook::onSessionUpdated(RefPtr<XenObject> object, int what)
 {
-    TRACE(StringBuffer().format("HostNotebook@%zx::onSessionUpdated(%zx,%d)", this, object.ptr(), what));
+    TRACEFUN(this, "HostNotebook::onSessionUpdated(%s@%zx,%s)", GetXenObjectTypeText(*object), object.ptr(), GetNotificationText(what));
 
     switch (what)
     {
@@ -107,7 +108,7 @@ void HostNotebook::onSessionUpdated(RefPtr<XenObject> object, int what)
 
 void HostNotebook::onHostUpdated(RefPtr<XenObject> object, int what)
 {
-    TRACE(StringBuffer().format("HostNotebook@%zx::onHostUpdated(%zx,%d)", this, object.ptr(), what));
+    TRACEFUN(this, "HostNotebook::onHostUpdated(%s@%zx,%s)", GetXenObjectTypeText(*object), object.ptr(), GetNotificationText(what));
 
     switch (what)
     {
@@ -128,7 +129,7 @@ void HostNotebook::onHostUpdated(RefPtr<XenObject> object, int what)
 
 void HostNotebook::update()
 {
-    TRACE(StringBuffer().format("HostNotebook@%zx::update", this));
+    TRACEFUN(this, "HostNotebook::update");
 
     bool tabs = page_num(_optBox) > 0;
 

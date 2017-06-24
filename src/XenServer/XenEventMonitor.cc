@@ -34,19 +34,19 @@ using namespace hnrt;
 XenEventMonitor::XenEventMonitor()
     : _connected(false)
 {
-    TRACE("XenEventMonitor::ctor");
+    TRACEFUN(NULL, "XenEventMonitor::ctor");
 }
 
 
 XenEventMonitor::~XenEventMonitor()
 {
-    TRACE("XenEventMonitor::dtor");
+    TRACEFUN(NULL, "XenEventMonitor::dtor");
 }
 
 
 void XenEventMonitor::run(Session& sessionPrimary)
 {
-    TRACE("XenEventMonitor::run");
+    TRACEFUN(NULL, "XenEventMonitor::run");
 
     RefPtr<Session> pSession = RefPtr<Session>(new Session());
 
@@ -205,7 +205,7 @@ XenEventMonitor::Record::Record(int type_, const xen_event_record* ev)
 
 bool XenEventMonitor::Record::process(XenEventMonitor& monitor, Session& sessionPrimary, Session& session)
 {
-    TRACE("XenEventMonitor::Record::process");
+    TRACEFUN(NULL, "XenEventMonitor::Record::process");
 
     XenObjectStore& store = session.getStore();
 

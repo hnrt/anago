@@ -46,13 +46,13 @@ ModelImpl::ModelImpl()
     , _pane1Width(PANE1WIDTH_DEFAULT)
     , _webBrowserPath(WEBBROWSER_DEFAULT)
 {
-    Trace trace("ModelImpl::ctor");
+    Trace trace(NULL, "ModelImpl::ctor");
 }
 
 
 ModelImpl::~ModelImpl()
 {
-    Trace trace("ModelImpl::dtor");
+    Trace trace(NULL, "ModelImpl::dtor");
 }
 
 
@@ -72,7 +72,7 @@ void ModelImpl::fini()
 
 void ModelImpl::clear()
 {
-    Trace trace("ModelImpl::clear");
+    Trace trace(NULL, "ModelImpl::clear");
     deselectAll();
     removeAllSessions();
 }

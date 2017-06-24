@@ -45,7 +45,7 @@ ViewImpl::ViewImpl()
     , _mainWindow()
     , _statusWindow(_mainWindow)
 {
-    Trace trace("ViewImpl::ctor");
+    Trace trace(NULL, "ViewImpl::ctor");
     Gdk::VisualType vt = Gdk::Visual::get_best_type();
     int depth = Gdk::Visual::get_best_depth();
     trace.put("visual=%s depth=%d",
@@ -80,13 +80,13 @@ ViewImpl::ViewImpl()
 
 ViewImpl::~ViewImpl()
 {
-    Trace trace("ViewImpl::dtor");
+    Trace trace(NULL, "ViewImpl::dtor");
 }
 
 
 void ViewImpl::load()
 {
-    Trace trace("ViewImpl::load");
+    Trace trace(NULL, "ViewImpl::load");
     int cx = Model::instance().getWidth();
     int cy = Model::instance().getHeight();
     if (cx > WIDTH_DEFAULT && cy > HEIGHT_DEFAULT)
@@ -105,7 +105,7 @@ void ViewImpl::load()
 
 void ViewImpl::save()
 {
-    Trace trace("ViewImpl::save");
+    Trace trace(NULL, "ViewImpl::save");
     Model::instance().setWidth(_mainWindow.getWidth());
     Model::instance().setHeight(_mainWindow.getHeight());
     Model::instance().setPane1Width(_mainWindow.getPane1Width());
@@ -114,7 +114,7 @@ void ViewImpl::save()
 
 void ViewImpl::clear()
 {
-    Trace trace("ViewImpl::clear");
+    Trace trace(NULL, "ViewImpl::clear");
     SignalManager::instance().clear();
     _mainWindow.clear();
 }

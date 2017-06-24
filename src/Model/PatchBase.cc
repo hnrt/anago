@@ -30,19 +30,19 @@ RefPtr<PatchBase> PatchBase::create()
 
 PatchBase::PatchBase()
 {
-    TRACE("PatchBase::ctor");
+    TRACEFUN(NULL, "PatchBase::ctor");
 }
 
 
 PatchBase::~PatchBase()
 {
-    TRACE("PatchBase::dtor");
+    TRACEFUN(NULL, "PatchBase::dtor");
 }
 
 
 void PatchBase::init()
 {
-    TRACE("PatchBase::init");
+    TRACEFUN(NULL, "PatchBase::init");
     _path = Glib::ustring::compose("%1%2", Model::instance().getAppDir(), "updates.xml");
     TRACEPUT("path=%s", _path.c_str());
 }
@@ -50,7 +50,7 @@ void PatchBase::init()
 
 void PatchBase::fini()
 {
-    TRACE("PatchBase::fini");
+    TRACEFUN(NULL, "PatchBase::fini");
 }
 
 
@@ -467,7 +467,7 @@ static bool ParseServerVersion(xmlNode* node, PatchBase::ServerRecord& serverRec
 
 bool PatchBase::load()
 {
-    TRACE("PatchBase::load");
+    TRACEFUN(NULL, "PatchBase::load");
 
     bool downloadRequired = true;
 
@@ -588,7 +588,7 @@ bool PatchBase::load()
 
 bool PatchBase::download()
 {
-    TRACE("PatchBase::download");
+    TRACEFUN(NULL, "PatchBase::download");
 
     bool retval = false;
 

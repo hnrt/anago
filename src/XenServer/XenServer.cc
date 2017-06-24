@@ -529,7 +529,7 @@ const char* XenServer::getText(enum xen_vbd_type type)
 
 bool XenServer::createVirtualMachine(xen_session* session, const VirtualMachineSpec& spec, xen_vm* vmReturn)
 {
-    Trace trace("XenServer::createVirtualMachine");
+    Trace trace(NULL, "XenServer::createVirtualMachine");
 
     trace.put("xen_vm_clone(%s,%s)", spec.templateREFID.c_str(), spec.name.c_str());
 
@@ -617,7 +617,7 @@ bool XenServer::createVirtualMachine(xen_session* session, const VirtualMachineS
 
 bool XenServer::createHdd(xen_session* session, xen_vm vm, const char* userdevice, const HardDiskDriveSpec& spec)
 {
-    Trace trace("XenServer::createHdd");
+    Trace trace(NULL, "XenServer::createHdd");
 
     XenRef<xen_vdi, xen_vdi_free_t> vdi;
     if (!createVdi(session, spec, &vdi))
@@ -642,7 +642,7 @@ bool XenServer::createHdd(xen_session* session, xen_vm vm, const char* userdevic
 
 bool XenServer::attachHdd(xen_session* session, xen_vm vm, const char* userdevice, xen_vdi vdi)
 {
-    Trace trace("XenServer::attachHdd");
+    Trace trace(NULL, "XenServer::attachHdd");
 
     XenRef<xen_vbd, xen_vbd_free_t> vbd;
     if (!createVbd(session, vm, userdevice, vdi, XEN_VBD_TYPE_DISK, XEN_VBD_MODE_RW, !strcmp(userdevice, "0"), &vbd))
@@ -682,7 +682,7 @@ bool XenServer::createNic(xen_session* session, xen_vm vm, const char* device, x
 
 bool XenServer::createVdi(xen_session* session, const HardDiskDriveSpec& spec, xen_vdi* vdiReturn)
 {
-    Trace trace("XenServer::createVdi");
+    Trace trace(NULL, "XenServer::createVdi");
 
     xen_sr_record_opt srRecordOpt = {0};
     srRecordOpt.u.handle = (xen_sr)spec.srREFID.c_str();
@@ -723,7 +723,7 @@ bool XenServer::createVdi(xen_session* session, const HardDiskDriveSpec& spec, x
 
 bool XenServer::setVmHintToVdi(xen_session* session, xen_vdi vdi, xen_vm vm)
 {
-    Trace trace("XenServer::setVmHintToVdi");
+    Trace trace(NULL, "XenServer::setVmHintToVdi");
 
     trace.put("xen_vm_get_uuid");
 
@@ -761,7 +761,7 @@ bool XenServer::setVmHintToVdi(xen_session* session, xen_vdi vdi, xen_vm vm)
 
 bool XenServer::createVbd(xen_session* session, xen_vm vm, const char* userdevice, xen_vdi vdi, enum xen_vbd_type type, enum xen_vbd_mode mode, bool bootable, xen_vbd* vbdReturn)
 {
-    Trace trace("XenServer::createVbd");
+    Trace trace(NULL, "XenServer::createVbd");
 
     xen_vm_record_opt vmRecordOpt = {0};
     vmRecordOpt.u.handle = vm;
@@ -815,7 +815,7 @@ bool XenServer::createVbd(xen_session* session, xen_vm vm, const char* userdevic
 
 bool XenServer::createVif(xen_session* session, xen_vm vm, const char* device, xen_network nw, xen_vif* vifReturn)
 {
-    Trace trace("XenServer::createVif");
+    Trace trace(NULL, "XenServer::createVif");
 
     xen_vm_record_opt vmRecordOpt = {0};
     vmRecordOpt.u.handle = vm;
@@ -920,7 +920,7 @@ bool XenServer::createSnapshot(xen_session* session, xen_vm vm)
 
 bool XenServer::addCifs(xen_session* session, xen_host host, const CifsSpec& spec, xen_sr* srReturn)
 {
-    Trace trace("XenServer::addCifs");
+    Trace trace(NULL, "XenServer::addCifs");
 
     bool result;
 

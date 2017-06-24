@@ -23,7 +23,7 @@ FrameScalerImpl::FrameScalerImpl()
 
 void FrameScalerImpl::init()
 {
-    TRACE("FrameScalerImpl::init");
+    TRACEFUN(this, "FrameScalerImpl::init");
     Glib::Mutex::Lock lock(_mutexScale);
     if (_terminate)
     {
@@ -38,7 +38,7 @@ void FrameScalerImpl::init()
 
 void FrameScalerImpl::fini()
 {
-    TRACE("FrameScalerImpl::fini");
+    TRACEFUN(this, "FrameScalerImpl::fini");
     Glib::Mutex::Lock lock1(_mutexScale);
     {
         Glib::Mutex::Lock lock2(_mutexStart);
@@ -62,7 +62,7 @@ void FrameScalerImpl::fini()
 
 void FrameScalerImpl::scale(RefPtr<FrameBuffer> fb, RefPtr<FrameBuffer> fbScaled, int multiplier, int divisor, GdkRectangle& rect)
 {
-    TRACE("FrameScalerImpl::scale", "x=%d y=%d width=%d height=%d", rect.x, rect.y, rect.width, rect.height);
+    TRACEFUN(this, "FrameScalerImpl::scale(%d,%d,%d,%d)", rect.x, rect.y, rect.width, rect.height);
     int xStart = (rect.x * multiplier) / divisor;
     int xEnd = ((rect.x + rect.width) * multiplier + divisor - 1) / divisor;
     int xEnd2 = xEnd;
@@ -182,7 +182,7 @@ void FrameScalerImpl::scale(RefPtr<FrameBuffer> fb, RefPtr<FrameBuffer> fbScaled
 
 void FrameScalerImpl::scaleInParallel(RefPtr<FrameBuffer> fb, RefPtr<FrameBuffer> fbScaled, int multiplier, int divisor, GdkRectangle& rect)
 {
-    TRACE("ConsoleViewImpl::scaleInParallel");
+    TRACEFUN(this, "ConsoleViewImpl::scaleInParallel");
     Glib::Mutex::Lock lock(_mutexScale);
     if (_terminate)
     {
@@ -256,7 +256,7 @@ void FrameScalerImpl::scaleInParallel(RefPtr<FrameBuffer> fb, RefPtr<FrameBuffer
 
 void FrameScalerImpl::run()
 {
-    TRACE("FrameScalerImpl::run");
+    TRACEFUN(this, "FrameScalerImpl::run");
     _mutexStart.lock();
     for (;;)
     {

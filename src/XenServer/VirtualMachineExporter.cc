@@ -26,20 +26,20 @@ RefPtr<VirtualMachineExporter> VirtualMachineExporter::create(RefPtr<VirtualMach
 VirtualMachineExporter::VirtualMachineExporter(RefPtr<VirtualMachine> vm)
     : VirtualMachinePorter(VM_EXPORTER, vm->getSession(), "VirtualMachineExporter")
 {
-    TRACE("VirtualMachineExporter::ctor", "vm=\"%s\"", vm->getName().c_str());
+    TRACEFUN(this, "VirtualMachineExporter::ctor(%s)", vm->getName().c_str());
     _vm = vm;
 }
 
 
 VirtualMachineExporter::~VirtualMachineExporter()
 {
-    TRACE("VirtualMachineExporter::dtor");
+    TRACEFUN(this, "VirtualMachineExporter::dtor(%s)", _vm->getName().c_str());
 }
 
 
 void VirtualMachineExporter::run(const char* path, bool verify)
 {
-    TRACE(StringBuffer().format("VirtualMachineExporter::run(%s)", _vm->getName().c_str()), "path=\"%s\" verify=%d", path, verify);
+    TRACEFUN(this, "VirtualMachineExporter::run(%s,%d)", path, verify);
 
     XenObject::Busy busy(_session);
 
@@ -183,7 +183,7 @@ void VirtualMachineExporter::init(const char* path, bool verify)
 
 bool VirtualMachineExporter::write(HttpClient& httpClient, const void* ptr, size_t len)
 {
-    TRACE("VirtualMachineExporter::write", "ptr=%zx len=%zu", ptr, len);
+    TRACEFUN(this, "VirtualMachineExporter::write(%zx,%zu)", ptr, len);
 
     if (_abort)
     {

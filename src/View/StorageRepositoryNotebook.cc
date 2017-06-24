@@ -2,7 +2,6 @@
 
 
 #include <libintl.h>
-#include "Base/StringBuffer.h"
 #include "Controller/SignalManager.h"
 #include "Logger/Trace.h"
 #include "XenServer/PhysicalBlockDevice.h"
@@ -25,7 +24,7 @@ RefPtr<Notebook> StorageRepositoryNotebook::create(const RefPtr<StorageRepositor
 StorageRepositoryNotebook::StorageRepositoryNotebook(const RefPtr<StorageRepository>& sr)
     : _sr(sr)
 {
-    Trace trace(StringBuffer().format("StorageRepositoryNotebook@%zx::ctor", this));
+    TRACEFUN(this, "StorageRepositoryNotebook::ctor");
 
     _srLabel.set_label(gettext("Storage repository:"));
     _srLabel.set_alignment(0, 0.5); // h=left, v=center
@@ -54,7 +53,7 @@ StorageRepositoryNotebook::StorageRepositoryNotebook(const RefPtr<StorageReposit
 
 StorageRepositoryNotebook::~StorageRepositoryNotebook()
 {
-    Trace trace(StringBuffer().format("StorageRepositoryNotebook@%zx::dtor", this));
+    TRACEFUN(this, "StorageRepositoryNotebook::dtor");
 
     _connection.disconnect();
 }

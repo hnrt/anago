@@ -21,53 +21,53 @@ using namespace hnrt;
 ThinClientInterfaceImpl::ThinClientInterfaceImpl()
     : _timeoutInMilliseconds(0)
 {
-    Trace trace("ThinClientInterfaceImpl::ctor");
+    Trace trace(this, "ThinClientInterfaceImpl::ctor");
 }
 
 
 ThinClientInterfaceImpl::~ThinClientInterfaceImpl()
 {
-    Trace trace("ThinClientInterfaceImpl::dtor");
+    Trace trace(this, "ThinClientInterfaceImpl::dtor");
 }
 
 
 void ThinClientInterfaceImpl::init()
 {
-    Trace trace("ThinClientInterfaceImpl::init");
+    Trace trace(this, "ThinClientInterfaceImpl::init");
 }
 
 
 void ThinClientInterfaceImpl::fini()
 {
-    Trace trace("ThinClientInterfaceImpl::fini");
+    Trace trace(this, "ThinClientInterfaceImpl::fini");
     _password.clear();
 }
 
 
 void ThinClientInterfaceImpl::setHostname(const char* hostname)
 {
-    Logger::instance().trace("ThinClientInterfaceImpl::setHostname(%s)", hostname);
+    Logger::instance().trace("ThinClientInterfaceImpl@%zx::setHostname(%s)", this, hostname);
     _hostname = hostname;
 }
 
 
 void ThinClientInterfaceImpl::setUsername(const char* username)
 {
-    Logger::instance().trace("ThinClientInterfaceImpl::setUsername(%s)", username);
+    Logger::instance().trace("ThinClientInterfaceImpl@%zx::setUsername(%s)", this, username);
     _username = username;
 }
 
 
 void ThinClientInterfaceImpl::setPassword(const char* password)
 {
-    Logger::instance().trace("ThinClientInterfaceImpl::setPassword(%s)", password);
+    Logger::instance().trace("ThinClientInterfaceImpl@%zx::setPassword(%s)", this, password);
     _password = password;
 }
 
 
 void ThinClientInterfaceImpl::setTimeout(long value)
 {
-    Logger::instance().trace("ThinClientInterfaceImpl::setTimeout(%ld)", value);
+    Logger::instance().trace("ThinClientInterfaceImpl@%zx::setTimeout(%ld)", this, value);
     _timeoutInMilliseconds = value;
 }
 
@@ -621,7 +621,7 @@ error:
 
 bool ThinClientInterfaceImpl::run(const char* arg, ...)
 {
-    Trace trace("ThinClientInterfaceImpl::run");
+    Trace trace(this, "ThinClientInterfaceImpl::run");
 
     if (!arg)
     {

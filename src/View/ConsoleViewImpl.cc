@@ -12,7 +12,6 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include "Base/Atomic.h"
-#include "Base/StringBuffer.h"
 #include "Controller/SignalManager.h"
 #include "Logger/Trace.h"
 #include "Net/Console.h"
@@ -32,7 +31,7 @@ ConsoleViewImpl::ConsoleViewImpl()
     , _scaler(*new FrameScalerImpl())
     , _hasFocus(false)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::ctor", this));
+    TRACEFUN(this, "ConsoleViewImpl::ctor");
 
     _fbMgr.setScaleFunc(&FrameScaler::scaleInParallel);
 
@@ -59,7 +58,7 @@ ConsoleViewImpl::ConsoleViewImpl()
 
 ConsoleViewImpl::~ConsoleViewImpl()
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::dtor", this));
+    TRACEFUN(this, "ConsoleViewImpl::dtor");
 
     close();
 
@@ -85,7 +84,7 @@ inline ConsoleViewImpl::FrameBufferManager::FrameBufferManager(ConsoleViewImpl& 
 
 inline void ConsoleViewImpl::FrameBufferManager::init(int width, int height, int bpp)
 {
-    TRACE(StringBuffer().format("FrameBufferManager@%zx::init", this));
+    TRACEFUN(this, "FrameBufferManager::init");
     Glib::Mutex::Lock lock(_mutex);
     _bpp = bpp;
     if (width != _frameBuffer->getWidth() || height != _frameBuffer->getHeight())
@@ -111,7 +110,7 @@ inline void ConsoleViewImpl::FrameBufferManager::setScaleFunc(FrameScaler::Scale
 
 inline void ConsoleViewImpl::FrameBufferManager::setContainerSize(int width, int height)
 {
-    TRACE(StringBuffer().format("FrameBufferManager@%zx::setContainerSize", this));
+    TRACEFUN(this, "FrameBufferManager::setContainerSize");
     Glib::Mutex::Lock lock(_mutex);
     if (width != _containerWidth || height != _containerHeight)
     {
@@ -209,7 +208,7 @@ inline bool ConsoleViewImpl::FrameBufferManager::setScaleEnabled(bool value, int
 // note: lock _mutex before calling this function.
 inline void ConsoleViewImpl::FrameBufferManager::resize()
 {
-    TRACE(StringBuffer().format("FrameBufferManager@%zx::resize", this));
+    TRACEFUN(this, "FrameBufferManager::resize");
 
     int cxDtp = _frameBuffer->getWidth();
     int cyDtp = _frameBuffer->getHeight();
@@ -279,7 +278,7 @@ inline void ConsoleViewImpl::FrameBufferManager::resize()
 
 void ConsoleViewImpl::open(const char* location, const char* authorization)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::open", this));
+    TRACEFUN(this, "ConsoleViewImpl::open");
     close();
     _scaler.init();
     _consoleThread = ThreadManager::instance().create(sigc::bind<Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ConsoleViewImpl::run), Glib::ustring(location), Glib::ustring(authorization)), true, "Console");
@@ -289,7 +288,7 @@ void ConsoleViewImpl::open(const char* location, const char* authorization)
 
 void ConsoleViewImpl::close()
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::close", this));
+    TRACEFUN(this, "ConsoleViewImpl::close");
     Glib::Thread* thread = InterlockedExchangePointer(&_consoleThread, (Glib::Thread*)NULL);
     if (thread)
     {
@@ -313,7 +312,7 @@ void ConsoleViewImpl::close()
 
 void ConsoleViewImpl::run(Glib::ustring location, Glib::ustring authorization)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::run", this));
+    TRACEFUN(this, "ConsoleViewImpl::run");
     try
     {
         _console->open(location.c_str(), authorization.c_str());
@@ -341,7 +340,7 @@ int ConsoleViewImpl::getFrameHeight()
 
 bool ConsoleViewImpl::on_configure_event(GdkEventConfigure* event)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::on_configure_event", this));
+    TRACEFUN(this, "ConsoleViewImpl::on_configure_event");
     _fbMgr.requestResize();
     return false;
 }
@@ -349,7 +348,7 @@ bool ConsoleViewImpl::on_configure_event(GdkEventConfigure* event)
 
 bool ConsoleViewImpl::on_expose_event(GdkEventExpose* event)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::on_expose_event", this));
+    TRACEFUN(this, "ConsoleViewImpl::on_expose_event");
     Glib::RefPtr<Gdk::Window> window = get_window();
     RefPtr<FrameBuffer> fb = _fbMgr.getScaledFrameBuffer();
     int width = fb->getWidth();
@@ -391,7 +390,7 @@ bool ConsoleViewImpl::on_expose_event(GdkEventExpose* event)
 
 bool ConsoleViewImpl::on_enter_notify_event(GdkEventCrossing* event)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::on_enter_notify_event", this));
+    TRACEFUN(this, "ConsoleViewImpl::on_enter_notify_event");
     if (!is_focus())
     {
         grab_focus();
@@ -409,7 +408,7 @@ bool ConsoleViewImpl::on_enter_notify_event(GdkEventCrossing* event)
 
 bool ConsoleViewImpl::on_leave_notify_event(GdkEventCrossing* event)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::on_leave_notify_event", this));
+    TRACEFUN(this, "ConsoleViewImpl::on_leave_notify_event");
     Glib::RefPtr<Gdk::Window> window = get_window();
     window->set_cursor();
     return true;
@@ -506,7 +505,7 @@ bool ConsoleViewImpl::on_scroll_event(GdkEventScroll* event)
 
 bool ConsoleViewImpl::on_focus_in_event(GdkEventFocus* event)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::on_focus_in_event", this));
+    TRACEFUN(this, "ConsoleViewImpl::on_focus_in_event");
     _hasFocus = true;
     return true;
 }
@@ -514,7 +513,7 @@ bool ConsoleViewImpl::on_focus_in_event(GdkEventFocus* event)
 
 bool ConsoleViewImpl::on_focus_out_event(GdkEventFocus* event)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::on_focus_out_event", this));
+    TRACEFUN(this, "ConsoleViewImpl::on_focus_out_event");
     _hasFocus = false;
     for (unsigned int keycode = 0; keycode < 256; keycode++)
     {
@@ -613,7 +612,7 @@ void ConsoleViewImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, 
 
 void ConsoleViewImpl::update(Message& msg)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::update", this));
+    TRACEFUN(this, "ConsoleViewImpl::update");
     Glib::RefPtr<Gdk::Window> window = get_window();
     if (window)
     {
@@ -654,7 +653,7 @@ void ConsoleViewImpl::update(Message& msg)
 
 void ConsoleViewImpl::enableScale(bool value)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::enableScale", this), "value=%d", value);
+    TRACEFUN(this, "ConsoleViewImpl::enableScale(%d)", value);
     int width = 0, height = 0;
     if (_fbMgr.setScaleEnabled(value, width, height))
     {
@@ -671,14 +670,14 @@ void ConsoleViewImpl::enableScaleByThreads(bool value)
 
 void ConsoleViewImpl::onContainerResized(int cx, int cy)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::onContainerResized", this), "cx=%d cy=%d", cx, cy);
+    TRACEFUN(this, "ConsoleViewImpl::onContainerResized(%d,%d)", cx, cy);
     _fbMgr.setContainerSize(cx, cy);
 }
 
 
 void ConsoleViewImpl::onContainerResized(Gtk::ScrolledWindow& sw)
 {
-    TRACE(StringBuffer().format("ConsoleViewImpl@%zx::onContainerResized", this));
+    TRACEFUN(this, "ConsoleViewImpl::onContainerResized");
     int cx = sw.get_width() - 2;
     int cy = sw.get_height() - 2;
     onContainerResized(cx, cy);

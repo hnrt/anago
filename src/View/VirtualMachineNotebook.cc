@@ -43,7 +43,7 @@ VirtualMachineNotebook::VirtualMachineNotebook(const RefPtr<VirtualMachine>& vm)
     , _lastPowerState(XEN_VM_POWER_STATE_UNDEFINED)
     , _updating(false)
 {
-    Trace trace(StringBuffer().format("VirtualMachineNotebook@%zx::ctor", this), "name=\"%s\"", vm->getName().c_str());
+    TRACEFUN(this, "VirtualMachineNotebook::ctor(%s)", vm->getName().c_str());
 
     append_page(_propertyView, Glib::ustring(gettext("Properties")));
 
@@ -159,7 +159,7 @@ VirtualMachineNotebook::VirtualMachineNotebook(const RefPtr<VirtualMachine>& vm)
 
 VirtualMachineNotebook::~VirtualMachineNotebook()
 {
-    Trace trace(StringBuffer().format("VirtualMachineNotebook@%zx::dtor", this));
+    TRACEFUN(this, "VirtualMachineNotebook::dtor");
 
     closeConsole();
 

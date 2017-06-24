@@ -24,7 +24,7 @@ SizeInBytesBox::SizeInBytesBox()
     : _unit(1)
     , _text("1")
 {
-    TRACE(StringBuffer().format("SizeInBytesBox@%zx::ctor", this));
+    TRACEPUT(this, "SizeInBytesBox::ctor");
 
     _spinButton.set_digits(0);
     _spinButton.set_increments(SPIN_STEP, SPIN_PAGE);
@@ -51,13 +51,13 @@ SizeInBytesBox::SizeInBytesBox()
 
 SizeInBytesBox::~SizeInBytesBox()
 {
-    TRACE(StringBuffer().format("SizeInBytesBox@%zx::dtor", this));
+    TRACEPUT(this, "SizeInBytesBox::dtor");
 }
 
 
 void SizeInBytesBox::initStore()
 {
-    TRACE(StringBuffer().format("SizeInBytesBox@%zx::initStore", this));
+    TRACEPUT(this, "SizeInBytesBox::initStore");
     Gtk::TreeModel::Row row = *_store->append();
     row[_record.colName] = Glib::ustring(gettext("Bytes"));
     row[_record.colValue] = 1L;
@@ -78,7 +78,8 @@ void SizeInBytesBox::initStore()
 
 void SizeInBytesBox::onUnitChanged()
 {
-    TRACE(StringBuffer().format("SizeInBytesBox@%zx::onUnitChanged", this), "unit=%zd", _unit);
+    TRACEPUT(this, "SizeInBytesBox::onUnitChanged");
+    TRACEPUT("unit=%zd", _unit);
     Gtk::TreeIter iter = _unitCombo.get_active();
     if (iter)
     {
@@ -135,7 +136,7 @@ void SizeInBytesBox::onUnitChanged()
 
 void SizeInBytesBox::setValue(int64_t value, bool round)
 {
-    TRACE(StringBuffer().format("SizeInBytesBox@%zx::setValue", this), "value=%zd round=%d", value, round);
+    TRACEPUT(this, "SizeInBytesBox::setValue(%zd,%d)", value, round);
     if (round)
     {
         int64_t u = 1;
@@ -179,7 +180,7 @@ void SizeInBytesBox::setValue(int64_t value, bool round)
 
 int64_t SizeInBytesBox::getValue()
 {
-    TRACE(StringBuffer().format("SizeInBytesBox@%zx::getValue", this));
+    TRACEPUT(this, "SizeInBytesBox::getValue");
     int64_t value;
     if (_unit == 1)
     {
@@ -221,8 +222,9 @@ int64_t SizeInBytesBox::getValue()
 
 void SizeInBytesBox::onNumChanged()
 {
+    TRACEPUT(this, "SizeInBytesBox::onNumChanged");
     Glib::ustring num = _numEntry.get_text();
-    TRACE(StringBuffer().format("SizeInBytesBox@%zx::onNumChanged", this), "num=%s", num.c_str());
+    TRACEPUT("num=%s", num.c_str());
     char* stop = NULL;
     int64_t value = strtoul(num.c_str(), &stop, 10);
     if (!*stop

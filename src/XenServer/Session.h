@@ -37,6 +37,7 @@ namespace hnrt
         const XenObjectStore& getStore() const { return *_objectStore; }
         XenObjectStore& getStore() { return *_objectStore; }
         bool operator ==(const Session&) const;
+        bool operator !=(const Session&) const;
         void setMonitoring(bool value) { _monitoring = value; }
         const char* url() const { return _url.c_str(); }
 

@@ -122,7 +122,7 @@ void ControllerImpl::connect()
 
 void ControllerImpl::connectInBackground(RefPtr<Host> host)
 {
-    Trace trace("ControllerImpl::connectInBackground", "host=%s", host->getSession().getConnectSpec().hostname.c_str());
+    Trace trace(NULL, "ControllerImpl::connectInBackground(%s)", host->getSession().getConnectSpec().hostname.c_str());
     Session& session = host->getSession();
     RefPtr<PerformanceMonitor> performanceMonitor = PerformanceMonitor::create(session);
     session.getStore().setPerformanceMonitor(performanceMonitor);
@@ -339,7 +339,7 @@ void ControllerImpl::connectInBackground(RefPtr<Host> host)
 
 void ControllerImpl::performanceMonitorInBackground(RefPtr<PerformanceMonitor> performanceMonitor)
 {
-    Trace trace("ControllerImpl::performanceMonitorInBackground");
+    Trace trace(NULL, "ControllerImpl::performanceMonitorInBackground");
     performanceMonitor->run();
 }
 
@@ -371,7 +371,7 @@ void ControllerImpl::disconnect(const RefPtr<Host>& host)
 
 void ControllerImpl::disconnectInBackground(RefPtr<Host> host)
 {
-    Trace trace("ControllerImpl::disconnectInBackground", "host=%s", host->getSession().getConnectSpec().hostname.c_str());
+    Trace trace(NULL, "ControllerImpl::disconnectInBackground(%s)", host->getSession().getConnectSpec().hostname.c_str());
     XenObject::Busy busy(*host);
     host->onDisconnectPending();
     Session& session = host->getSession();

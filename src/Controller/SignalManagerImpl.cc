@@ -13,14 +13,14 @@ using namespace hnrt;
 
 SignalManagerImpl::SignalManagerImpl()
 {
-    TRACE("SignalManagerImpl::ctor");
+    TRACEFUN(NULL, "SignalManagerImpl::ctor");
     _dispatcher.connect(sigc::mem_fun(*this, &SignalManagerImpl::onNotify));
 }
 
 
 SignalManagerImpl::~SignalManagerImpl()
 {
-    TRACE("SignalManagerImpl::dtor");
+    TRACEFUN(NULL, "SignalManagerImpl::dtor");
 }
 
 
@@ -53,7 +53,7 @@ inline bool SignalManagerImpl::dequeue(RefPtr<XenObject>& object, int& notificat
 
 void SignalManagerImpl::clear()
 {
-    TRACE("SignalManagerImpl::clear");
+    TRACEFUN(NULL, "SignalManagerImpl::clear");
     if (ThreadManager::instance().isMain())
     {
         _notificationXenObjectSignalMap.clear();
@@ -73,7 +73,7 @@ void SignalManagerImpl::clear()
 
 SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(int notification)
 {
-    TRACE("SignalManagerImpl::xenObjectSignal", "notification=%s", GetNotificationText(notification));
+    TRACE("SignalManagerImpl::xenObjectSignal(%s)", GetNotificationText(notification));
     if (ThreadManager::instance().isMain())
     {
         NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
@@ -94,7 +94,7 @@ SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(int notificati
 
 SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(const XenObject& object)
 {
-    TRACE("SignalManagerImpl::xenObjectSignal", "object=%zx", &object);
+    TRACE("SignalManagerImpl::xenObjectSignal(%s)", XenObjectText(object).ptr);
     if (ThreadManager::instance().isMain())
     {
         void* key = const_cast<XenObject*>(&object);
@@ -116,7 +116,7 @@ SignalManager::XenObjectSignal SignalManagerImpl::xenObjectSignal(const XenObjec
 
 void SignalManagerImpl::notify(const RefPtr<XenObject>& object, int notification)
 {
-    TRACE("SignalManagerImpl::notify", "%s@%zx %s", GetXenObjectTypeText(*object), object.ptr(), GetNotificationText(notification));
+    TRACEFUN(NULL, "SignalManagerImpl::notify(%s@%zx,%s)", GetXenObjectTypeText(*object), object.ptr(), GetNotificationText(notification));
     enqueue(object, notification);
     _dispatcher();
 }
@@ -124,31 +124,45 @@ void SignalManagerImpl::notify(const RefPtr<XenObject>& object, int notification
 
 void SignalManagerImpl::onNotify()
 {
-    TRACE("SignalManagerImpl::onNotify");
     RefPtr<XenObject> object;
     int notification;
     if (dequeue(object, notification))
     {
-        TRACEPUT("%s@%zx %s", GetXenObjectTypeText(*object), object.ptr(), GetNotificationText(notification));
-        {
-            XenObjectSignalMap::iterator iter = _xenObjectSignalMap.find(object.ptr());
-            if (iter != _xenObjectSignalMap.end())
-            {
-                iter->second.emit(object, notification);
-                if (notification == XenObject::DESTROYED)
-                {
-                    _xenObjectSignalMap.erase(iter);
-                }
-                return;
-            }
-        }
+        int hit = 0;
+        XenObjectSignal sig1, sig2;
         {
             NotificationXenObjectSignalMap::iterator iter = _notificationXenObjectSignalMap.find(notification);
             if (iter != _notificationXenObjectSignalMap.end())
             {
-                iter->second.emit(object, notification);
-                return;
+                sig1 = iter->second;
+                hit++;
             }
+        }
+        {
+            XenObjectSignalMap::iterator iter = _xenObjectSignalMap.find(object.ptr());
+            if (iter != _xenObjectSignalMap.end())
+            {
+                sig2 = iter->second;
+                hit++;
+                if (notification == XenObject::DESTROYED)
+                {
+                    _xenObjectSignalMap.erase(iter);
+                }
+            }
+        }
+        if (!sig1.empty())
+        {
+            TRACEFUN(NULL, "SignalManagerImpl::onNotify(%s,*%s*)%s", XenObjectText(*object).ptr, GetNotificationText(notification), hit == 2 ? "[1/2]" : "");
+            sig1.emit(object, notification);
+        }
+        if (!sig2.empty())
+        {
+            TRACEFUN(NULL, "SignalManagerImpl::onNotify(*%s*,%s)%s", XenObjectText(*object).ptr, GetNotificationText(notification), hit == 2 ? "[2/2]" : "");
+            sig2.emit(object, notification);
+        }
+        if (!hit)
+        {
+            TRACE("SignalManagerImpl::onNotify(%s,%s): No callback.", XenObjectText(*object).ptr, GetNotificationText(notification));
         }
     }
 }

@@ -88,13 +88,13 @@ ConsoleImpl::ConsoleImpl(ConsoleView& view)
     , _rectIndex(0)
     , _fbUpdateCount(0)
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::ctor", this));
+    TRACEFUN(this, "ConsoleImpl::ctor");
 }
 
 
 ConsoleImpl::~ConsoleImpl()
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::dtor", this));
+    TRACEFUN(this, "ConsoleImpl::dtor");
 }
 
 
@@ -162,7 +162,7 @@ inline bool ConsoleImpl::isServerNotResponding() const
 
 void ConsoleImpl::open(const char* location, const char* authorization)
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::open", this));
+    TRACEFUN(this, "ConsoleImpl::open");
 
     try
     {
@@ -191,7 +191,7 @@ void ConsoleImpl::open(const char* location, const char* authorization)
 
 void ConsoleImpl::close()
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::close", this));
+    TRACEFUN(this, "ConsoleImpl::close");
 
     if (InterlockedExchange(&_state, STATE_CLOSED) != STATE_CLOSED)
     {
@@ -202,7 +202,7 @@ void ConsoleImpl::close()
 
 void ConsoleImpl::run()
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::run", this));
+    TRACEFUN(this, "ConsoleImpl::run");
 
     Glib::Thread* rx = NULL;
     Glib::Thread* tx = NULL;
@@ -267,7 +267,7 @@ void ConsoleImpl::run()
 
 void ConsoleImpl::rxMain()
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::rxMain", this));
+    TRACEFUN(this, "ConsoleImpl::rxMain");
     try
     {
         Glib::Mutex::Lock lock(_mutexRx);
@@ -324,7 +324,7 @@ void ConsoleImpl::rxMain()
 
 void ConsoleImpl::txMain()
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::txMain", this));
+    TRACEFUN(this, "ConsoleImpl::txMain");
     try
     {
         Glib::Mutex::Lock lock(_mutexTx);
@@ -338,11 +338,11 @@ void ConsoleImpl::txMain()
                 }
                 else if (canSend())
                 {
-                    TRACE("send ready.");
+                    TRACEPUT("send ready.");
                 }
                 else
                 {
-                    TRACE("send not ready.");
+                    TRACEPUT("send not ready.");
                 }
             }
             else
@@ -382,7 +382,7 @@ void ConsoleImpl::terminate()
 
 void ConsoleImpl::processIncomingData()
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::processIncomingData", this));
+    TRACEFUN(this, "ConsoleImpl::processIncomingData");
 
     try
     {
@@ -651,7 +651,7 @@ void ConsoleImpl::processIncomingData()
 
 bool ConsoleImpl::processOutgoingData()
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::processOutgoingData", this));
+    TRACEFUN(this, "ConsoleImpl::processOutgoingData");
 
     try
     {
@@ -830,7 +830,7 @@ bool ConsoleImpl::processOutgoingData()
 
 void ConsoleImpl::sendPointerEvent(unsigned char buttonMask, unsigned short x, unsigned short y)
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::sendPointerEvent", this));
+    TRACEFUN(this, "ConsoleImpl::sendPointerEvent");
 
     if (STATE_INTERACTION_PHASE <= _state && _state < STATE_COMPLETED)
     {
@@ -1148,7 +1148,7 @@ static const guint keycodeToScancode[256] =
 
 void ConsoleImpl::sendKeyEvent(unsigned char downFlag, unsigned int keyval, unsigned int keycode)
 {
-    TRACE(StringBuffer().format("ConsoleImpl@%zx::sendKeyEvent", this));
+    TRACEFUN(this, "ConsoleImpl::sendKeyEvent");
 
     if (STATE_INTERACTION_PHASE <= _state && _state < STATE_COMPLETED)
     {

@@ -6,7 +6,6 @@
 #include <string.h>
 #include <libxml/parser.h>
 #include "Base/Atomic.h"
-#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Protocol/HttpClient.h"
 #include "Api.h"
@@ -89,8 +88,7 @@ Session::Session(const ConnectSpec& cs)
     , _objectStore(new XenObjectStore)
     , _monitoring(false)
 {
-    Trace trace(StringBuffer().format("Session@%zx::ctor", this),
-                "display=%s hostname=%s username=%s", cs.displayname.c_str(), cs.hostname.c_str(), cs.username.c_str());
+    Trace trace(this, "Session::ctor(%s,%s,%s)", cs.displayname.c_str(), cs.hostname.c_str(), cs.username.c_str());
 }
 
 
@@ -101,13 +99,13 @@ Session::Session()
     , _ptr(NULL)
     , _monitoring(false)
 {
-    Trace trace(StringBuffer().format("Session@%zx::ctor", this));
+    Trace trace(this, "Session::ctor");
 }
 
 
 Session::~Session()
 {
-    Trace trace(StringBuffer().format("Session@%zx::dtor", this));
+    Trace trace(this, "Session::dtor");
     if (_state != NONE)
     {
         disconnect();
@@ -124,7 +122,7 @@ bool Session::isConnected() const
 
 bool Session::connect()
 {
-    Trace trace(StringBuffer().format("Session@%zx::connect", this));
+    Trace trace(this, "Session::connect");
     int state = InterlockedCompareExchange(&_state, PRIMARY_PENDING, NONE);
     if (state != NONE)
     {
@@ -162,7 +160,7 @@ bool Session::connect()
 
 bool Session::connect(const Session& other)
 {
-    Trace trace(StringBuffer().format("Session@%zx::connect", this), "other=%zx", &other);
+    Trace trace(this, "Session::connect(%zx)", &other);
     int state = InterlockedCompareExchange(&_state, SECONDARY_PENDING, NONE);
     if (state != NONE)
     {
@@ -205,7 +203,7 @@ bool Session::connect(const Session& other)
 
 bool Session::disconnect()
 {
-    Trace trace(StringBuffer().format("Session@%zx::disconnect", this));
+    Trace trace(this, "Session::disconnect");
     bool retval = false;
     switch (InterlockedExchange((int32_t*)&_state, NONE))
     {
@@ -312,4 +310,10 @@ bool Session::operator ==(const Session& rhs) const
             _connectSpec.username == rhs._connectSpec.username &&
             _connectSpec.password == rhs._connectSpec.password;
     }
+}
+
+
+bool Session::operator !=(const Session& rhs) const
+{
+    return !operator ==(rhs);
 }

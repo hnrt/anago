@@ -2,7 +2,6 @@
 
 
 #include <libintl.h>
-#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "Session.h"
 #include "VirtualBlockDevice.h"
@@ -40,13 +39,13 @@ VirtualBlockDevice::VirtualBlockDevice(Session& session, xen_vbd handle, const X
     : XenObject(XenObject::VBD, session, handle, record->uuid, "VBD")
     , _record(record)
 {
-    Trace trace(StringBuffer().format("VBD@%zx::ctor", this));
+    Trace trace(this, "VBD::ctor");
 }
 
 
 VirtualBlockDevice::~VirtualBlockDevice()
 {
-    Trace trace(StringBuffer().format("VBD@%zx::dtor", this));
+    Trace trace(this, "VBD::dtor");
 }
 
 

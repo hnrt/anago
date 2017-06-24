@@ -24,13 +24,13 @@ HttpClientImpl::HttpClientImpl()
     , _status(0)
     , _contentLength(-1.0)
 {
-    TRACE(StringBuffer().format("HttpClientImpl@%zx::ctor", this));
+    TRACEFUN(this, "HttpClientImpl::ctor");
 }
 
 
 HttpClientImpl::~HttpClientImpl()
 {
-    TRACE(StringBuffer().format("HttpClientImpl@%zx::dtor", this));
+    TRACEFUN(this, "HttpClientImpl::dtor");
 
     if (_curl)
     {
@@ -41,7 +41,7 @@ HttpClientImpl::~HttpClientImpl()
 
 void HttpClientImpl::init()
 {
-    TRACE(StringBuffer().format("HttpClientImpl@%zx::init", this));
+    TRACEFUN(this, "HttpClientImpl::init");
 
     _curl = curl_easy_init();
     if (!_curl)
@@ -64,7 +64,7 @@ void HttpClientImpl::init()
 
 void HttpClientImpl::fini()
 {
-    TRACE(StringBuffer().format("HttpClientImpl@%zx::fini", this));
+    TRACEFUN(this, "HttpClientImpl::fini");
 
     _responseHeaderMap.clear();
     _responseBody.setLength(0);
@@ -86,28 +86,28 @@ void HttpClientImpl::fini()
 
 void HttpClientImpl::setTimeout(long timeout)
 {
-    TRACE1("HttpClientImpl@%zx: TIMEOUT=%ld", this, timeout);
+    TRACE("HttpClientImpl@%zx: TIMEOUT=%ld", this, timeout);
     _timeout = (timeout > 0) ? timeout : 0;
 }
 
 
 void HttpClientImpl::setMaxConnects(int count)
 {
-    TRACE1("HttpClientImpl@%zx: MAXCONNECTS=%d", this, count);
+    TRACE("HttpClientImpl@%zx: MAXCONNECTS=%d", this, count);
     curl_easy_setopt(_curl, CURLOPT_MAXCONNECTS, static_cast<long>(count));
 }
 
 
 void HttpClientImpl::setFreshConnect(bool enabled)
 {
-    TRACE1("HttpClientImpl@%zx: FRESH_CONNECT=%d", this, enabled ? 1 : 0);
+    TRACE("HttpClientImpl@%zx: FRESH_CONNECT=%d", this, enabled ? 1 : 0);
     curl_easy_setopt(_curl, CURLOPT_FRESH_CONNECT, enabled ? 1L : 0L);
 }
 
 
 void HttpClientImpl::setForbidReuse(bool enabled)
 {
-    TRACE1("HttpClientImpl@%zx: FORBID_REUSE=%d", this, enabled ? 1 : 0);
+    TRACE("HttpClientImpl@%zx: FORBID_REUSE=%d", this, enabled ? 1 : 0);
     curl_easy_setopt(_curl, CURLOPT_FORBID_REUSE, enabled ? 1L : 0L);
 }
 
@@ -116,12 +116,12 @@ void HttpClientImpl::setHttpVersion(const char* version)
 {
     if (!strcmp(version, "1.1"))
     {
-        TRACE1("HttpClientImpl@%zx: HTTP_VERSION=1.1", this);
+        TRACE("HttpClientImpl@%zx: HTTP_VERSION=1.1", this);
         curl_easy_setopt(_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
     }
     else if (!strcmp(version, "1.0"))
     {
-        TRACE1("HttpClientImpl@%zx: HTTP_VERSION=1.0", this);
+        TRACE("HttpClientImpl@%zx: HTTP_VERSION=1.0", this);
         curl_easy_setopt(_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
     }
     else
@@ -133,7 +133,7 @@ void HttpClientImpl::setHttpVersion(const char* version)
 
 void HttpClientImpl::setUrl(const char* url)
 {
-    TRACE1("HttpClientImpl@%zx: URL=%s", this, url);
+    TRACE("HttpClientImpl@%zx: URL=%s", this, url);
     curl_easy_setopt(_curl, CURLOPT_URL, url);
 }
 
@@ -143,14 +143,14 @@ void HttpClientImpl::setMethod(Method method)
     switch (method)
     {
     case GET:
-        TRACE1("HttpClientImpl@%zx: GET", this);
+        TRACE("HttpClientImpl@%zx: GET", this);
         break;
     case PUT:
-        TRACE1("HttpClientImpl@%zx: PUT", this);
+        TRACE("HttpClientImpl@%zx: PUT", this);
         curl_easy_setopt(_curl, CURLOPT_PUT, 1L);
         break;
     case POST:
-        TRACE1("HttpClientImpl@%zx: POST", this);
+        TRACE("HttpClientImpl@%zx: POST", this);
         curl_easy_setopt(_curl, CURLOPT_POST, 1L);
         break;
     default:
@@ -161,7 +161,7 @@ void HttpClientImpl::setMethod(Method method)
 
 void HttpClientImpl::setCredentials(const char* username, const char* password)
 {
-    TRACE1("HttpClientImpl@%zx: username=%s password=%s", this, username, password);
+    TRACE("HttpClientImpl@%zx: username=%s password=%s", this, username, password);
     curl_easy_setopt(_curl, CURLOPT_USERNAME, username);
     curl_easy_setopt(_curl, CURLOPT_PASSWORD, password);
 }
@@ -169,7 +169,7 @@ void HttpClientImpl::setCredentials(const char* username, const char* password)
 
 void HttpClientImpl::setPost(const void* data, size_t size)
 {
-    TRACE1("HttpClientImpl@%zx: POST %'zu %s", this, size, (const char*)data);
+    TRACE("HttpClientImpl@%zx: POST %'zu %s", this, size, (const char*)data);
     curl_easy_setopt(_curl, CURLOPT_POST, 1L);
     curl_easy_setopt(_curl, CURLOPT_POSTFIELDS, data);
     curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, size);
@@ -178,14 +178,14 @@ void HttpClientImpl::setPost(const void* data, size_t size)
 
 void HttpClientImpl::followLocation()
 {
-    TRACE1("HttpClientImpl@%zx: FOLLOWLOCATION=1", this);
+    TRACE("HttpClientImpl@%zx: FOLLOWLOCATION=1", this);
     curl_easy_setopt(_curl, CURLOPT_FOLLOWLOCATION, 1L);
 }
 
 
 void HttpClientImpl::setUpload(size_t nbytes)
 {
-    TRACE1("HttpClientImpl@%zx: UPLOAD size=%'zu", this, nbytes);
+    TRACE("HttpClientImpl@%zx: UPLOAD size=%'zu", this, nbytes);
     curl_easy_setopt(_curl, CURLOPT_UPLOAD, 1L);
     curl_easy_setopt(_curl, CURLOPT_INFILESIZE_LARGE, static_cast<curl_off_t>(nbytes));
 }
@@ -193,7 +193,7 @@ void HttpClientImpl::setUpload(size_t nbytes)
 
 void HttpClientImpl::removeHeader(const char* header)
 {
-    TRACE1("HttpClientImpl@%zx::removeHeader(%s)", this, header);
+    TRACE("HttpClientImpl@%zx::removeHeader(%s)", this, header);
     const char* colon = strchr(header, ':');
     _headers = curl_slist_append(_headers, colon && !colon[1] ? header : StringBuffer().format("%s:", header).str());
 }
@@ -207,14 +207,14 @@ void HttpClientImpl::removeExpectHeader()
 
 void HttpClientImpl::setTcpNoDelay(bool enabled)
 {
-    TRACE1("HttpClientImpl@%zx: TCP_NODELAY=%d", this, enabled ? 1 : 0);
+    TRACE("HttpClientImpl@%zx: TCP_NODELAY=%d", this, enabled ? 1 : 0);
     curl_easy_setopt(_curl, CURLOPT_TCP_NODELAY, enabled ? 1L : 0L);
 }
 
 
 void HttpClientImpl::setVerbose(bool enabled)
 {
-    TRACE1("HttpClientImpl@%zx: VERBOSE=%d", this, enabled ? 1 : 0);
+    TRACE("HttpClientImpl@%zx: VERBOSE=%d", this, enabled ? 1 : 0);
     curl_easy_setopt(_curl, CURLOPT_VERBOSE, enabled ? 1L : 0L);
     curl_easy_setopt(_curl, CURLOPT_STDERR, stderr);
 }
@@ -222,7 +222,7 @@ void HttpClientImpl::setVerbose(bool enabled)
 
 bool HttpClientImpl::run(HttpClientHandler& handler)
 {
-    TRACE(StringBuffer().format("HttpClientImpl@%zx::run", this));
+    TRACEFUN(this, "HttpClientImpl::run");
 
     _handler = &handler;
     _expiry.now().addMilliseconds(_timeout);
@@ -315,7 +315,7 @@ bool HttpClientImpl::timedOut() const
 
 curlioerr HttpClientImpl::ioControl(CURL* handle, curliocmd cmd, HttpClientImpl* pThis)
 {
-    TRACE(StringBuffer().format("HttpClientImpl::ioControl@%zx", pThis), "cmd=%d", (int)cmd);
+    TRACEFUN(pThis, "HttpClientImpl::ioControl(%d)", (int)cmd);
 
     (void)handle;
 
@@ -335,7 +335,7 @@ curlioerr HttpClientImpl::ioControl(CURL* handle, curliocmd cmd, HttpClientImpl*
 
 size_t HttpClientImpl::receiveData(void* ptr, size_t size, size_t nmemb, HttpClientImpl* pThis)
 {
-    TRACE(StringBuffer().format("HttpClientImpl@%zx::receiveData", pThis), "size=%zu nmemb=%zu", size, nmemb);
+    TRACEFUN(pThis, "HttpClientImpl::receiveData(size=%zu,nmemb=%zu)", size, nmemb);
 
     if (pThis->timedOut())
     {
@@ -377,7 +377,7 @@ size_t HttpClientImpl::receiveData(void* ptr, size_t size, size_t nmemb, HttpCli
 
 size_t HttpClientImpl::sendData(void* ptr, size_t size, size_t nmemb, HttpClientImpl* pThis)
 {
-    TRACE(StringBuffer().format("HttpClientImpl@%zx::sendData", pThis), "size=%zu nmemb=%zu", size, nmemb);
+    TRACEFUN(pThis, "HttpClientImpl::sendData(size=%zu,nmemb=%zu)", size, nmemb);
 
     if (pThis->timedOut())
     {
@@ -451,7 +451,7 @@ int HttpClientImpl::getSocket()
 
 int HttpClientImpl::canRecv(long timeoutInMilliseconds)
 {
-    TRACE(StringBuffer().format("HttpClientImpl@%zx::canRecv", this), "timeout=%ld", timeoutInMilliseconds);
+    TRACEFUN(this, "HttpClientImpl::canRecv(%ld)", timeoutInMilliseconds);
     if (_socket < 0 && getSocket() < 0)
     {
         TRACEPUT("return=-1 (Socket unavailable.)");
@@ -479,7 +479,7 @@ int HttpClientImpl::canRecv(long timeoutInMilliseconds)
 
 int HttpClientImpl::canSend(long timeoutInMilliseconds)
 {
-    TRACE(StringBuffer().format("HttpClientImpl@%zx::canSend", this), "timeout=%ld", timeoutInMilliseconds);
+    TRACEFUN(this, "HttpClientImpl::canSend(%ld)", timeoutInMilliseconds);
     if (_socket < 0 && getSocket() < 0)
     {
         TRACEPUT("return=-1 (Socket unavailable.)");
@@ -602,7 +602,7 @@ inline static bool isTokenChar(int c)
 
 static bool ParseResponse(int c, int& state, HttpClientImpl::Response& response)
 {
-    TRACE1(c >= SP ? "ParseRespose(c=%c state=%d)" : "ParseRespose(c=0x%02x state=%d)", c, state);
+    TRACE(c >= SP ? "ParseRespose(c=%c state=%d)" : "ParseRespose(c=0x%02x state=%d)", c, state);
     switch (state)
     {
     case 0:
@@ -817,7 +817,7 @@ static bool ParseResponse(int c, int& state, HttpClientImpl::Response& response)
 
 bool HttpClientImpl::recvResponse()
 {
-    TRACE(StringBuffer().format("HttpClientImpl@%zx::recvResponse", this).str());
+    TRACEFUN(this, "HttpClientImpl::recvResponse");
     int state = 0;
     HttpClientImpl::Response response(*this);
     while (state < 40)

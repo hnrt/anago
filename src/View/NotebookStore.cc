@@ -13,14 +13,14 @@ using namespace hnrt;
 
 NotebookStore::NotebookStore()
 {
-    Trace trace("NotebookStore::ctor");
+    TRACEFUN(this, "NotebookStore::ctor");
 }
 
 
 NotebookStore::~NotebookStore()
 {
-    Trace trace("NotebookStore::dtor");
-    trace.put("size=%zu", size());
+    TRACEFUN(this, "NotebookStore::dtor");
+    TRACEPUT("size=%zu", size());
 }
 
 

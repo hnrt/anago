@@ -167,7 +167,7 @@ void ControllerImpl::addVm()
 
 void ControllerImpl::addVmInBackground(RefPtr<Host> host, VirtualMachineSpec spec)
 {
-    Trace trace("ControllerImpl::addVmInBackground");
+    Trace trace(NULL, "ControllerImpl::addVmInBackground");
     XenObject::Busy busy(*host);
     try
     {
@@ -222,7 +222,7 @@ void ControllerImpl::copyVm()
 
 void ControllerImpl::cloneVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustring label)
 {
-    Trace trace("ControllerImpl::cloneVmInBackground");
+    Trace trace(NULL, "ControllerImpl::cloneVmInBackground");
     XenObject::Busy busy(*vm);
     try
     {
@@ -240,7 +240,7 @@ void ControllerImpl::cloneVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustrin
 
 void ControllerImpl::copyVmInBackground(RefPtr<VirtualMachine> vm, Glib::ustring label, Glib::ustring srREFID)
 {
-    Trace trace("ControllerImpl::copyVmInBackground");
+    Trace trace(NULL, "ControllerImpl::copyVmInBackground");
     XenObject::Busy busy(*vm);
     try
     {
@@ -725,11 +725,11 @@ void ControllerImpl::changeSnapshotName()
 
 void ControllerImpl::snapshotVm()
 {
-    TRACE("ControllerImpl::snapshotVm");
+    Trace trace(NULL, "ControllerImpl::snapshotVm");
     RefPtr<VirtualMachine> vm = Model::instance().getSelectedVm();
     if (!vm || vm->isBusy())
     {
-        TRACEPUT(vm ? "Selected VM is busy." : "No selected VM.");
+        trace.put(vm ? "Selected VM is busy." : "No selected VM.");
         return;
     }
     schedule(sigc::bind<RefPtr<VirtualMachine> >(sigc::mem_fun(*this, &ControllerImpl::snapshotVmInBackground), vm));
@@ -738,7 +738,7 @@ void ControllerImpl::snapshotVm()
 
 void ControllerImpl::snapshotVmInBackground(RefPtr<VirtualMachine> vm)
 {
-    TRACE("ControllerImpl::snapshotVmInBackground");
+    Trace trace(NULL, "ControllerImpl::snapshotVmInBackground");
     XenObject::Busy busy(*vm);
     Session& session = vm->getSession();
     Session::Lock lock(session);
@@ -752,11 +752,11 @@ void ControllerImpl::snapshotVmInBackground(RefPtr<VirtualMachine> vm)
 
 void ControllerImpl::revertVm()
 {
-    TRACE("ControllerImpl::revertVm");
+    Trace trace(NULL, "ControllerImpl::revertVm");
     RefPtr<VirtualMachine> vm = Model::instance().getSelectedSnapshot();
     if (!vm  || vm->isBusy())
     {
-        TRACEPUT(vm ? "Selected snapshot is busy." : "No selected snapshot.");
+        trace.put(vm ? "Selected snapshot is busy." : "No selected snapshot.");
         return;
     }
     XenPtr<xen_vm_record> record = vm->getRecord();
@@ -764,7 +764,7 @@ void ControllerImpl::revertVm()
     RefPtr<VirtualMachine> src = session.getStore().getVm(record->snapshot_of);
     if (!src || src->isBusy())
     {
-        TRACEPUT(src ? "Selected snapshot source is busy." : "No selected snapshot source.");
+        trace.put(src ? "Selected snapshot source is busy." : "No selected snapshot source.");
         return;
     }
     schedule(sigc::bind<RefPtr<VirtualMachine> >(sigc::mem_fun(*this, &ControllerImpl::revertVmInBackground), vm));
@@ -773,7 +773,7 @@ void ControllerImpl::revertVm()
 
 void ControllerImpl::revertVmInBackground(RefPtr<VirtualMachine> vm)
 {
-    TRACE("ControllerImpl::revertVmInBackground");
+    Trace trace(NULL, "ControllerImpl::revertVmInBackground");
     Session& session = vm->getSession();
     XenPtr<xen_vm_record> record = vm->getRecord();
     RefPtr<VirtualMachine> src = session.getStore().getVm(record->snapshot_of);
@@ -789,11 +789,11 @@ void ControllerImpl::revertVmInBackground(RefPtr<VirtualMachine> vm)
 
 void ControllerImpl::deleteSnapshot()
 {
-    TRACE("ControllerImpl::deleteSnapshot");
+    Trace trace(NULL, "ControllerImpl::deleteSnapshot");
     RefPtr<VirtualMachine> vm = Model::instance().getSelectedSnapshot();
     if (!vm  || vm->isBusy())
     {
-        TRACEPUT(vm ? "Selected snapshot is busy." : "No selected snapshot.");
+        trace.put(vm ? "Selected snapshot is busy." : "No selected snapshot.");
         return;
     }
     std::list<Glib::ustring> disks;

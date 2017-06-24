@@ -39,7 +39,7 @@ MainWindow::MainWindow()
     , _height(0)
     , _windowState((GdkWindowState)0)
 {
-    Trace trace("MainWindow::ctor");
+    Trace trace(NULL, "MainWindow::ctor");
 
     initStockItems();
 
@@ -316,7 +316,7 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
-    Trace trace("MainWindow::dtor");
+    Trace trace(NULL, "MainWindow::dtor");
 
     _connObjectCreated.disconnect();
 }
@@ -751,7 +751,7 @@ void MainWindow::setPane1Width(int cx)
 
 void MainWindow::clear()
 {
-    Trace trace("MainWindow::clear");
+    Trace trace(NULL, "MainWindow::clear");
     _hostTreeView.clear();
     _defaultNotebook.reset();
     _currentNotebook.reset();

@@ -20,7 +20,7 @@ using namespace hnrt;
 
 void ControllerImpl::browsePatchPage(const Glib::ustring& uuid)
 {
-    TRACE("ControllerImpl::browsePatchPage", "uuid=%s", uuid.c_str());
+    Trace trace(NULL, "ControllerImpl::browsePatchPage(%s)", uuid.c_str());
     RefPtr<Host> host = Model::instance().getSelectedHost();
     if (!host)
     {
@@ -45,7 +45,7 @@ void ControllerImpl::browsePatchPage(const Glib::ustring& uuid)
 
 void ControllerImpl::downloadPatch(const Glib::ustring& uuid)
 {
-    TRACE("ControllerImpl::downloadPatch", "uuid=%s", uuid.c_str());
+    Trace trace(NULL, "ControllerImpl::downloadPatch(%s)", uuid.c_str());
     RefPtr<Host> host = Model::instance().getSelectedHost();
     if (!host)
     {
@@ -62,7 +62,7 @@ void ControllerImpl::downloadPatch(const Glib::ustring& uuid)
 
 void ControllerImpl::downloadPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecord> patchRecord)
 {
-    TRACE("ControllerImpl::downloadPatchInBackground");
+    Trace trace(NULL, "ControllerImpl::downloadPatchInBackground");
     patchRecord->state = PatchState::DOWNLOAD_INPROGRESS;
     host->emit(XenObject::RECORD_UPDATED);
     Glib::ustring dir = Model::instance().getAppDir();
@@ -78,7 +78,7 @@ void ControllerImpl::downloadPatchInBackground(RefPtr<Host> host, RefPtr<PatchRe
     {
         path = Glib::ustring::compose("%1%2.zip", dir, patchRecord->label);
     }
-    TRACEPUT("url=\"%s\" path=\"%s\"", patchRecord->patchUrl.c_str(), path.c_str());
+    trace.put("url=\"%s\" path=\"%s\"", patchRecord->patchUrl.c_str(), path.c_str());
     RefPtr<PatchDownloader> downloader = PatchDownloader::create();
     downloader->run(patchRecord->patchUrl, path);
     RefPtr<File> file = File::create(path.c_str());
@@ -119,7 +119,7 @@ void ControllerImpl::downloadPatchInBackground(RefPtr<Host> host, RefPtr<PatchRe
 
 void ControllerImpl::uploadPatch(const Glib::ustring& uuid)
 {
-    TRACE("ControllerImpl::uploadPatch", "uuid=%s", uuid.c_str());
+    Trace trace(NULL, "ControllerImpl::uploadPatch(%s)", uuid.c_str());
     RefPtr<Host> host = Model::instance().getSelectedHost();
     if (!host)
     {
@@ -137,7 +137,7 @@ void ControllerImpl::uploadPatch(const Glib::ustring& uuid)
 
 void ControllerImpl::uploadPatchInBackground(RefPtr<Patch> patch)
 {
-    TRACE("ControllerImpl::uploadPatchInBackground");
+    Trace trace(NULL, "ControllerImpl::uploadPatchInBackground(%s)", patch->getRecord()->uuid.c_str());
     patch->init();
     patch->upload();
     patch->fini();
@@ -146,7 +146,7 @@ void ControllerImpl::uploadPatchInBackground(RefPtr<Patch> patch)
 
 void ControllerImpl::applyPatch(const Glib::ustring& uuid)
 {
-    TRACE("ControllerImpl::applyPatch", "uuid=%s", uuid.c_str());
+    Trace trace(NULL, "ControllerImpl::applyPatch(%s)", uuid.c_str());
     RefPtr<Host> host = Model::instance().getSelectedHost();
     if (!host)
     {
@@ -164,7 +164,7 @@ void ControllerImpl::applyPatch(const Glib::ustring& uuid)
 
 void ControllerImpl::applyPatchInBackground(RefPtr<Patch> patch)
 {
-    TRACE("ControllerImpl::applyPatchInBackground");
+    Trace trace(NULL, "ControllerImpl::applyPatchInBackground(%s)", patch->getRecord()->uuid.c_str());
     patch->init();
     patch->apply();
     patch->fini();
@@ -173,7 +173,7 @@ void ControllerImpl::applyPatchInBackground(RefPtr<Patch> patch)
 
 void ControllerImpl::cleanPatch(const Glib::ustring& uuid)
 {
-    TRACE("ControllerImpl::cleanPatch", "uuid=%s", uuid.c_str());
+    Trace trace(NULL, "ControllerImpl::cleanPatch(%s)", uuid.c_str());
     RefPtr<Host> host = Model::instance().getSelectedHost();
     if (!host)
     {
@@ -190,7 +190,8 @@ void ControllerImpl::cleanPatch(const Glib::ustring& uuid)
 
 void ControllerImpl::cleanPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecord> patchRecord)
 {
-    TRACE("ControllerImpl::cleanPatchInBackground");
+    Trace trace(NULL, "ControllerImpl::cleanPatchInBackground(%s,%s)",
+                host->getSession().getConnectSpec().hostname.c_str(), patchRecord->uuid.c_str());
     patchRecord->state = PatchState::CLEAN_INPROGRESS;
     host->emit(XenObject::RECORD_UPDATED);
     XenObject::Busy busy(*host);

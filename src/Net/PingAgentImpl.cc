@@ -23,13 +23,13 @@ PingAgentImpl::PingAgentImpl()
     : _thread(NULL)
     , _interval(60)
 {
-    TRACE("PingAgentImpl::ctor");
+    TRACEFUN(this, "PingAgentImpl::ctor");
 }
 
 
 PingAgentImpl::~PingAgentImpl()
 {
-    TRACE("PingAgentImpl::dtor");
+    TRACEFUN(this, "PingAgentImpl::dtor");
     if (_thread)
     {
         close();
@@ -39,7 +39,7 @@ PingAgentImpl::~PingAgentImpl()
 
 void PingAgentImpl::open()
 {
-    TRACE("PingAgentImpl::open");
+    TRACEFUN(this, "PingAgentImpl::open");
     if (_thread)
     {
         return;
@@ -51,7 +51,7 @@ void PingAgentImpl::open()
 
 void PingAgentImpl::close()
 {
-    TRACE("PingAgentImpl::close");
+    TRACEFUN(this, "PingAgentImpl::close");
     if (!_thread)
     {
         return;
@@ -101,7 +101,7 @@ void PingAgentImpl::remove(const char* hostname)
 
 PingAgent::State PingAgentImpl::get(const char* hostname)
 {
-    TRACE("PingAgentImpl::get", "hostname=%s", hostname);
+    TRACEFUN(this, "PingAgentImpl::get(%s)", hostname);
     Glib::Mutex::Lock lock(_mutexRecords);
     for (std::list<Record>::iterator iter = _records.begin(); iter != _records.end(); iter++)
     {
@@ -130,7 +130,7 @@ void PingAgentImpl::append(const char* hostname)
 
 void PingAgentImpl::run()
 {
-    TRACE("PingAgentImpl::run");
+    TRACEFUN(this, "PingAgentImpl::run");
     Glib::Mutex::Lock lock(_mutexThread);
     while (!_stop)
     {
@@ -171,7 +171,7 @@ void PingAgentImpl::getHostnames(std::list<Glib::ustring>& hostnames)
 
 PingAgent::State PingAgentImpl::check(const char* hostname)
 {
-    TRACE("PingAgentImpl::check", "hostname=%s", hostname);
+    TRACEFUN(this, "PingAgentImpl::check(%s)", hostname);
 
     State result = UNKNOWN;
 

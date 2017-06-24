@@ -2,7 +2,6 @@
 
 
 #include <libintl.h>
-#include "Base/StringBuffer.h"
 #include "Controller/SignalManager.h"
 #include "Logger/Trace.h"
 #include "XenServer/Network.h"
@@ -125,7 +124,7 @@ void VirtualMachinePropertyView::onSelectionChanged()
 
 void VirtualMachinePropertyView::onUpdated(RefPtr<XenObject> object, int what)
 {
-    TRACE(StringBuffer().format("VirtualMachinePropertyView@%zx::onUpdated", this));
+    TRACEFUN(this, "VirtualMachinePropertyView::onUpdated");
 
     update();
 }

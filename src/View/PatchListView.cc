@@ -9,7 +9,9 @@
 #include "Logger/Trace.h"
 #include "Model/Model.h"
 #include "Model/PatchBase.h"
+#include "XenServer/Host.h"
 #include "XenServer/Patch.h"
+#include "XenServer/Session.h"
 #include "XenServer/XenObject.h"
 #include "PatchListView.h"
 #include "View.h"
@@ -18,7 +20,8 @@
 using namespace hnrt;
 
 
-PatchListView::PatchListView()
+PatchListView::PatchListView(const Host& host)
+    : _host(host)
 {
     _store = Gtk::ListStore::create(_record);
     set_model(_store);
@@ -192,8 +195,12 @@ Gtk::ScrolledWindow* PatchListView::createScrolledWindow()
 
 void PatchListView::onNotify(RefPtr<XenObject> object, int what)
 {
-    TRACE(StringBuffer().format("PatchListView@%zx::onNotify", this), "what=%s", GetNotificationText(what));
     RefPtr<Patch> patch = RefPtr<Patch>::castStatic(object);
+    if (patch->getSession() != _host.getSession())
+    {
+        return;
+    }
+    TRACEFUN(this, "PatchListView::onNotify(%s)", GetNotificationText(what));
     RefPtr<PatchRecord> patchRecord = patch->getRecord();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
     while (iter)

@@ -26,20 +26,20 @@ RefPtr<VirtualMachineVerifier> VirtualMachineVerifier::create()
 VirtualMachineVerifier::VirtualMachineVerifier()
     : VirtualMachinePorter(VM_VERIFIER, *(new Session), "VirtualMachineVerifier")
 {
-    TRACE("VirtualMachineVerifier::ctor");
+    TRACEFUN(this, "VirtualMachineVerifier::ctor");
 }
 
 
 VirtualMachineVerifier::~VirtualMachineVerifier()
 {
-    TRACE("VirtualMachineVerifier::dtor");
+    TRACEFUN(this, "VirtualMachineVerifier::dtor");
     _session.decRef();
 }
 
 
 void VirtualMachineVerifier::run(const char* path)
 {
-    TRACE("VirtualMachineVerifier::run", "path=\"%s\"", path);
+    TRACEFUN(this, "VirtualMachineVerifier::run(%s)", path);
 
     init(path);
 

@@ -28,19 +28,19 @@ RefPtr<VirtualMachineImporter> VirtualMachineImporter::create(Session& session)
 VirtualMachineImporter::VirtualMachineImporter(Session& session)
     : VirtualMachinePorter(VM_IMPORTER, session, "VirtualMachineImporter")
 {
-    TRACE("VirtualMachineImporter::ctor");
+    TRACEFUN(this, "VirtualMachineImporter::ctor");
 }
 
 
 VirtualMachineImporter::~VirtualMachineImporter()
 {
-    TRACE("VirtualMachineImporter::dtor");
+    TRACEFUN(this, "VirtualMachineImporter::dtor");
 }
 
 
 void VirtualMachineImporter::run(const char* path)
 {
-    TRACE("VirtualMachineImporter::run", "path=\"%s\"", path);
+    TRACEFUN(this, "VirtualMachineImporter::run(%s)", path);
 
     XenObject::Busy busy(_session);
 
@@ -130,7 +130,7 @@ void VirtualMachineImporter::init(const char* path)
 
 size_t VirtualMachineImporter::read(HttpClient& httpClient, void* ptr, size_t len)
 {
-    TRACE("VirtualMachineImporter::read", "ptr=%zx len=%zu", ptr, len);
+    TRACEFUN(this, "VirtualMachineImporter::read(%zx,%zu)", ptr, len);
 
     if (_abort)
     {

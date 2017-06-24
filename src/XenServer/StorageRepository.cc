@@ -50,13 +50,13 @@ StorageRepository::StorageRepository(Session& session, xen_sr handle, const XenP
     , _subType(GetSubType(record->type))
     , _record(record)
 {
-    Trace trace(StringBuffer().format("VM@%zx::ctor", this));
+    Trace trace(this, "SR::ctor");
 }
 
 
 StorageRepository::~StorageRepository()
 {
-    Trace trace(StringBuffer().format("VM@%zx::dtor", this));
+    Trace trace(this, "SR::dtor");
 }
 
 

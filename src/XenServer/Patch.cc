@@ -1,7 +1,6 @@
 // Copyright (C) 2017 Hideaki Narita
 
 
-#include "Base/StringBuffer.h"
 #include "File/File.h"
 #include "Logger/Trace.h"
 #include "Model/PatchRecord.h"
@@ -23,18 +22,19 @@ Patch::Patch(Session& session, const RefPtr<PatchRecord>& record)
     : XenObject(XenObject::PATCH, session, NULL, record->uuid.c_str(), record->label.c_str())
     , _record(record)
 {
-    TRACE(StringBuffer().format("Patch@%zx::ctor", this));
+    TRACEFUN(this, "Patch::ctor");
 }
 
 
 Patch::~Patch()
 {
-    TRACE(StringBuffer().format("Patch@%zx::dtor", this));
+    TRACEFUN(this, "Patch::dtor");
 }
 
 
 void Patch::init()
 {
+    TRACEFUN(this, "Patch::init");
     const ConnectSpec& cs = _session.getConnectSpec();
     Glib::ustring pw = cs.descramblePassword();
     _cli = ThinClientInterface::create();
@@ -56,6 +56,7 @@ void Patch::init()
 
 void Patch::fini()
 {
+    TRACEFUN(this, "Patch::fini");
     _cli->fini();
     _cli.reset();
     emit(XenObject::DESTROYED);
@@ -70,7 +71,7 @@ RefPtr<PatchRecord> Patch::getRecord() const
 
 bool Patch::upload()
 {
-    TRACE(StringBuffer().format("Patch@%zx::upload", this));
+    TRACEFUN(this, "Patch::upload");
 
     RefPtr<File> file = _record->getFile();
     if (!file)
@@ -103,7 +104,7 @@ bool Patch::upload()
 
 bool Patch::apply()
 {
-    TRACE(StringBuffer().format("Patch@%zx::apply", this));
+    TRACEFUN(this, "Patch@%zx::apply");
 
     _record->state = PatchState::APPLY_INPROGRESS;
 

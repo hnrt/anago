@@ -26,7 +26,7 @@ using namespace hnrt;
 
 HostTreeView::HostTreeView()
 {
-    TRACE("HostTreeView::ctor");
+    TRACEFUN(this, "HostTreeView::ctor");
     _store = HostTreeStore::create();
     set_model(_store);
     set_headers_visible(false);
@@ -42,20 +42,20 @@ HostTreeView::HostTreeView()
 
 HostTreeView::~HostTreeView()
 {
-    TRACE("HostTreeView::dtor");
+    TRACEFUN(this, "HostTreeView::dtor");
 }
 
 
 void HostTreeView::clear()
 {
-    TRACE("HostTreeView::clear");
+    TRACEFUN(this, "HostTreeView::clear");
     _store.clear();
 }
 
 
 void HostTreeView::onObjectCreated(RefPtr<XenObject> object, int what)
 {
-    TRACE("HostTreeView::onObjectCreated", "object={%s} what=%d", object->getName().c_str(), what);
+    TRACEFUN(this, "HostTreeView::onObjectCreated(%s%zx,%s)", GetXenObjectTypeText(*object), object.ptr(), GetNotificationText(what));
     AddObject add = getAdd(object);
     if ((this->*add)(object))
     {
@@ -68,7 +68,7 @@ void HostTreeView::onObjectCreated(RefPtr<XenObject> object, int what)
 
 void HostTreeView::onObjectUpdated(RefPtr<XenObject> object, int what)
 {
-    TRACE("HostTreeView::onObjectUpdated", "object={%s} what=%d", object->getName().c_str(), what);
+    TRACEFUN(this, "HostTreeView::onObjectUpdated(%s%zx,%s)", GetXenObjectTypeText(*object), object.ptr(), GetNotificationText(what));
     if (what == XenObject::DESTROYED)
     {
         remove(*object);
@@ -337,7 +337,7 @@ void HostTreeView::updateDisplayOrder()
 
 void HostTreeView::remove(const XenObject& object)
 {
-    TRACE("HostTreeView::remove");
+    TRACEFUN(this, "HostTreeView::remove");
     if (object.getType() == XenObject::HOST)
     {
         remove(object, _store->get_iter("0"));
@@ -356,7 +356,7 @@ void HostTreeView::remove(const XenObject& object)
 
 void HostTreeView::remove(const XenObject& object, Gtk::TreeIter iter)
 {
-    TRACE("HostTreeView::remove");
+    TRACEFUN(this, "HostTreeView::remove");
     while (iter)
     {
         Gtk::TreeModel::Row row = *iter;

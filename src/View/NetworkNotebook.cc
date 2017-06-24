@@ -2,7 +2,6 @@
 
 
 #include <libintl.h>
-#include "Base/StringBuffer.h"
 #include "Controller/SignalManager.h"
 #include "Logger/Trace.h"
 #include "XenServer/Network.h"
@@ -27,7 +26,7 @@ NetworkNotebook::NetworkNotebook(const RefPtr<Network>& network)
     : _networkMenu(network)
     , _network(network)
 {
-    Trace trace(StringBuffer().format("NetworkNotebook@%zx::ctor", this));
+    Trace trace(this, "NetworkNotebook::ctor");
 
     _networkLv.setMenu(&_networkMenu);
 
@@ -55,7 +54,7 @@ NetworkNotebook::NetworkNotebook(const RefPtr<Network>& network)
 
 NetworkNotebook::~NetworkNotebook()
 {
-    Trace trace(StringBuffer().format("NetworkNotebook@%zx::dtor", this));
+    Trace trace(this, "NetworkNotebook::dtor");
 
     _connection.disconnect();
 }
@@ -63,7 +62,7 @@ NetworkNotebook::~NetworkNotebook()
 
 void NetworkNotebook::onNetworkUpdated(RefPtr<XenObject> object, int what)
 {
-    Trace trace(StringBuffer().format("NetworkNotebook@%zx::onNetworkUpdated", this));
+    Trace trace(this, "NetworkNotebook::onNetworkUpdated");
 
     if (what == XenObject::RECORD_UPDATED)
     {

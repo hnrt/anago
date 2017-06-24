@@ -1,7 +1,7 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
-#define NO_TRACE
+//#define NO_TRACE
 
 
 #include <ctype.h>
@@ -47,7 +47,7 @@ ConsoleConnector::~ConsoleConnector()
 
 void ConsoleConnector::open(const char* location, const char* authorization)
 {
-    TRACE(StringBuffer().format("ConsoleConnector@%zx::open", this), "location=%s authorization=%s", location, authorization);
+    TRACEFUN(this, "ConsoleConnector::open(%s,%s)", location, authorization);
 
     _sockHost = -1;
     _ibuf.clear();
@@ -78,7 +78,7 @@ void ConsoleConnector::open(const char* location, const char* authorization)
 
 void ConsoleConnector::close()
 {
-    TRACE(StringBuffer().format("ConsoleConnector@%zx::close", this));
+    TRACEFUN(this, "ConsoleConnector::close");
 
     _httpClient->fini();
 }
@@ -86,7 +86,7 @@ void ConsoleConnector::close()
 
 ssize_t ConsoleConnector::recv()
 {
-    TRACE("ConsoleConnector::recv", "pos=%zd len=%zd", _ibuf.wPos(), _ibuf.wLen());
+    TRACEFUN(this, "ConsoleConnector::recv(pos=%zd,len=%zd)", _ibuf.wPos(), _ibuf.wLen());
     if (_ibuf.tryRewind())
     {
         TRACEPUT("Buffer rewinded.");
@@ -117,7 +117,7 @@ ssize_t ConsoleConnector::recv()
 
 ssize_t ConsoleConnector::send()
 {
-    TRACE("ConsoleConnector::send", "pos=%zd len=%zd", _obuf.rPos(), _obuf.rLen());
+    TRACEFUN(this, "ConsoleConnector::send(pos=%zd,len=%zd)", _obuf.rPos(), _obuf.rLen());
     if (!_obuf.canRead())
     {
         TRACEPUT("No data to send.");

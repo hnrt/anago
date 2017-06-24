@@ -19,13 +19,13 @@ using namespace hnrt;
 VirtualMachinePorter::VirtualMachinePorter(XenObject::Type type, Session& session, const char* name)
     : XenObject(type, session, NULL, UUID::generate().c_str(), name)
 {
-    TRACE("VirtualMachinePorter::ctor");
+    TRACEFUN(this, "VirtualMachinePorter::ctor");
 }
 
 
 VirtualMachinePorter::~VirtualMachinePorter()
 {
-    TRACE("VirtualMachinePorter::dtor");
+    TRACEFUN(this, "VirtualMachinePorter::dtor");
     _xva.reset();
     if (_vm)
     {

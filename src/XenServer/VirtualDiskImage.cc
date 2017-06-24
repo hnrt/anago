@@ -28,13 +28,13 @@ VirtualDiskImage::VirtualDiskImage(Session& session, xen_vdi handle, const XenPt
     : XenObject(XenObject::VDI, session, handle, record->uuid, record->name_label)
     , _record(record)
 {
-    Trace trace(StringBuffer().format("VDI@%zx::ctor", this));
+    Trace trace(this, "VDI::ctor");
 }
 
 
 VirtualDiskImage::~VirtualDiskImage()
 {
-    Trace trace(StringBuffer().format("VDI@%zx::dtor", this));
+    Trace trace(this, "VDI::dtor");
 }
 
 

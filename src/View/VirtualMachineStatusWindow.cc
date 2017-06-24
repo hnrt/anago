@@ -119,7 +119,7 @@ void VirtualMachineStatusWindow::onObjectUpdated(RefPtr<XenObject> object, int w
 
 bool VirtualMachineStatusWindow::onTimedOut()
 {
-    TRACE("VirtualMachineStatusWindow::onTimedOut");
+    TRACEFUN(this, "VirtualMachineStatusWindow::onTimedOut");
     _listView.update();
     return true; // to be invoked again
 }
@@ -264,7 +264,7 @@ void VirtualMachineStatusWindow::ListView::clear()
 
 void VirtualMachineStatusWindow::ListView::add(RefPtr<XenObject> object)
 {
-    TRACE("VirtualMachineStatusWindow::ListView::add", "object=\"%s\"", object->getName().c_str());
+    TRACEFUN(this, "VirtualMachineStatusWindow::ListView::add(%s)", object->getName().c_str());
     Glib::ustring uuid = object->getUUID();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
     Gtk::TreeModel::Row row;
@@ -310,7 +310,7 @@ void VirtualMachineStatusWindow::ListView::update(RefPtr<XenObject> object)
 
 void VirtualMachineStatusWindow::ListView::remove(RefPtr<XenObject> object)
 {
-    TRACE("VirtualMachineStatusWindow::ListView::remove", "object=\"%s\"", object->getName().c_str());
+    TRACEFUN(this, "VirtualMachineStatusWindow::ListView::remove(%s)", object->getName().c_str());
     Glib::ustring uuid = object->getUUID();
     Gtk::TreeIter iter = _store->get_iter("0"); // point to first item
     while (iter)

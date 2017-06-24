@@ -23,7 +23,7 @@ ControllerImpl::ControllerImpl()
     : _tm(ThreadManager::instance())
     , _quitInProgress(false)
 {
-    Trace trace("ControllerImpl::ctor");
+    Trace trace(NULL, "ControllerImpl::ctor");
 
     SignalManager& sm = SignalManager::instance();
     sm.xenObjectSignal(XenObject::CONNECT_FAILED).connect(sigc::mem_fun(*this, &ControllerImpl::onConnectFailed));
@@ -42,13 +42,13 @@ ControllerImpl::ControllerImpl()
 
 ControllerImpl::~ControllerImpl()
 {
-    Trace trace("ControllerImpl::dtor");
+    Trace trace(NULL, "ControllerImpl::dtor");
 }
 
 
 void ControllerImpl::parseCommandLine(int argc, char *argv[])
 {
-    Trace trace("ControllerImpl::parseCommandLine");
+    Trace trace(NULL, "ControllerImpl::parseCommandLine");
 
     for (int index = 1; index < argc; index++)
     {
@@ -78,7 +78,7 @@ void ControllerImpl::parseCommandLine(int argc, char *argv[])
 
 void ControllerImpl::quit()
 {
-    Trace trace("ControllerImpl::quit");
+    Trace trace(NULL, "ControllerImpl::quit");
 
     if (!_quitInProgress)
     {
@@ -95,7 +95,7 @@ void ControllerImpl::quit()
 
 bool ControllerImpl::quit2()
 {
-    Trace trace("ControllerImpl::quit2");
+    Trace trace(NULL, "ControllerImpl::quit2");
 
     _condBackground.broadcast();
 
@@ -143,7 +143,7 @@ bool ControllerImpl::quit2()
 
 void ControllerImpl::backgroundWorker()
 {
-    Trace trace("ControllerImpl::backgroundWorker");
+    Trace trace(NULL, "ControllerImpl::backgroundWorker");
     for (;;)
     {
         sigc::slot<void> job;
@@ -178,7 +178,7 @@ void ControllerImpl::backgroundWorker()
 
 void ControllerImpl::schedule(const sigc::slot<void>& job)
 {
-    Trace trace("ControllerImpl::schedule");
+    Trace trace(NULL, "ControllerImpl::schedule");
     Glib::Mutex::Lock lock(_mutexBackground);
     _backgroundQueue.push_back(job);
     _condBackground.signal();

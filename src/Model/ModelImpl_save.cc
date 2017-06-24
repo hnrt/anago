@@ -17,7 +17,7 @@ using namespace hnrt;
 
 void ModelImpl::save()
 {
-    Trace trace("ModelImpl::save");
+    Trace trace(NULL, "ModelImpl::save");
 
     FILE* fp = NULL;
 

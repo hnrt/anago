@@ -7,7 +7,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "Base/Atomic.h"
-#include "Base/StringBuffer.h"
 #include "Controller/Controller.h"
 #include "File/File.h"
 #include "Logger/Trace.h"
@@ -37,19 +36,19 @@ Host::Host(Session& session)
     : XenObject(XenObject::HOST, session, NULL, NULL, NULL)
     , _state(STATE_NONE)
 {
-    Trace trace(StringBuffer().format("Host@%zx::ctor", this));
+    Trace trace(this, "Host::ctor");
 }
 
 
 Host:: ~Host()
 {
-    Trace trace(StringBuffer().format("Host@%zx::dtor", this));
+    Trace trace(this, "Host::dtor");
 }
 
 
 int Host::setBusy(bool value)
 {
-    TRACE(StringBuffer().format("Host@%zx::setBusy", this));
+    TRACEFUN(this, "Host::setBusy");
     int count = XenObject::setBusy(value);
     TRACEPUT("count=%d state=%d", count, _state);
     if (!count)
@@ -329,7 +328,7 @@ bool Host::setName(const char* label, const char* description)
 
 void Host::initPatchList()
 {
-    TRACE(StringBuffer().format("Host@%zx::initPatchList", this));
+    TRACEFUN(this, "Host::initPatchList");
     XenPtr<xen_host_record> record = getRecord();
     if (!record)
     {
@@ -442,7 +441,7 @@ static void UpdateState(std::list<RefPtr<PatchRecord> >& patchList, XenPtr<xen_p
 
 void Host::updatePatchList()
 {
-    TRACE(StringBuffer().format("Host@%zx::updatePatchList", this));
+    TRACEFUN(this, "Host::updatePatchList");
     for (std::list<RefPtr<PatchRecord> >::iterator i = _patchList.begin(); i != _patchList.end(); i++)
     {
         switch ((*i)->state)
@@ -636,7 +635,7 @@ bool Host::applyPatch(const Glib::ustring& uuid)
     XenRef<xen_pool_update, xen_pool_update_free_t> updateHandle;
     if (xen_pool_update_get_by_uuid(_session, &updateHandle, const_cast<char*>(uuid.c_str())))
     {
-        TRACE1("Host@%zx::applyPatch: update-handle=%s", this, updateHandle.toString().c_str());
+        TRACE("Host@%zx::applyPatch: update-handle=%s", this, updateHandle.toString().c_str());
         if (xen_pool_update_apply(_session, updateHandle, _handle))
         {
             return true;
@@ -654,7 +653,7 @@ bool Host::applyPatch(const Glib::ustring& uuid)
     XenRef<xen_pool_patch, xen_pool_patch_free_t> patchHandle;
     if (xen_pool_patch_get_by_uuid(_session, &patchHandle, const_cast<char*>(uuid.c_str())))
     {
-        TRACE1("Host@%zx::applyPatch: update-handle=%s", this, patchHandle.toString().c_str());
+        TRACE("Host@%zx::applyPatch: update-handle=%s", this, patchHandle.toString().c_str());
         char* result = NULL;
         if (xen_pool_patch_apply(_session, &result, patchHandle, _handle))
         {

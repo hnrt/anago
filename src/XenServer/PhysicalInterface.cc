@@ -1,7 +1,6 @@
 // Copyright (C) 2012-2017 Hideaki Narita
 
 
-#include "Base/StringBuffer.h"
 #include "Logger/Trace.h"
 #include "PhysicalInterface.h"
 #include "Session.h"
@@ -23,13 +22,13 @@ PhysicalInterface::PhysicalInterface(Session& session, xen_pif handle, const Xen
     : XenObject(XenObject::PIF, session, handle, record->uuid, "PIF")
     , _record(record)
 {
-    Trace trace(StringBuffer().format("PIF@%zx::ctor", this));
+    Trace trace(this, "PIF::ctor");
 }
 
 
 PhysicalInterface::~PhysicalInterface()
 {
-    Trace trace(StringBuffer().format("PIF@%zx::dtor", this));
+    Trace trace(this, "PIF::dtor");
 }
 
 

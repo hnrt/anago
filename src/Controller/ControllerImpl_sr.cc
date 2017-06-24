@@ -21,7 +21,7 @@ using namespace hnrt;
 
 void ControllerImpl::addCifs()
 {
-    TRACE("ControllerImpl::addCifs");
+    Trace trace(NULL, "ControllerImpl::addCifs");
     RefPtr<Host> host = Model::instance().getSelectedHost();
     if (!host || host->isBusy())
     {
@@ -41,7 +41,7 @@ void ControllerImpl::addCifs()
 
 void ControllerImpl::addCifsInBackground(RefPtr<Host> host, CifsSpec spec)
 {
-    TRACE("ControllerImpl::addCifsInBackground");
+    Trace trace(NULL, "ControllerImpl::addCifsInBackground(%s)", host->getSession().getConnectSpec().hostname.c_str());
     XenObject::Busy busy1(*host);
     Session& session = host->getSession();
     XenObject::Busy busy2(session);
@@ -57,7 +57,7 @@ void ControllerImpl::addCifsInBackground(RefPtr<Host> host, CifsSpec spec)
 
 void ControllerImpl::deleteCifs()
 {
-    TRACE("ControllerImpl::deleteCifs");
+    Trace trace(NULL, "ControllerImpl::deleteCifs");
     RefPtr<StorageRepository> sr = Model::instance().getSelectedSr();
     if (sr->isBusy() || !sr->isCifs())
     {
@@ -77,8 +77,8 @@ void ControllerImpl::deleteCifs()
 
 void ControllerImpl::deleteCifsInBackground(RefPtr<StorageRepository> sr)
 {
-    TRACE("ControllerImpl::deleteCifsInBackground");
-    TRACEPUT("Removing %s...", sr->getName().c_str());
+    Trace trace(NULL, "ControllerImpl::deleteCifsInBackground");
+    trace.put("Removing %s...", sr->getName().c_str());
     Session& session = sr->getSession();
     RefPtr<Host> host = session.getStore().getHost();
     XenObject::Busy busy1(*host);
@@ -91,7 +91,7 @@ void ControllerImpl::deleteCifsInBackground(RefPtr<StorageRepository> sr)
 
 void ControllerImpl::changeSrName()
 {
-    TRACE("ControllerImpl::changeSrName");
+    Trace trace(NULL, "ControllerImpl::changeSrName");
     RefPtr<StorageRepository> sr = Model::instance().getSelectedSr();
     if (!sr || sr->isBusy())
     {
@@ -112,7 +112,7 @@ void ControllerImpl::changeSrName()
 
 void ControllerImpl::setDefaultSr()
 {
-    TRACE("ControllerImpl::setDefaultSr");
+    Trace trace(NULL, "ControllerImpl::setDefaultSr");
     RefPtr<StorageRepository> sr = Model::instance().getSelectedSr();
     if (!sr || sr->isBusy() || sr->isTools() || sr->isCifs() || sr->getSubType() != StorageRepository::USR)
     {
@@ -129,7 +129,7 @@ void ControllerImpl::setDefaultSr()
 
 void ControllerImpl::addHdd()
 {
-    TRACE("ControllerImpl::addHdd");
+    Trace trace(NULL, "ControllerImpl::addHdd");
     RefPtr<StorageRepository> sr;
     std::list<RefPtr<StorageRepository> > srList;
     if (Model::instance().getSelected(srList) == 1)
@@ -161,7 +161,7 @@ void ControllerImpl::addHdd()
 
 void ControllerImpl::addHddTo(StorageRepository& sr)
 {
-    TRACE("ControllerImpl::addHddTo");
+    Trace trace(NULL, "ControllerImpl::addHddTo");
     HardDiskDriveSpec spec;
     spec.srREFID = sr.getREFID();
     Session& session = sr.getSession();
@@ -176,7 +176,7 @@ void ControllerImpl::addHddTo(StorageRepository& sr)
 
 void ControllerImpl::addHddInBackground(RefPtr<StorageRepository> sr, HardDiskDriveSpec spec)
 {
-    TRACE("ControllerImpl::addHddInBackground");
+    Trace trace(NULL, "ControllerImpl::addHddInBackground");
     Session& session = sr->getSession();
     XenObject::Busy busy(session);
     Session::Lock lock(session);
