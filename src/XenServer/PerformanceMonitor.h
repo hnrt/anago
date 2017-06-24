@@ -13,7 +13,6 @@
 #include <vector>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
-#include "Protocol/HttpClientHandler.h"
 
 
 namespace hnrt
@@ -23,7 +22,6 @@ namespace hnrt
 
     class PerformanceMonitor
         : public RefObj
-        , public HttpClientHandler
     {
     public:
 
@@ -41,13 +39,6 @@ namespace hnrt
         void terminate();
         void run();
         ListEntry getEntry(const Glib::ustring&);
-
-        virtual bool onSuccess(HttpClient&, int) { return true; }
-        virtual bool onFailure(HttpClient&, const char*) { return false; }
-        virtual bool onCancelled(HttpClient&) { return false; }
-        virtual size_t read(HttpClient&, void*, size_t) { return 0; }
-        virtual bool write(HttpClient&, const void*, size_t);
-        virtual void rewind(HttpClient&) {}
 
     protected:
 
@@ -80,6 +71,7 @@ namespace hnrt
         PerformanceMonitor(Session&);
         PerformanceMonitor(const PerformanceMonitor&);
         void operator =(const PerformanceMonitor&);
+        bool write(const void*, size_t);
         void parseRoot(xmlNode* pNode);
         void parseMeta(xmlNode* pNode, std::vector<Legend>& columns);
         void parseLegend(xmlNode* pNode, std::vector<Legend>& columns);

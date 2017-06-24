@@ -18,6 +18,8 @@ namespace hnrt
     {
     public:
 
+        typedef sigc::slot<void, size_t, size_t, const char*> ProgressFunction;
+
         static RefPtr<ThinClientInterface> create();
 
         virtual ~ThinClientInterface();
@@ -30,6 +32,8 @@ namespace hnrt
         virtual void setPrintCallback(const sigc::slot<void, ThinClientInterface&>&) = 0;
         virtual void setPrintErrorCallback(const sigc::slot<void, ThinClientInterface&>&) = 0;
         virtual void setExitCallback(const sigc::slot<void, ThinClientInterface&>&) = 0;
+        virtual void setProgressFunction(const ProgressFunction&) = 0;
+        virtual void resetProgressFunction() = 0;
         virtual bool run(const char*, ...) = 0;
         virtual void cancel() = 0;
         virtual const Glib::ustring& getOutput() const = 0;

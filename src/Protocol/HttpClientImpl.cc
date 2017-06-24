@@ -7,7 +7,6 @@
 #include <stdexcept>
 #include <sys/select.h>
 #include "Logger/Trace.h"
-#include "HttpClientDefaultHandler.h"
 #include "HttpClientImpl.h"
 
 
@@ -17,7 +16,6 @@ using namespace hnrt;
 HttpClientImpl::HttpClientImpl()
     : _curl(NULL)
     , _headers(NULL)
-    , _handler(NULL)
     , _timeout(0)
     , _cancelled(false)
     , _socket(-1)
@@ -220,11 +218,52 @@ void HttpClientImpl::setVerbose(bool enabled)
 }
 
 
-bool HttpClientImpl::run(HttpClientHandler& handler)
+void HttpClientImpl::setReadFunction(const ReadFunction& function)
+{
+    TRACE("HttpClientImpl@%zx: READFUNCTION set", this);
+    _readFunction = function;
+}
+
+
+void HttpClientImpl::setRewindFunction(const RewindFunction& function)
+{
+    TRACE("HttpClientImpl@%zx: REWINDFUNCTION set", this);
+    _rewindFunction = function;
+}
+
+
+void HttpClientImpl::setWriteFunction(const WriteFunction& function)
+{
+    TRACE("HttpClientImpl@%zx: WRITEFUNCTION set", this);
+    _writeFunction = function;
+}
+
+
+void HttpClientImpl::resetReadFunction()
+{
+    TRACE("HttpClientImpl@%zx: READFUNCTION reset", this);
+    _readFunction.disconnect();
+}
+
+
+void HttpClientImpl::resetRewindFunction()
+{
+    TRACE("HttpClientImpl@%zx: REWINDFUNCTION reset", this);
+    _rewindFunction.disconnect();
+}
+
+
+void HttpClientImpl::resetWriteFunction()
+{
+    TRACE("HttpClientImpl@%zx: WRITEFUNCTION reset", this);
+    _writeFunction.disconnect();
+}
+
+
+bool HttpClientImpl::run()
 {
     TRACEFUN(this, "HttpClientImpl::run");
 
-    _handler = &handler;
     _expiry.now().addMilliseconds(_timeout);
     _cancelled = false;
     _socket = -1;
@@ -253,29 +292,16 @@ bool HttpClientImpl::run(HttpClientHandler& handler)
 
     if (_result == CURLE_OK)
     {
-        if (_cancelled)
+        return true;
+    }
+    else
+    {
+        if (!_errbuf[0])
         {
-            return _handler->onCancelled(*this);
+            snprintf(_errbuf, sizeof(_errbuf), "%s", curl_easy_strerror(_result));
         }
-        return _handler->onSuccess(*this, _status);
+        return false;
     }
-
-    if (_cancelled)
-    {
-        return _handler->onCancelled(*this);
-    }
-
-    if (_result == CURLE_ABORTED_BY_CALLBACK)
-    {
-        return _handler->onSuccess(*this, _status);
-    }
-
-    if (!_errbuf[0])
-    {
-        snprintf(_errbuf, sizeof(_errbuf), "%s", curl_easy_strerror(_result));
-    }
-
-    return _handler->onFailure(*this, _errbuf);
 }
 
 
@@ -322,7 +348,10 @@ curlioerr HttpClientImpl::ioControl(CURL* handle, curliocmd cmd, HttpClientImpl*
     switch (cmd)
     {
     case CURLIOCMD_RESTARTREAD:
-        pThis->_handler->rewind(*pThis);
+        if (!pThis->_rewindFunction.empty())
+        {
+            pThis->_rewindFunction();
+        }
         break;
 
     default:
@@ -335,11 +364,9 @@ curlioerr HttpClientImpl::ioControl(CURL* handle, curliocmd cmd, HttpClientImpl*
 
 size_t HttpClientImpl::receiveData(void* ptr, size_t size, size_t nmemb, HttpClientImpl* pThis)
 {
-    TRACEFUN(pThis, "HttpClientImpl::receiveData(size=%zu,nmemb=%zu)", size, nmemb);
-
     if (pThis->timedOut())
     {
-        TRACEPUT("Timed out.");
+        TRACE("HttpClientImpl@%zx::receiveData(%zu,%zu): return=0 (timed out)", pThis, size, nmemb);
         return 0;
     }
 
@@ -355,16 +382,48 @@ size_t HttpClientImpl::receiveData(void* ptr, size_t size, size_t nmemb, HttpCli
 
     if (pThis->_cancelled)
     {
+        TRACE("HttpClientImpl@%zx::receiveData(%zu,%zu): return=0 (cancelled)", pThis, size, nmemb);
         return 0;
     }
 
     size_t len = size * nmemb;
     if (!len)
     {
+        TRACE("HttpClientImpl@%zx::receiveData(%zu,%zu): return=0 (no data)", pThis, size, nmemb);
         return 0;
     }
 
-    if (pThis->_handler->write(*pThis, ptr, len))
+    if (pThis->_writeFunction.empty())
+    {
+        if (Logger::instance().getLevel() <= LogLevel::TRACE)
+        {
+            StringBuffer buf;
+            const char* p1 = reinterpret_cast<const char*>(ptr);
+            const char* p2 = p1 + len;
+            while (p1 < p2)
+            {
+                switch (*p1)
+                {
+                case '\n':
+                    buf.append("\\n");
+                    break;
+                case '\r':
+                    buf.append("\\r");
+                    break;
+                case '\\':
+                    buf.append("\\\\");
+                    break;
+                default:
+                    buf.append(*p1);
+                    break;
+                }
+                p1++;
+            }
+            TRACE("HttpClientImpl@%zx::receiveData(%zu,%zu): %s", pThis, size, nmemb, buf.str());
+        }
+        return len / size;
+    }
+    else if (pThis->_writeFunction(ptr, len))
     {
         return len / size;
     }
@@ -381,46 +440,41 @@ size_t HttpClientImpl::sendData(void* ptr, size_t size, size_t nmemb, HttpClient
 
     if (pThis->timedOut())
     {
-        TRACEPUT("Timed out.");
+        TRACE("HttpClientImpl@%zx::sendData(%zu,%zu): return=CURL_READFUNC_ABORT (timed out)", pThis, size, nmemb);
         return CURL_READFUNC_ABORT;
     }
 
     if (pThis->_cancelled)
     {
-        TRACEPUT("Cancelled by user.");
+        TRACE("HttpClientImpl@%zx::sendData(%zu,%zu): return=CURL_READFUNC_ABORT (cancelled by user)", pThis, size, nmemb);
         return CURL_READFUNC_ABORT;
     }
 
     size_t len = size * nmemb;
     if (!len)
     {
-        TRACEPUT("return=0");
+        TRACE("HttpClientImpl@%zx::sendData(%zu,%zu): return=0 (no space)", pThis, size, nmemb);
         return 0;
     }
 
-    size_t ret = pThis->_handler->read(*pThis, ptr, len);
-    TRACEPUT("read=%zu", ret);
-    if (ret)
+    if (pThis->_readFunction.empty())
     {
-        TRACEPUT("return=%'zu", ret / size);
-        return ret / size;
+        TRACE("HttpClientImpl@%zx::sendData(%zu,%zu): return=0 (no function)", pThis, size, nmemb);
+        return 0;
     }
     else
     {
-        // In the scenario to upload data to XenServer,
-        // CURL will freeze after this callback returns zero.
-        // To avoid such situation, forcibly end the session by returning this:
-        TRACEPUT("Cancelled for workaround.");
-        return CURL_READFUNC_ABORT;
+        size_t ret = pThis->_readFunction(ptr, len);
+        return ret / size;
     }
 }
 
 
 bool HttpClientImpl::connect()
 {
+    TRACEFUN(this, "HttpClientImpl::connect");
     curl_easy_setopt(_curl, CURLOPT_CONNECT_ONLY, 1L);
-    HttpClientDefaultHandler handler;
-    return run(handler);
+    return run();
 }
 
 

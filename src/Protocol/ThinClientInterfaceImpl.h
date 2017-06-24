@@ -61,6 +61,8 @@ namespace hnrt
         virtual void setPrintCallback(const sigc::slot<void, ThinClientInterface&>&);
         virtual void setPrintErrorCallback(const sigc::slot<void, ThinClientInterface&>&);
         virtual void setExitCallback(const sigc::slot<void, ThinClientInterface&>&);
+        virtual void setProgressFunction(const ProgressFunction&);
+        virtual void resetProgressFunction();
         virtual bool run(const char*, ...);
         virtual void cancel() { _cancel = true; }
         virtual const Glib::ustring& getOutput() const { return _output; }
@@ -83,6 +85,7 @@ namespace hnrt
         sigc::slot<void, ThinClientInterface&> _printCb;
         sigc::slot<void, ThinClientInterface&> _printErrorCb;
         sigc::slot<void, ThinClientInterface&> _exitCb;
+        ProgressFunction _progressFunction;
     };
 }
 

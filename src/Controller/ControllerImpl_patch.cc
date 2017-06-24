@@ -11,7 +11,6 @@
 #include "XenServer/Host.h"
 #include "XenServer/Session.h"
 #include "XenServer/Patch.h"
-#include "XenServer/PatchDownloader.h"
 #include "ControllerImpl.h"
 
 
@@ -56,64 +55,17 @@ void ControllerImpl::downloadPatch(const Glib::ustring& uuid)
     {
         return;
     }
-    schedule(sigc::bind<RefPtr<Host>, RefPtr<PatchRecord> >(sigc::mem_fun(*this, &ControllerImpl::downloadPatchInBackground), host, record));
+    RefPtr<Patch> patch = Patch::create(host->getSession(), record);
+    schedule(sigc::bind<RefPtr<Patch> >(sigc::mem_fun(*this, &ControllerImpl::downloadPatchInBackground), patch));
 }
 
 
-void ControllerImpl::downloadPatchInBackground(RefPtr<Host> host, RefPtr<PatchRecord> patchRecord)
+void ControllerImpl::downloadPatchInBackground(RefPtr<Patch> patch)
 {
     Trace trace(NULL, "ControllerImpl::downloadPatchInBackground");
-    patchRecord->state = PatchState::DOWNLOAD_INPROGRESS;
-    host->emit(XenObject::RECORD_UPDATED);
-    Glib::ustring dir = Model::instance().getAppDir();
-    Glib::ustring path;
-    Glib::ustring::size_type pos1 = patchRecord->patchUrl.rfind('/');
-    if (pos1 != Glib::ustring::npos)
-    {
-        Glib::ustring::size_type pos2 = patchRecord->patchUrl.find('&', pos1 + 1);
-        Glib::ustring::size_type len = (pos2 != Glib::ustring::npos) ? (pos2 - (pos1 + 1)) : Glib::ustring::npos;
-        path = Glib::ustring::compose("%1%2", dir, patchRecord->patchUrl.substr(pos1 + 1, len));
-    }
-    else
-    {
-        path = Glib::ustring::compose("%1%2.zip", dir, patchRecord->label);
-    }
-    trace.put("url=\"%s\" path=\"%s\"", patchRecord->patchUrl.c_str(), path.c_str());
-    RefPtr<PatchDownloader> downloader = PatchDownloader::create();
-    downloader->run(patchRecord->patchUrl, path);
-    RefPtr<File> file = File::create(path.c_str());
-    if (!file->exists())
-    {
-        Logger::instance().warn("%s: Not found. Download failed.", file->path());
-        patchRecord->state = PatchState::DOWNLOAD_FAILURE;
-        host->emit(XenObject::RECORD_UPDATED);
-        return;
-    }
-    else if (!file->size())
-    {
-        Logger::instance().warn("%s: Empty. Download failed.", file->path());
-        patchRecord->state = PatchState::DOWNLOAD_FAILURE;
-        host->emit(XenObject::RECORD_UPDATED);
-        return;
-    }
-    RefPtr<File> file2 = patchRecord->unzipFile(path);
-    if (!file2)
-    {
-        Logger::instance().warn("%s: No patch file was found. Treated as download failure.", path.c_str());
-        patchRecord->state = PatchState::DOWNLOAD_FAILURE;
-        host->emit(XenObject::RECORD_UPDATED);
-        return;
-    }
-    else if (!file2->size())
-    {
-        Logger::instance().warn("%s: Empty. Download failed.", file2->path());
-        patchRecord->state = PatchState::DOWNLOAD_FAILURE;
-        host->emit(XenObject::RECORD_UPDATED);
-        return;
-    }
-    Logger::instance().info("%s: %'zu bytes extracted.", file2->path(), file2->size());
-    patchRecord->state = PatchState::DOWNLOADED;
-    host->emit(XenObject::RECORD_UPDATED);
+    patch->initDownload();
+    patch->download();
+    patch->fini();
 }
 
 

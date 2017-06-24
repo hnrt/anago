@@ -45,6 +45,7 @@ PatchListView::PatchListView(const Host& host)
     set_rules_hint(true);
     Glib::RefPtr<Gtk::TreeSelection> selection = get_selection();
     selection->set_mode(Gtk::SELECTION_SINGLE);
+    SignalManager::instance().xenObjectSignal(XenObject::PATCH_DOWNLOAD_PENDING).connect(sigc::mem_fun(*this, &PatchListView::onNotify));
     SignalManager::instance().xenObjectSignal(XenObject::PATCH_UPLOAD_PENDING).connect(sigc::mem_fun(*this, &PatchListView::onNotify));
     SignalManager::instance().xenObjectSignal(XenObject::PATCH_APPLY_PENDING).connect(sigc::mem_fun(*this, &PatchListView::onNotify));
 }
@@ -208,48 +209,61 @@ void PatchListView::onNotify(RefPtr<XenObject> object, int what)
         Gtk::TreeModel::Row row = *iter;
         if (row[_record.colId] == patchRecord->uuid)
         {
+            row[_record.colStatus] = patchRecord->state;
+            StringBuffer buf;
+            buf = GetDisplayStatus(patchRecord->state);
+            if (what == XenObject::PATCH_DOWNLOADING ||
+                what == XenObject::PATCH_UPLOADING)
+            {
+                size_t n = patch->getExpected();
+                size_t m = patch->getActual();
+                if (n)
+                {
+                    buf.appendFormat("%zu%%", (100 * m) / n);
+                }
+                else
+                {
+                    buf.appendFormat("%'zu", m);
+                }
+            }
+            row[_record.colDisplayStatus] = Glib::ustring(buf.str());
             switch (what)
             {
+            case XenObject::PATCH_DOWNLOAD_PENDING:
             case XenObject::PATCH_UPLOAD_PENDING:
             case XenObject::PATCH_APPLY_PENDING:
                 SignalManager::instance().xenObjectSignal(*object).connect(sigc::mem_fun(*this, &PatchListView::onNotify));
                 break;
-            case XenObject::PATCH_UPLOAD_FILE_ERROR:
-                View::instance().showWarning(gettext("Unable to open file."));
-                break;
-            case XenObject::PATCH_UPLOAD_PRINT:
-            case XenObject::PATCH_APPLY_PRINT:
-                break;
-            case XenObject::PATCH_UPLOAD_PRINT_ERROR:
-            case XenObject::PATCH_APPLY_PRINT_ERROR:
-                break;
-            case XenObject::PATCH_UPLOAD_EXIT:
-            case XenObject::PATCH_APPLY_EXIT:
+            case XenObject::PATCH_DOWNLOADED:
+            case XenObject::PATCH_DOWNLOAD_FAILED:
+            case XenObject::PATCH_UPLOADED:
+            case XenObject::PATCH_UPLOAD_FAILED:
+            case XenObject::PATCH_APPLIED:
+            case XenObject::PATCH_APPLY_FAILED:
             {
+                Glib::ustring msg0 = Glib::ustring::compose("%1: ", patchRecord->label);
                 Glib::ustring msg1 = patch->getOutput();
                 Glib::ustring msg2 = patch->getErrorOutput();
                 if (msg2.empty())
                 {
                     if (!msg1.empty())
                     {
-                        View::instance().showInfo(msg1);
+                        View::instance().showInfo(msg0 + msg1);
                     }
                 }
                 else if (msg1.empty())
                 {
-                    View::instance().showWarning(msg2);
+                    View::instance().showWarning(msg0 + msg2);
                 }
                 else
                 {
-                    View::instance().showWarning(msg1 + "\n" + msg2);
+                    View::instance().showWarning(msg0 + msg1 + "\n" + msg2);
                 }
                 break;
             }
             default:
                 break;
             }
-            row[_record.colStatus] = patchRecord->state;
-            row[_record.colDisplayStatus] = GetDisplayStatus(patchRecord->state);
             break;
         }
         iter++;

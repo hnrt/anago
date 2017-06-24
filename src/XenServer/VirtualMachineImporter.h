@@ -5,15 +5,15 @@
 #define HNRT_VIRTUALMACHINEIMPORTER_H
 
 
-#include "Protocol/HttpClientHandler.h"
 #include "VirtualMachinePorter.h"
 
 
 namespace hnrt
 {
+    class HttpClient;
+
     class VirtualMachineImporter
         : public VirtualMachinePorter
-        , public HttpClientHandler
     {
     public:
 
@@ -22,19 +22,14 @@ namespace hnrt
         virtual ~VirtualMachineImporter();
         void run(const char*);
 
-        virtual bool onSuccess(HttpClient&, int) { return true; }
-        virtual bool onFailure(HttpClient&, const char*) { return false; }
-        virtual bool onCancelled(HttpClient&) { return false; }
-        virtual size_t read(HttpClient&, void*, size_t);
-        virtual bool write(HttpClient&, const void*, size_t) { return false; }
-        virtual void rewind(HttpClient&);
-
     protected:
 
         VirtualMachineImporter(Session&);
         VirtualMachineImporter(const VirtualMachineImporter&);
         void operator =(const VirtualMachineImporter&);
         void init(const char*);
+        size_t read(void*, size_t, HttpClient*);
+        void rewind();
     };
 }
 

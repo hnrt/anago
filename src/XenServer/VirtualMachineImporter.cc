@@ -83,7 +83,9 @@ void VirtualMachineImporter::run(const char* path)
         httpClient->setUrl(url.str());
         httpClient->setUpload(_xva->size());
         httpClient->removeExpectHeader();
-        bool result = httpClient->run(*this);
+        httpClient->setReadFunction(sigc::bind<HttpClient*>(sigc::mem_fun(*this, &VirtualMachineImporter::read), httpClient));
+        httpClient->setRewindFunction(sigc::mem_fun(*this, &VirtualMachineImporter::rewind));
+        bool result = httpClient->run();
 
         if (_state != VirtualMachineOperationState::IMPORT_FAILURE &&
             _state != VirtualMachineOperationState::IMPORT_CANCELED)
@@ -128,16 +130,16 @@ void VirtualMachineImporter::init(const char* path)
 }
 
 
-size_t VirtualMachineImporter::read(HttpClient& httpClient, void* ptr, size_t len)
+size_t VirtualMachineImporter::read(void* ptr, size_t len, HttpClient* httpClient)
 {
-    TRACEFUN(this, "VirtualMachineImporter::read(%zx,%zu)", ptr, len);
+    TRACEFUN(this, "VirtualMachineImporter::read(%zu)", len);
 
     if (_abort)
     {
         Logger::instance().info("Import canceled: %s", _xva->path());
         _state = VirtualMachineOperationState::IMPORT_CANCELED;
         emit(XenObject::IMPORT_CANCELED);
-        httpClient.cancel();
+        httpClient->cancel();
         return 0;
     }
 
@@ -170,7 +172,9 @@ size_t VirtualMachineImporter::read(HttpClient& httpClient, void* ptr, size_t le
 }
 
 
-void VirtualMachineImporter::rewind(HttpClient&)
+void VirtualMachineImporter::rewind()
 {
+    TRACEFUN(this, "VirtualMachineImporter::rewind");
+
     _xva->rewind();
 }

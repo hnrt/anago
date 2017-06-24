@@ -154,10 +154,11 @@ void PerformanceMonitor::run()
                        cs.hostname.c_str(),
                        _end + 1);
 
-            RefPtr<HttpClient> httpClinet = HttpClient::create();
-            httpClinet->init();
-            httpClinet->setUrl(url.str());
-            bool result = httpClinet->run(*this);
+            RefPtr<HttpClient> httpClient = HttpClient::create();
+            httpClient->init();
+            httpClient->setUrl(url.str());
+            httpClient->setWriteFunction(sigc::mem_fun(*this, &PerformanceMonitor::write));
+            bool result = httpClient->run();
 
             url.clear();
 
@@ -176,7 +177,7 @@ void PerformanceMonitor::run()
             }
             else
             {
-                Logger::instance().error("PerformanceMonitor: %s", httpClinet->getError());
+                Logger::instance().error("PerformanceMonitor: %s", httpClient->getError());
             }
         }
         catch (...)
@@ -197,7 +198,7 @@ void PerformanceMonitor::run()
 }
 
 
-bool PerformanceMonitor::write(HttpClient&, const void* ptr, size_t len)
+bool PerformanceMonitor::write(const void* ptr, size_t len)
 {
     if (!_context)
     {

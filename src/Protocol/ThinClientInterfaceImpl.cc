@@ -90,6 +90,18 @@ void ThinClientInterfaceImpl::setExitCallback(const sigc::slot<void, ThinClientI
 }
 
 
+void ThinClientInterfaceImpl::setProgressFunction(const ProgressFunction& function)
+{
+    _progressFunction = function;
+}
+
+
+void ThinClientInterfaceImpl::resetProgressFunction()
+{
+    _progressFunction.disconnect();
+}
+
+
 static bool Send(HttpClient& httpClient, const void* ptr, size_t len)
 {
     const char* s1 = (const char*)ptr;
@@ -470,7 +482,7 @@ static bool Connect(HttpClient& httpClient, Glib::ustring& url, const char* buf,
 }
 
 
-static bool HttpPut(HttpClient& httpClient, const Glib::ustring& hostname, char* buf, size_t bufsz, Trace& trace)
+static bool HttpPut(HttpClient& httpClient, const Glib::ustring& hostname, char* buf, size_t bufsz, ThinClientInterface::ProgressFunction& report, Trace& trace)
 {
     {
         Glib::ustring filename;
@@ -527,6 +539,11 @@ static bool HttpPut(HttpClient& httpClient, const Glib::ustring& hostname, char*
             if (!Send(*httpClient2, buf, n))
             {
                 goto error;
+            }
+
+            if (!report.empty())
+            {
+                report(file->nbytes(), file->size(), file->path());
             }
         }
 
@@ -821,7 +838,7 @@ bool ThinClientInterfaceImpl::run(const char* arg, ...)
                 break;
 
             case HTTP_PUT:
-                if (!HttpPut(*httpClient, _hostname, buf, BLOCK_SIZE, trace))
+                if (!HttpPut(*httpClient, _hostname, buf, BLOCK_SIZE, _progressFunction, trace))
                 {
                     goto done;
                 }

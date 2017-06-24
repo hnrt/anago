@@ -7,10 +7,10 @@
 
 #include <stddef.h>
 #include <glibmm/ustring.h>
+#include <sigc++/slot.h>
 #include <map>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
-#include "HttpClientHandler.h"
 
 
 namespace hnrt
@@ -19,6 +19,10 @@ namespace hnrt
         : public RefObj
     {
     public:
+
+        typedef sigc::slot2<size_t, void*, size_t> ReadFunction;
+        typedef sigc::slot2<bool, const void*, size_t> WriteFunction;
+        typedef sigc::slot<void> RewindFunction;
 
         enum Method
         {
@@ -57,7 +61,13 @@ namespace hnrt
         virtual void removeExpectHeader() = 0;
         virtual void setTcpNoDelay(bool = true) = 0;
         virtual void setVerbose(bool = true) = 0;
-        virtual bool run(HttpClientHandler&) = 0;
+        virtual void setReadFunction(const ReadFunction&) = 0;
+        virtual void setRewindFunction(const RewindFunction&) = 0;
+        virtual void setWriteFunction(const WriteFunction&) = 0;
+        virtual void resetReadFunction() = 0;
+        virtual void resetRewindFunction() = 0;
+        virtual void resetWriteFunction() = 0;
+        virtual bool run() = 0;
         virtual void cancel() = 0;
         virtual long remainingTime() const = 0;
         virtual bool timedOut() const = 0;

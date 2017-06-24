@@ -17,64 +17,22 @@
 using namespace hnrt;
 
 
-class RpcCallback
-    : public HttpClientHandler
+static bool rpcWrite(const void* ptr, size_t len, void* handle, xen_result_func func)
 {
-public:
-
-    RpcCallback(xen_result_func func, void* handle)
-        : _func(func)
-        , _handle(handle)
-    {
-    }
-
-    virtual bool onSuccess(HttpClient&, int)
-    {
-        return true;
-    }
-
-    virtual bool onFailure(HttpClient&, const char*)
-    {
-        return false;
-    }
-
-    virtual bool onCancelled(HttpClient&)
-    {
-        return false;
-    }
-
-    virtual size_t read(HttpClient&, void*, size_t)
-    {
-        return 0;
-    }
-
-    virtual bool write(HttpClient&, const void* ptr, size_t len)
-    {
-        return _func(ptr, len, _handle) ? true : false;
-    }
-
-    virtual void rewind(HttpClient&)
-    {
-    }
-
-private:
-
-    xen_result_func _func;
-    void* _handle;
-};
+    return func(ptr, len, handle) ? true : false;
+}
 
 
 static int rpcExecute(const void* data, size_t size, void* user_handle, void* result_handle, xen_result_func result_func)
 {
-    Session* x = (Session*)user_handle;
-
-    RpcCallback callback(result_func, result_handle);
+    Session* pThis = reinterpret_cast<Session*>(user_handle);
 
     RefPtr<HttpClient> httpClient = HttpClient::create();
     httpClient->init();
-    httpClient->setUrl(x->url());
+    httpClient->setUrl(pThis->url());
     httpClient->setPost(data, size);
-    httpClient->run(callback);
+    httpClient->setWriteFunction(sigc::bind<void*, xen_result_func>(sigc::ptr_fun(&rpcWrite), result_handle, result_func));
+    httpClient->run();
 
     return httpClient->getResult();
 }

@@ -12,7 +12,6 @@
 #include <map>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
-#include "Protocol/HttpClientHandler.h"
 
 
 namespace hnrt
@@ -22,7 +21,6 @@ namespace hnrt
 
     class PatchBase
         : public RefObj
-        , public HttpClientHandler
     {
     public:
 
@@ -80,19 +78,13 @@ namespace hnrt
         RecordIterator getRecordIterator(const char*);
         RefPtr<PatchRecord> getRecord(const Glib::ustring&) const;
 
-        virtual bool onSuccess(HttpClient&, int) { return true; }
-        virtual bool onFailure(HttpClient&, const char*)  { return false; }
-        virtual bool onCancelled(HttpClient&)  { return false; }
-        virtual size_t read(HttpClient&, void*, size_t) { return 0; }
-        virtual bool write(HttpClient&, const void* ptr, size_t len);
-        virtual void rewind(HttpClient&) {}
-
     protected:
 
         PatchBase();
         PatchBase(const PatchBase&);
         void operator =(const PatchBase&);
         bool download();
+        bool write(const void* ptr, size_t len);
 
         Glib::ustring _path;
         RefPtr<File> _file;

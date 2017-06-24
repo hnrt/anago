@@ -643,13 +643,16 @@ bool PatchBase::download()
         RefPtr<HttpClient> httpClient = HttpClient::create();
         httpClient->init();
         httpClient->setUrl(url.c_str());
-        if (!httpClient->run(*this))
+        httpClient->setWriteFunction(sigc::mem_fun(*this, &PatchBase::write));
+        bool result = httpClient->run();
+
+        _file->close();
+
+        if (!result)
         {
             Logger::instance().error("%s: %s", url.c_str(), httpClient->getError());
             goto done;
         }
-
-        _file->close();
 
         if (rename(_path.c_str(), tmp2.c_str()))
         {
@@ -681,7 +684,7 @@ done:
 }
 
 
-bool PatchBase::write(HttpClient&, const void* ptr, size_t len)
+bool PatchBase::write(const void* ptr, size_t len)
 {
     return _file->write(ptr, len);
 }

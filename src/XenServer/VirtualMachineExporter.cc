@@ -82,7 +82,8 @@ void VirtualMachineExporter::run(const char* path, bool verify)
             RefPtr<HttpClient> httpClient = HttpClient::create();
             httpClient->init();
             httpClient->setUrl(url.str());
-            bool result = httpClient->run(*this);
+            httpClient->setWriteFunction(sigc::bind<HttpClient*>(sigc::mem_fun(*this, &VirtualMachineExporter::write), httpClient));
+            bool result = httpClient->run();
 
             if (_state != VirtualMachineOperationState::EXPORT_FAILURE &&
                 _state != VirtualMachineOperationState::EXPORT_CANCELED)
@@ -181,16 +182,16 @@ void VirtualMachineExporter::init(const char* path, bool verify)
 }
 
 
-bool VirtualMachineExporter::write(HttpClient& httpClient, const void* ptr, size_t len)
+bool VirtualMachineExporter::write(const void* ptr, size_t len, HttpClient* httpClient)
 {
-    TRACEFUN(this, "VirtualMachineExporter::write(%zx,%zu)", ptr, len);
+    TRACEFUN(this, "VirtualMachineExporter::write(%zu)", len);
 
     if (_abort)
     {
         Logger::instance().info("Export canceled: %s", _xva->path());
         _state = VirtualMachineOperationState::EXPORT_CANCELED;
         emit(XenObject::EXPORT_CANCELED);
-        httpClient.cancel();
+        httpClient->cancel();
         return false;
     }
 

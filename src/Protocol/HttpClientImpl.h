@@ -38,7 +38,13 @@ namespace hnrt
         virtual void removeExpectHeader();
         virtual void setTcpNoDelay(bool = true);
         virtual void setVerbose(bool = true);
-        virtual bool run(HttpClientHandler&);
+        virtual void setReadFunction(const ReadFunction&);
+        virtual void setRewindFunction(const RewindFunction&);
+        virtual void setWriteFunction(const WriteFunction&);
+        virtual void resetReadFunction();
+        virtual void resetRewindFunction();
+        virtual void resetWriteFunction();
+        virtual bool run();
         virtual void cancel();
         virtual long remainingTime() const;
         virtual bool timedOut() const;
@@ -91,7 +97,9 @@ namespace hnrt
 
         CURL* _curl;
         struct curl_slist *_headers;
-        HttpClientHandler* _handler;
+        ReadFunction _readFunction;
+        RewindFunction _rewindFunction;
+        WriteFunction _writeFunction;
         long _timeout;
         Time _expiry;
         volatile bool _cancelled;

@@ -127,7 +127,7 @@ namespace hnrt
         void revertVmInBackground(RefPtr<VirtualMachine>);
         void addCifsInBackground(RefPtr<Host>, CifsSpec);
         void deleteCifsInBackground(RefPtr<StorageRepository>);
-        void downloadPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
+        void downloadPatchInBackground(RefPtr<Patch>);
         void uploadPatchInBackground(RefPtr<Patch>);
         void applyPatchInBackground(RefPtr<Patch>);
         void cleanPatchInBackground(RefPtr<Host>, RefPtr<PatchRecord>);
