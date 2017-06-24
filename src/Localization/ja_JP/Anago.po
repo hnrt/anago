@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: anago\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-13 23:08+0900\n"
-"PO-Revision-Date: 2017-05-28 14:15+0900\n"
+"PO-Revision-Date: 2017-06-25 02:37+0900\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -57,6 +57,10 @@ msgstr ""
 "wake-on-LAN パケットを %1 へ送信できませんでした.\n"
 "\n"
 "%2"
+
+#: Controller/ControllerImpl_nw.cc:19
+msgid "Change network label/description"
+msgstr "ネットワークのラベル/説明を変更"
 
 #: Controller/ControllerImpl_sr.cc:49
 msgid "Creating CIFS..."
@@ -198,7 +202,7 @@ msgstr "スナップショットを作成中..."
 msgid "Reverting..."
 msgstr "復元中..."
 
-#: Net/ConsoleConnector.cc:239
+#: Net/ConsoleConnector.cc:184
 #, c-format
 msgid "Malformed location: %s"
 msgstr "ロケーションが壊れています: %s"
@@ -302,13 +306,13 @@ msgid "Attach HDD to VM"
 msgstr "仮想マシンにハードディスクドライブをアタッチ"
 
 #: View/AttachHddDialog.cc:25
-#: View/StorageRepositoryNotebook.cc:30
+#: View/StorageRepositoryNotebook.cc:29
 msgid "Storage repository:"
 msgstr "ストレージリポジトリ:"
 
 #: View/AttachHddDialog.cc:27
 #: View/ChangeCdDialog.cc:17
-#: View/VirtualMachinePropertyView.cc:169
+#: View/VirtualMachinePropertyView.cc:168
 msgid "Virtual disk image:"
 msgstr "仮想ディスクイメージ:"
 
@@ -329,8 +333,8 @@ msgid "Attach NIC to VM"
 msgstr "仮想マシンにネットワークカードをアタッチ"
 
 #: View/AttachNicDialog.cc:16
-#: View/NetworkNotebook.cc:34
-#: View/VirtualMachinePropertyView.cc:231
+#: View/NetworkNotebook.cc:33
+#: View/VirtualMachinePropertyView.cc:230
 msgid "Network:"
 msgstr "ネットワーク:"
 
@@ -340,7 +344,7 @@ msgstr "ネットワーク:"
 #: View/NetworkListView.cc:20
 #: View/SnapshotTreeView.cc:23
 #: View/VirtualDiskImageListView.cc:25
-#: View/VirtualMachinePropertyView.cc:301
+#: View/VirtualMachinePropertyView.cc:300
 #: View/VirtualMachineTemplateListView.cc:20
 msgid "Name"
 msgstr "名前"
@@ -439,7 +443,7 @@ msgstr "削除"
 
 #: View/DeleteVmDialog.cc:62
 #: View/HardDiskDriveListView.cc:23
-#: View/PatchListView.cc:28
+#: View/PatchListView.cc:36
 msgid "Size"
 msgstr "サイズ"
 
@@ -521,12 +525,12 @@ msgid "Storage repository"
 msgstr "ストレージリポジトリ"
 
 #: View/HardDiskDriveListView.cc:24
-#: View/PatchListView.cc:21
+#: View/PatchListView.cc:29
 msgid "Label"
 msgstr "ラベル"
 
 #: View/HardDiskDriveListView.cc:25
-#: View/PatchListView.cc:22
+#: View/PatchListView.cc:30
 #: View/VirtualDiskImageListView.cc:26
 msgid "Description"
 msgstr "説明"
@@ -572,7 +576,7 @@ msgid "Add CIFS"
 msgstr "CIFS リポジトリを追加"
 
 #: View/HostMenu.cc:26
-#: View/NetworkMenu.cc:14
+#: View/NetworkMenu.cc:14 View/NetworkMenu.cc:24
 #: View/StorageRepositoryMenu.cc:14
 #: View/VirtualBlockDeviceMenu.cc:27
 #: View/VirtualDiskImageMenu.cc:16 View/VirtualDiskImageMenu.cc:30
@@ -584,7 +588,7 @@ msgid "Change"
 msgstr "変更"
 
 #: View/HostMenu.cc:27
-#: View/NetworkMenu.cc:15
+#: View/NetworkMenu.cc:15 View/NetworkMenu.cc:25
 #: View/PatchMenu.cc:20
 #: View/SnapshotMenu.cc:19
 #: View/StorageRepositoryMenu.cc:17
@@ -597,87 +601,87 @@ msgstr "変更"
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: View/HostNotebook.cc:46
+#: View/HostNotebook.cc:47
 #: View/VirtualMachineNotebook.cc:107
 msgid "CPU Load History"
 msgstr "CPU 負荷履歴"
 
-#: View/HostNotebook.cc:50
+#: View/HostNotebook.cc:51
 #: View/VirtualMachineNotebook.cc:111
 msgid "Memory Usage History"
 msgstr "メモリ使用履歴"
 
-#: View/HostNotebook.cc:54
+#: View/HostNotebook.cc:55
 #: View/VirtualMachineNotebook.cc:115
 msgid "Network I/O History"
 msgstr "ネットワーク入出力履歴"
 
-#: View/HostNotebook.cc:60
+#: View/HostNotebook.cc:61
 msgid "Automatically connect to this host at start time"
 msgstr "アプリ起動時にこのホストに自動的に接続する"
 
-#: View/HostNotebook.cc:64
+#: View/HostNotebook.cc:65
 #: View/VirtualMachineNotebook.cc:142
 msgid "Options"
 msgstr "オプション"
 
-#: View/HostNotebook.cc:140
+#: View/HostNotebook.cc:141
 msgid "Host"
 msgstr "ホスト"
 
-#: View/HostNotebook.cc:141
+#: View/HostNotebook.cc:142
 #: View/VirtualMachineMenu.cc:27
 msgid "CPU"
 msgstr "CPU"
 
-#: View/HostNotebook.cc:142
+#: View/HostNotebook.cc:143
 #: View/VirtualMachineMenu.cc:28
-#: View/VirtualMachinePropertyView.cc:307
+#: View/VirtualMachinePropertyView.cc:306
 msgid "Memory"
 msgstr "メモリ"
 
-#: View/HostNotebook.cc:143
+#: View/HostNotebook.cc:144
 msgid "Software"
 msgstr "ソフトウェア"
 
-#: View/HostNotebook.cc:144
+#: View/HostNotebook.cc:145
 msgid "Patches"
 msgstr "パッチ"
 
-#: View/HostNotebook.cc:145
+#: View/HostNotebook.cc:146
 #: View/VirtualMachineNotebook.cc:123
 msgid "Performance"
 msgstr "パフォーマンス"
 
-#: View/HostNotebook.cc:336
+#: View/HostNotebook.cc:337
 #, c-format
 msgid "eth%d receive"
 msgstr "eth%d 受信"
 
-#: View/HostNotebook.cc:337
+#: View/HostNotebook.cc:338
 #, c-format
 msgid "eth%d send"
 msgstr "eth%d 送信"
 
-#: View/HostNotebook.cc:381
+#: View/HostNotebook.cc:382
 msgid "Loopback receive"
 msgstr "ループバック受信"
 
-#: View/HostNotebook.cc:382
+#: View/HostNotebook.cc:383
 msgid "Loopback send"
 msgstr "ループバック送信"
 
-#: View/HostNotebook.cc:427
+#: View/HostNotebook.cc:428
 msgid "Total receive"
 msgstr "総受信"
 
-#: View/HostNotebook.cc:428
+#: View/HostNotebook.cc:429
 msgid "Total send"
 msgstr "総送信"
 
 #: View/HostTreeView.cc:34
 #: View/SnapshotTreeView.cc:22
-#: View/VirtualMachinePropertyView.cc:300
+#: View/VirtualMachinePropertyView.cc:299
 msgid "Pix"
 msgstr "画像"
 
@@ -951,13 +955,13 @@ msgstr "利用可能"
 msgid "Value"
 msgstr "値"
 
-#: View/NetworkNotebook.cc:39
-#: View/VirtualMachinePropertyView.cc:231
+#: View/NetworkNotebook.cc:38
+#: View/VirtualMachinePropertyView.cc:230
 msgid "Physical interface:"
 msgstr "物理インターフェース:"
 
-#: View/NetworkNotebook.cc:46
-#: View/StorageRepositoryNotebook.cc:42
+#: View/NetworkNotebook.cc:45
+#: View/StorageRepositoryNotebook.cc:41
 #: View/VirtualMachineNotebook.cc:48
 msgid "Properties"
 msgstr "プロパティ"
@@ -966,89 +970,89 @@ msgstr "プロパティ"
 msgid "Information"
 msgstr "情報"
 
-#: View/PatchListView.cc:20
+#: View/PatchListView.cc:28
 #: View/VirtualDiskImageListView.cc:24
 msgid "UUID"
 msgstr "UUID"
 
-#: View/PatchListView.cc:23
+#: View/PatchListView.cc:31
 #: View/VirtualMachineStatusWindow.cc:238
 msgid "Status"
 msgstr "ステータス"
 
-#: View/PatchListView.cc:24
+#: View/PatchListView.cc:32
 msgid "After apply"
 msgstr "適用後"
 
-#: View/PatchListView.cc:25
+#: View/PatchListView.cc:33
 msgid "Required"
 msgstr "必須"
 
-#: View/PatchListView.cc:26
+#: View/PatchListView.cc:34
 msgid "Conflicting"
 msgstr "衝突"
 
-#: View/PatchListView.cc:27
+#: View/PatchListView.cc:35
 msgid "Timestamp"
 msgstr "タイムスタンプ"
 
-#: View/PatchListView.cc:29
+#: View/PatchListView.cc:37
 msgid "Version"
 msgstr "バージョン"
 
-#: View/PatchListView.cc:30
+#: View/PatchListView.cc:38
 msgid "URL"
 msgstr "URL"
 
-#: View/PatchListView.cc:31
+#: View/PatchListView.cc:39
 msgid "Patch URL"
 msgstr "パッチ URL"
 
-#: View/PatchListView.cc:53
+#: View/PatchListView.cc:64
 msgid "Available"
 msgstr "利用可能"
 
-#: View/PatchListView.cc:54 View/PatchListView.cc:55
+#: View/PatchListView.cc:65 View/PatchListView.cc:66
 msgid "Downloading..."
 msgstr "ダウンロード中..."
 
-#: View/PatchListView.cc:56
+#: View/PatchListView.cc:67
 msgid "Download failed"
 msgstr "ダウンロード失敗"
 
-#: View/PatchListView.cc:57
+#: View/PatchListView.cc:68
 msgid "Downloaded"
 msgstr "ダウンロード済み"
 
-#: View/PatchListView.cc:58 View/PatchListView.cc:59
+#: View/PatchListView.cc:69 View/PatchListView.cc:70
 msgid "Uploading..."
 msgstr "アップロード中..."
 
-#: View/PatchListView.cc:60
+#: View/PatchListView.cc:71
 msgid "Upload failed"
 msgstr "アップロード失敗"
 
-#: View/PatchListView.cc:61
+#: View/PatchListView.cc:72
 msgid "Uploaded"
 msgstr "アップロード済み"
 
-#: View/PatchListView.cc:62
+#: View/PatchListView.cc:73
 msgid "Applying..."
 msgstr "適用中..."
 
-#: View/PatchListView.cc:63
+#: View/PatchListView.cc:74
 msgid "Apply failed"
 msgstr "適用失敗"
 
-#: View/PatchListView.cc:64
+#: View/PatchListView.cc:75
 msgid "Applied"
 msgstr "適用済み"
 
-#: View/PatchListView.cc:65
+#: View/PatchListView.cc:76
 msgid "Cleaning..."
 msgstr "クリーニング中..."
 
-#: View/PatchListView.cc:66
+#: View/PatchListView.cc:77
 msgid "Clean failed"
 msgstr "クリーニング失敗"
 
@@ -1073,7 +1077,7 @@ msgid "Clean from pool"
 msgstr "プールをクリーニング"
 
 #: View/PropertyHelper.cc:221
-#: XenServer/VirtualBlockDevice.cc:26
+#: XenServer/VirtualBlockDevice.cc:25
 #: XenServer/XenServer.cc:244
 msgid "(unknown)"
 msgstr "(不明)"
@@ -1133,11 +1137,11 @@ msgstr "ハードディスクドライブを追加"
 msgid "Set as default SR"
 msgstr "既定ストレージリポジトリとして設定"
 
-#: View/StorageRepositoryNotebook.cc:35
+#: View/StorageRepositoryNotebook.cc:34
 msgid "Physical block device:"
 msgstr "物理ブロックデバイス:"
 
-#: View/StorageRepositoryNotebook.cc:45
+#: View/StorageRepositoryNotebook.cc:44
 msgid "Virtual disk images"
 msgstr "仮想ディスクイメージ"
 
@@ -1239,7 +1243,7 @@ msgid "Missing"
 msgstr "不明"
 
 #: View/VirtualDiskImageListView.cc:36
-#: View/VirtualMachinePropertyView.cc:306
+#: View/VirtualMachinePropertyView.cc:305
 #: View/VirtualMachineStatusWindow.cc:241
 msgid "Virtual machine"
 msgstr "仮想マシン"
@@ -1383,11 +1387,11 @@ msgstr "ディスク %d 読み出し"
 msgid "Disk %d write"
 msgstr "ディスク %d 書き込み"
 
-#: View/VirtualMachinePropertyView.cc:169
+#: View/VirtualMachinePropertyView.cc:168
 msgid "Virtual block device:"
 msgstr "仮想ブロックデバイス:"
 
-#: View/VirtualMachinePropertyView.cc:231
+#: View/VirtualMachinePropertyView.cc:230
 msgid "Virtual interface:"
 msgstr "仮想インターフェース:"
 
@@ -1493,45 +1497,107 @@ msgstr "検証をキャンセル"
 msgid "New hard disk drive"
 msgstr "新しいハードディスクドライブ"
 
-#: XenServer/Host.cc:56
+#: XenServer/Host.cc:59
 msgid "Connected"
 msgstr "接続"
 
-#: XenServer/Host.cc:59
+#: XenServer/Host.cc:62
 msgid "Disconnected"
 msgstr "切断"
 
-#: XenServer/Host.cc:62
+#: XenServer/Host.cc:65
 msgid "Disconnected by peer"
 msgstr "相手により切断"
 
-#: XenServer/Host.cc:66
+#: XenServer/Host.cc:69
 msgid "Failed to connect"
 msgstr "接続に失敗"
 
-#: XenServer/Host.cc:139
+#: XenServer/Host.cc:142
 msgid "Connecting..."
 msgstr "接続中..."
 
-#: XenServer/Host.cc:215
+#: XenServer/Host.cc:217
 msgid "Disconnecting..."
 msgstr "切断中..."
 
-#: XenServer/Host.cc:255
+#: XenServer/Host.cc:258
 msgid "Shut down successfully"
 msgstr "停止に成功"
 
-#: XenServer/Host.cc:261
+#: XenServer/Host.cc:264
 msgid "Failed to shut down"
 msgstr "停止に失敗"
 
-#: XenServer/Host.cc:289
+#: XenServer/Host.cc:292
 msgid "Rebooted successfully"
 msgstr "再起動に成功"
 
-#: XenServer/Host.cc:295
+#: XenServer/Host.cc:298
 msgid "Failed to reboot"
 msgstr "再起動に失敗"
+
+#: XenServer/Patch.cc:129
+msgid ""
+"Unable to open file.\n"
+"\n"
+"%1\n"
+"\n"
+"%2"
+msgstr ""
+"ファイルをオープンできません.\n"
+"\n"
+"%1\n"
+"\n"
+"%2"
+
+#: XenServer/Patch.cc:145
+msgid "Download failed."
+msgstr "ダウンロードに失敗しました."
+
+#: XenServer/Patch.cc:154
+msgid ""
+"File not exist.\n"
+"\n"
+"%1"
+msgstr ""
+"ファイルがありません.\n"
+"\n"
+"%1"
+
+#: XenServer/Patch.cc:162 XenServer/Patch.cc:180
+msgid ""
+"File is empty.\n"
+"\n"
+"%1"
+msgstr ""
+"ファイルが空です.\n"
+"\n"
+"%1"
+
+#: XenServer/Patch.cc:172
+msgid ""
+"File not found.\n"
+"\n"
+"%1"
+msgstr ""
+"ファイルが見つかりません.\n"
+"\n"
+"%1"
+
+#: XenServer/Patch.cc:189
+msgid ""
+"Downloaded successfully.\n"
+"\n"
+"%1"
+msgstr ""
+"ダウンロードに成功しました.\n"
+"\n"
+"%1"
+
+#: XenServer/Patch.cc:235
+msgid "No patch file was found."
+msgstr "パッチファイルが見つかりませんでした."
 
 #: XenServer/StorageRepository.cc:168
 msgid "Attached"
@@ -1546,12 +1612,12 @@ msgstr "デタッチ"
 msgid " (%ld%% used)"
 msgstr " (%ld%% 使用)"
 
-#: XenServer/VirtualBlockDevice.cc:22
+#: XenServer/VirtualBlockDevice.cc:21
 #: XenServer/XenServer.cc:523
 msgid "CD"
 msgstr "CD"
 
-#: XenServer/VirtualBlockDevice.cc:24
+#: XenServer/VirtualBlockDevice.cc:23
 #: XenServer/XenServer.cc:524
 msgid "Disk"
 msgstr "ディスク"
@@ -1566,47 +1632,47 @@ msgstr "仮想ディスクイメージ \"%s\" の削除に失敗.\n"
 msgid "Failed to resize VDI \"%s\".\n"
 msgstr "仮想ディスクイメージ \"%s\" のサイズ変更に失敗.\n"
 
-#: XenServer/VirtualInterface.cc:68
+#: XenServer/VirtualInterface.cc:67
 msgid "Network %1"
 msgstr "ネットワーク %1"
 
-#: XenServer/VirtualMachine.cc:349
+#: XenServer/VirtualMachine.cc:348
 msgid "Starting..."
 msgstr "起動中..."
 
-#: XenServer/VirtualMachine.cc:370
+#: XenServer/VirtualMachine.cc:369
 msgid "Forcibly shutting down..."
 msgstr "強制停止中..."
 
-#: XenServer/VirtualMachine.cc:377
+#: XenServer/VirtualMachine.cc:376
 msgid "Shutting down..."
 msgstr "停止中..."
 
-#: XenServer/VirtualMachine.cc:395
+#: XenServer/VirtualMachine.cc:394
 msgid "Forcibly rebooting..."
 msgstr "強制再起動中..."
 
-#: XenServer/VirtualMachine.cc:402
+#: XenServer/VirtualMachine.cc:401
 msgid "Rebooting..."
 msgstr "再起動中..."
 
-#: XenServer/VirtualMachine.cc:418
+#: XenServer/VirtualMachine.cc:417
 msgid "Suspending..."
 msgstr "一時停止中..."
 
-#: XenServer/VirtualMachine.cc:437
+#: XenServer/VirtualMachine.cc:436
 msgid "Resuming..."
 msgstr "再開中..."
 
-#: XenServer/VirtualMachine.cc:594
+#: XenServer/VirtualMachine.cc:593
 msgid "Cloning..."
 msgstr "クローン中..."
 
-#: XenServer/VirtualMachine.cc:613
+#: XenServer/VirtualMachine.cc:612
 msgid "Copying..."
 msgstr "コピー中..."
 
-#: XenServer/VirtualMachine.cc:632
+#: XenServer/VirtualMachine.cc:631
 msgid "Being destroyed..."
 msgstr "削除中..."
 
