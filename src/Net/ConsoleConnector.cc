@@ -32,7 +32,6 @@ using namespace hnrt;
 
 ConsoleConnector::ConsoleConnector()
     : _httpClient(HttpClient::create())
-    , _sockHost(-1)
     , _ibuf(IBUFSZ)
     , _obuf(OBUFSZ)
     , _statusCode(0)
@@ -49,7 +48,6 @@ void ConsoleConnector::open(const char* location, const char* authorization)
 {
     TRACEFUN(this, "ConsoleConnector::open(%s,%s)", location, authorization);
 
-    _sockHost = -1;
     _ibuf.clear();
     _obuf.clear();
     _statusCode = -1;
@@ -61,12 +59,6 @@ void ConsoleConnector::open(const char* location, const char* authorization)
     if (!_httpClient->connect())
     {
         throw CommunicationConsoleException(_httpClient->getResult(), "%s", _httpClient->getError());
-    }
-
-    _sockHost = _httpClient->getSocket();
-    if (_sockHost < 0)
-    {
-        throw CommunicationConsoleException(_httpClient->getResult(), "Socket unavailable.");
     }
 
     Glib::ustring request = getRequest(location, authorization);
@@ -142,15 +134,9 @@ ssize_t ConsoleConnector::send()
 }
 
 
-bool ConsoleConnector::canRecv(long timeoutInMicroseconds) const
+bool ConsoleConnector::canRecv(long timeout)
 {
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(_sockHost, &fds);
-    struct timeval timeout;
-    timeout.tv_sec = timeoutInMicroseconds / 1000000L;
-    timeout.tv_usec = timeoutInMicroseconds % 1000000L;
-    int rc = select(_sockHost + 1, &fds, NULL, NULL, &timeout);
+    int rc = _httpClient->canRecv(timeout);
     if (rc < 0)
     {
         int errorCode = errno;
@@ -160,15 +146,9 @@ bool ConsoleConnector::canRecv(long timeoutInMicroseconds) const
 }
 
 
-bool ConsoleConnector::canSend(long timeoutInMicroseconds) const
+bool ConsoleConnector::canSend(long timeout)
 {
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(_sockHost, &fds);
-    struct timeval timeout;
-    timeout.tv_sec = timeoutInMicroseconds / 1000000L;
-    timeout.tv_usec = timeoutInMicroseconds % 1000000L;
-    int rc = select(_sockHost + 1, NULL, &fds, NULL, &timeout);
+    int rc = _httpClient->canSend(timeout);
     if (rc < 0)
     {
         int errorCode = errno;

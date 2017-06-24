@@ -36,8 +36,8 @@ namespace hnrt
         void close();
         ssize_t recv();
         ssize_t send();
-        bool canRecv(long = 1000000L) const;
-        bool canSend(long = 1000000L) const;
+        bool canRecv(long = 1000L);
+        bool canSend(long = 1000L);
         Glib::ustring getRequest(const char* location, const char* authorization);
         void parseLocation(const char* location, Glib::ustring& host, Glib::ustring& absPathAndQuery);
         bool getHeaderLength(size_t&);
@@ -46,7 +46,6 @@ namespace hnrt
         bool extendOutputBuffer(size_t sizeHint = 0);
 
         RefPtr<HttpClient> _httpClient;
-        int _sockHost;
         ByteBuffer _ibuf;
         ByteBuffer _obuf;
         int _statusCode;
