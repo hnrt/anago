@@ -219,11 +219,11 @@ void PatchListView::onNotify(RefPtr<XenObject> object, int what)
                 size_t m = patch->getActual();
                 if (n)
                 {
-                    buf.appendFormat("%zu%%", (100 * m) / n);
+                    buf.appendFormat("(%zu%%)", (100 * m) / n);
                 }
                 else
                 {
-                    buf.appendFormat("%'zu", m);
+                    buf.appendFormat("(%'zu)", m);
                 }
             }
             row[_record.colDisplayStatus] = Glib::ustring(buf.str());
