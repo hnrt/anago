@@ -46,9 +46,9 @@ void Patch::init()
     _cli->setUsername(cs.username.c_str());
     _cli->setPassword(pw.c_str());
     _cli->setTimeout(600000L);
-    _cli->setPrintCallback(sigc::mem_fun(*this, &Patch::print));
-    _cli->setPrintErrorCallback(sigc::mem_fun(*this, &Patch::printError));
-    _cli->setExitCallback(sigc::mem_fun(*this, &Patch::exit));
+    _cli->setPrintFunction(sigc::mem_fun(*this, &Patch::print));
+    _cli->setPrintErrorFunction(sigc::mem_fun(*this, &Patch::printError));
+    _cli->setExitFunction(sigc::mem_fun(*this, &Patch::exit));
     _cli->setProgressFunction(sigc::mem_fun(*this, &Patch::reportProgress));
     pw.clear();
     _output.clear();
@@ -285,27 +285,27 @@ bool Patch::apply()
 }
 
 
-void Patch::print(ThinClientInterface& cli)
+void Patch::print(const char* message)
 {
-    _output.append(cli.getOutput());
+    _output.append(message);
 }
 
 
-void Patch::printError(ThinClientInterface& cli)
+void Patch::printError(const char* message)
 {
-    _errorOutput.append(cli.getErrorOutput());
+    _errorOutput.append(message);
 }
 
 
-void Patch::exit(ThinClientInterface& cli)
+void Patch::exit(int exitCode)
 {
-    _exitCode = cli.getExitCode();
+    _exitCode = exitCode;
 }
 
 
-void Patch::reportProgress(size_t nbytes, size_t size, const char* path)
+void Patch::reportProgress(size_t nbytes)
 {
-    TRACEFUN(this, "Patch::reportProgress(%zu,%zu,%s)", nbytes, size, path);
+    TRACEFUN(this, "Patch::reportProgress(%zu)", nbytes);
     switch (_record->state)
     {
     case PatchState::UPLOAD_INPROGRESS:

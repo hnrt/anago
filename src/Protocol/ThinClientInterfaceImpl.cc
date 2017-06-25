@@ -5,6 +5,7 @@
 
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #include <stdexcept>
 #include "Base/StringBuffer.h"
@@ -16,6 +17,9 @@
 
 
 using namespace hnrt;
+
+
+ThinClientInterfaceImpl::CommandFunctionMap ThinClientInterfaceImpl::_commandFunctionMap;
 
 
 ThinClientInterfaceImpl::ThinClientInterfaceImpl()
@@ -34,6 +38,18 @@ ThinClientInterfaceImpl::~ThinClientInterfaceImpl()
 void ThinClientInterfaceImpl::init()
 {
     Trace trace(this, "ThinClientInterfaceImpl::init");
+    if (_commandFunctionMap.empty())
+    {
+        _commandFunctionMap.insert(CommandFunctionMapEntry(PRINT, &ThinClientInterfaceImpl::print));
+        _commandFunctionMap.insert(CommandFunctionMapEntry(PRINT_STDERR, &ThinClientInterfaceImpl::printStderr));
+        _commandFunctionMap.insert(CommandFunctionMapEntry(DEBUG, &ThinClientInterfaceImpl::debug));
+        _commandFunctionMap.insert(CommandFunctionMapEntry(EXIT, &ThinClientInterfaceImpl::exit));
+        _commandFunctionMap.insert(CommandFunctionMapEntry(ERROR, &ThinClientInterfaceImpl::error));
+        _commandFunctionMap.insert(CommandFunctionMapEntry(PROMPT, &ThinClientInterfaceImpl::prompt));
+        _commandFunctionMap.insert(CommandFunctionMapEntry(LOAD, &ThinClientInterfaceImpl::load));
+        _commandFunctionMap.insert(CommandFunctionMapEntry(HTTP_PUT, &ThinClientInterfaceImpl::httpPut));
+        _commandFunctionMap.insert(CommandFunctionMapEntry(HTTP_GET, &ThinClientInterfaceImpl::httpGet));
+    }
 }
 
 
@@ -72,21 +88,39 @@ void ThinClientInterfaceImpl::setTimeout(long value)
 }
 
 
-void ThinClientInterfaceImpl::setPrintCallback(const sigc::slot<void, ThinClientInterface&>& printCb)
+void ThinClientInterfaceImpl::setPrintFunction(const PrintFunction& function)
 {
-    _printCb = printCb;
+    _printFunction = function;
 }
 
 
-void ThinClientInterfaceImpl::setPrintErrorCallback(const sigc::slot<void, ThinClientInterface&>& printErrorCb)
+void ThinClientInterfaceImpl::resetPrintFunction()
 {
-    _printErrorCb = printErrorCb;
+    _printFunction.disconnect();
 }
 
 
-void ThinClientInterfaceImpl::setExitCallback(const sigc::slot<void, ThinClientInterface&>& exitCb)
+void ThinClientInterfaceImpl::setPrintErrorFunction(const PrintFunction& function)
 {
-    _exitCb = exitCb;
+    _printErrorFunction = function;
+}
+
+
+void ThinClientInterfaceImpl::resetPrintErrorFunction()
+{
+    _printErrorFunction.disconnect();
+}
+
+
+void ThinClientInterfaceImpl::setExitFunction(const ExitFunction& function)
+{
+    _exitFunction = function;
+}
+
+
+void ThinClientInterfaceImpl::resetExitFunction()
+{
+    _exitFunction.disconnect();
 }
 
 
@@ -302,340 +336,6 @@ done:
 }
 
 
-static bool Print(HttpClient& httpClient, Glib::ustring& output, Trace& trace)
-{
-    if (!Recv(httpClient, output))
-    {
-        return false;
-    }
-
-    trace.put("PRINT: %s", output.c_str());
-
-    return true;
-}
-
-
-static bool PrintStderr(HttpClient& httpClient, Glib::ustring& output, Trace& trace)
-{
-    if (!Recv(httpClient, output))
-    {
-        return false;
-    }
-
-    trace.put("PRINT_STDERR: %s", output.c_str());
-
-    return true;
-}
-
-
-static bool Debug(HttpClient& httpClient, Glib::ustring& output)
-{
-    if (!Recv(httpClient, output))
-    {
-        return false;
-    }
-
-    Logger::instance().debug("CLI: %s", output.c_str());
-
-    return true;
-}
-
-
-static bool GetError(HttpClient& httpClient, Glib::ustring& output)
-{
-    if (!Recv(httpClient, output))
-    {
-        return false;
-    }
-
-    int count;
-
-    if (!Recv(httpClient, count))
-    {
-        return false;
-    }
-
-    while (count-- > 0)
-    {
-        Glib::ustring message;
-        if (!Recv(httpClient, message))
-        {
-            return false;
-        }
-        output.append("\n");
-        output.append(message);
-    }
-
-    Logger::instance().error("CLI: %s", output.c_str());
-
-    return true;
-}
-
-
-static bool Load(HttpClient& httpClient, char* buf, size_t bufsz, Trace& trace)
-{
-    {
-        Glib::ustring filename;
-
-        if (!Recv(httpClient, filename))
-        {
-            goto error;
-        }
-
-        trace.put("LOAD: filename=%s", filename.c_str());
-
-        RefPtr<File> file = File::create(filename.c_str(), "r");
-
-        if (!file->open())
-        {
-            Logger::instance().error("%s: %s", file->path(), strerror(file->error()));
-            goto error;
-        }
-
-        if (!Send(httpClient, ThinClientInterfaceImpl::RESPONSE, ThinClientInterfaceImpl::OK))
-        {
-            return false;
-        }
-
-        if (!Send(httpClient, ThinClientInterfaceImpl::BLOB, ThinClientInterfaceImpl::CHUNK, (int)file->size()))
-        {
-            return false;
-        }
-
-        while (1)
-        {
-            size_t n = file->read(buf, ThinClientInterfaceImpl::BLOCK_SIZE);
-
-            if (n == 0)
-            {
-                break;
-            }
-
-            if (!Send(httpClient, buf, n))
-            {
-                return false;
-            }
-        }
-
-        return Send(httpClient, ThinClientInterfaceImpl::BLOB, ThinClientInterfaceImpl::END);
-    }
-
-error:
-
-    Send(httpClient, ThinClientInterfaceImpl::RESPONSE, ThinClientInterfaceImpl::FAILED);
-
-    return false;
-}
-
-
-static bool Connect(HttpClient& httpClient, Glib::ustring& url, const char* buf, Trace& trace)
-{
-    while (1)
-    {
-        httpClient.init();
-        httpClient.setFreshConnect();
-        httpClient.setUrl(url.c_str());
-        httpClient.setVerbose(true);
-
-        if (!httpClient.connect())
-        {
-            Logger::instance().error("CLI: Connect(2) failed.");
-            return false;
-        }
-
-        if (!Send(httpClient, buf, strlen(buf)))
-        {
-            return false;
-        }
-
-        if (!httpClient.recvResponse())
-        {
-            return false;
-        }
-
-        int status = httpClient.getStatus();
-
-        trace.put("status=%d", status);
-
-        if (status == 200)
-        {
-            return true;
-        }
-        else if (status == 302)
-        {
-            const HttpClient::HeaderMap& map = httpClient.getResponseHeaderMap();
-            HttpClient::HeaderMap::const_iterator iter = map.find("location");
-            if (iter == map.end())
-            {
-                Logger::instance().error("CLI: Missing location header.");
-                return false;
-            }
-            url = iter->second.value;
-            trace.put("Location: %s\n", url.c_str());
-            httpClient.fini();
-        }
-        else
-        {
-            return false;
-        }
-    }
-}
-
-
-static bool HttpPut(HttpClient& httpClient, const Glib::ustring& hostname, char* buf, size_t bufsz, ThinClientInterface::ProgressFunction& report, Trace& trace)
-{
-    {
-        Glib::ustring filename;
-
-        if (!Recv(httpClient, filename))
-        {
-            goto error;
-        }
-
-        trace.put("HTTP_PUT: filename=%s", filename.c_str());
-
-        Glib::ustring path;
-
-        if (!Recv(httpClient, path))
-        {
-            goto error;
-        }
-
-        trace.put("HTTP_PUT: path=%s", path.c_str());
-
-        RefPtr<File> file = File::create(filename.c_str(), "r");
-
-        if (!file->open())
-        {
-            Logger::instance().error("%s: %s", file->path(), strerror(file->error()));
-            goto error;
-        }
-
-        RefPtr<HttpClient> httpClient2 = HttpClient::create();
-
-        Glib::ustring url = Glib::ustring::compose("https://%1%2", hostname, path);
-
-        snprintf(buf, bufsz,
-                 "PUT %s HTTP/1.0\r\n"
-                 "Content-Length: %zu\r\n"
-                 "\r\n",
-                 path.c_str(),
-                 file->size());
-
-        if (!Connect(*httpClient2, url, buf, trace))
-        {
-            goto error;
-        }
-
-        while (1)
-        {
-            size_t n = file->read(buf, bufsz);
-
-            if (n == 0)
-            {
-                break;
-            }
-
-            if (!Send(*httpClient2, buf, n))
-            {
-                goto error;
-            }
-
-            if (!report.empty())
-            {
-                report(file->nbytes(), file->size(), file->path());
-            }
-        }
-
-        return Send(httpClient, ThinClientInterfaceImpl::RESPONSE, ThinClientInterfaceImpl::OK);
-    }
-
-error:
-
-    Send(httpClient, ThinClientInterfaceImpl::RESPONSE, ThinClientInterfaceImpl::FAILED);
-
-    return false;
-}
-
-
-static bool HttpGet(HttpClient& httpClient, const Glib::ustring& hostname, char* buf, size_t bufsz, Trace& trace)
-{
-    {
-        Glib::ustring filename;
-
-        if (!Recv(httpClient, filename))
-        {
-            goto error;
-        }
-
-        trace.put("HTTP_GET: filename=%s", filename.c_str());
-
-        Glib::ustring path;
-
-        if (!Recv(httpClient, path))
-        {
-            goto error;
-        }
-
-        trace.put("HTTP_GET: path=%s", path.c_str());
-
-        RefPtr<File> file = File::create(filename.c_str(), "w");
-
-        if (file->exists())
-        {
-            Logger::instance().error("%s: Already exists.", file->path());
-            goto error;
-        }
-
-        if (!file->open())
-        {
-            Logger::instance().error("%s: %s", file->path(), strerror(file->error()));
-            goto error;
-        }
-
-        RefPtr<HttpClient> httpClient2 = HttpClient::create();
-
-        Glib::ustring url = Glib::ustring::compose("https://%1%2", hostname, path);
-
-        snprintf(buf, bufsz,
-                 "GET %s HTTP/1.0\r\n"
-                 "\r\n",
-                 path.c_str());
-
-        if (!Connect(*httpClient2, url, buf, trace))
-        {
-            goto error;
-        }
-
-        while (1)
-        {
-            ssize_t n = httpClient2->recv(buf, bufsz);
-
-            if (n == 0)
-            {
-                break;
-            }
-            else if (n > 0)
-            {
-                file->write(buf, n);
-            }
-            else
-            {
-                goto error;
-            }
-        }
-
-        return Send(httpClient, ThinClientInterfaceImpl::RESPONSE, ThinClientInterfaceImpl::OK);
-    }
-
-error:
-
-    Send(httpClient, ThinClientInterfaceImpl::RESPONSE, ThinClientInterfaceImpl::FAILED);
-
-    return false;
-}
-
-
 bool ThinClientInterfaceImpl::run(const char* arg, ...)
 {
     Trace trace(this, "ThinClientInterfaceImpl::run");
@@ -646,7 +346,6 @@ bool ThinClientInterfaceImpl::run(const char* arg, ...)
     }
 
     bool retval = false;
-    char* buf = new char[BLOCK_SIZE];
 
     Time expiry;
     expiry.addMilliseconds(_timeoutInMilliseconds);
@@ -671,7 +370,7 @@ bool ThinClientInterfaceImpl::run(const char* arg, ...)
         body.appendFormat("username=%s\n", _username.c_str());
         body.appendFormat("password=%s", _password.c_str());
 
-        snprintf(buf, BLOCK_SIZE,
+        snprintf(_buf, BLOCK_SIZE,
                  "POST /cli HTTP/1.0\r\n"
                  "content-length: %d\r\n"
                  "\r\n"
@@ -691,7 +390,7 @@ bool ThinClientInterfaceImpl::run(const char* arg, ...)
             goto done;
         }
 
-        if (!Send(*httpClient, buf, strlen(buf)))
+        if (!Send(*httpClient, _buf, strlen(_buf)))
         {
             goto done;
         }
@@ -702,11 +401,11 @@ bool ThinClientInterfaceImpl::run(const char* arg, ...)
         int major;
         int minor;
 
-        if (!Recv(*httpClient, buf, magicLen))
+        if (!Recv(*httpClient, _buf, magicLen))
         {
             goto done;
         }
-        if (memcmp(buf, magic, magicLen))
+        if (memcmp(_buf, magic, magicLen))
         {
             Logger::instance().error("CLI: Magic mismatch.");
             goto done;
@@ -738,131 +437,482 @@ bool ThinClientInterfaceImpl::run(const char* arg, ...)
             goto done;
         }
 
-        bool next = true;
-        while (next)
+        do
         {
             int length;
-            int command1;
-            int command2;
+            int type;
+
+            _command = -1;
+            _contentLength = static_cast<size_t>(-1);
 
             if (!Recv(*httpClient, length))
             {
                 goto done;
             }
 
-            if (!Recv(*httpClient, command1))
+            if (!Recv(*httpClient, type))
             {
                 goto done;
             }
 
-            if (command1 != COMMAND)
+            if (type != COMMAND)
             {
-                Logger::instance().error("CLI: Unknown command: %d", command1);
+                Logger::instance().error("CLI: Unknown type: %d", type);
                 goto done;
             }
 
-            if (!Recv(*httpClient, command2))
+            if (!Recv(*httpClient, _command))
             {
                 goto done;
             }
 
-            switch (command2)
+            CommandFunctionMap::const_iterator iter = _commandFunctionMap.find(_command);
+            if (iter == _commandFunctionMap.end())
             {
-            case PRINT:
-                if (Print(*httpClient, _output, trace))
-                {
-                    if (!_printCb.empty())
-                    {
-                        _printCb(*this);
-                    }
-                }
-                else
-                {
-                    goto done;
-                }
-                break;
-
-            case PRINT_STDERR:
-                if (PrintStderr(*httpClient, _errorOutput, trace))
-                {
-                    if (!_printErrorCb.empty())
-                    {
-                        _printErrorCb(*this);
-                    }
-                }
-                else
-                {
-                    goto done;
-                }
-                break;
-
-            case DEBUG:
-                if (!Debug(*httpClient, _output))
-                {
-                    goto done;
-                }
-                break;
-
-            case EXIT:
-                if (Recv(*httpClient, _exitCode))
-                {
-                    trace.put("EXIT: %d", _exitCode);
-                    next = false;
-                    if (!_exitCb.empty())
-                    {
-                        _exitCb(*this);
-                    }
-                }
-                else
-                {
-                    goto done;
-                }
-                break;
-
-            case ERROR:
-                if (!GetError(*httpClient, _errorOutput))
-                {
-                    goto done;
-                }
-                break;
-
-            case PROMPT:
-                Logger::instance().error("CLI: PROMPT not implemented.");
+                Logger::instance().error("CLI: Unknown command: %d", _command);
                 goto done;
+            }
 
-            case LOAD:
-                if (Load(*httpClient, buf, BLOCK_SIZE, trace))
-                {
-                    goto done;
-                }
-                break;
-
-            case HTTP_PUT:
-                if (!HttpPut(*httpClient, _hostname, buf, BLOCK_SIZE, _progressFunction, trace))
-                {
-                    goto done;
-                }
-                break;
-
-            case HTTP_GET:
-                if (!HttpGet(*httpClient, _hostname, buf, BLOCK_SIZE, trace))
-                {
-                    goto done;
-                }
-                break;
-
-            default:
-                Logger::instance().error("CLI: Unknown sub-command: %d", command2);
+            const CommandFunction& function = iter->second;
+            if (!(this->*function)(*httpClient))
+            {
                 goto done;
             }
         }
+        while (_command != EXIT);
 
         retval = true;
     }
 
 done:
 
-    delete[] buf;
-
     return retval;
+}
+
+
+bool ThinClientInterfaceImpl::print(HttpClient& httpClient)
+{
+    Trace trace(this, "ThinClientInterfaceImpl::print");
+
+    Glib::ustring output;
+
+    if (!Recv(httpClient, output))
+    {
+        return false;
+    }
+
+    trace.put("%s", output.c_str());
+
+    if (!_printFunction.empty())
+    {
+        _printFunction(output.c_str());
+    }
+
+    return true;
+}
+
+
+bool ThinClientInterfaceImpl::printStderr(HttpClient& httpClient)
+{
+    Trace trace(this, "ThinClientInterfaceImpl::printStderr");
+
+    Glib::ustring output;
+
+    if (!Recv(httpClient, output))
+    {
+        return false;
+    }
+
+    trace.put("%s", output.c_str());
+
+    if (!_printErrorFunction.empty())
+    {
+        _printErrorFunction(output.c_str());
+    }
+
+    return true;
+}
+
+
+bool ThinClientInterfaceImpl::debug(HttpClient& httpClient)
+{
+    Trace trace(this, "ThinClientInterfaceImpl::debug");
+
+    Glib::ustring output;
+
+    if (!Recv(httpClient, output))
+    {
+        return false;
+    }
+
+    Logger::instance().debug("CLI: %s", output.c_str());
+
+    return true;
+}
+
+
+bool ThinClientInterfaceImpl::exit(HttpClient& httpClient)
+{
+    Trace trace(this, "ThinClientInterfaceImpl::exit");
+
+    int exitCode;
+
+    if (!Recv(httpClient, exitCode))
+    {
+        return false;
+    }
+
+    trace.put("exitCode=%d", exitCode);
+
+    if (!_exitFunction.empty())
+    {
+        _exitFunction(exitCode);
+    }
+
+    return true;
+}
+
+
+bool ThinClientInterfaceImpl::error(HttpClient& httpClient)
+{
+    Trace trace(this, "ThinClientInterfaceImpl::error");
+
+    Glib::ustring output;
+
+    if (!Recv(httpClient, output))
+    {
+        return false;
+    }
+
+    int count;
+
+    if (!Recv(httpClient, count))
+    {
+        return false;
+    }
+
+    while (count-- > 0)
+    {
+        Glib::ustring message;
+        if (!Recv(httpClient, message))
+        {
+            return false;
+        }
+        output.append("\n");
+        output.append(message);
+    }
+
+    Logger::instance().error("CLI: %s", output.c_str());
+
+    if (!_printErrorFunction.empty())
+    {
+        _printErrorFunction(output.c_str());
+    }
+
+    return true;
+}
+
+
+bool ThinClientInterfaceImpl::prompt(HttpClient& httpClient)
+{
+    Logger::instance().error("CLI: PROMPT not implemented.");
+    return false;
+}
+
+
+bool ThinClientInterfaceImpl::load(HttpClient& httpClient)
+{
+    Trace trace(this, "ThinClientInterfaceImpl::load");
+
+    {
+        Glib::ustring filename;
+
+        if (!Recv(httpClient, filename))
+        {
+            goto error;
+        }
+
+        trace.put("filename=%s", filename.c_str());
+
+        RefPtr<File> file = File::create(filename.c_str(), "r");
+
+        if (!file->open())
+        {
+            Logger::instance().error("%s: %s", file->path(), strerror(file->error()));
+            goto error;
+        }
+
+        _contentLength = file->size();
+
+        if (!Send(httpClient, RESPONSE, OK))
+        {
+            return false;
+        }
+
+        if (!Send(httpClient, BLOB, CHUNK, (int)file->size()))
+        {
+            return false;
+        }
+
+        while (1)
+        {
+            size_t n = file->read(_buf, BLOCK_SIZE);
+
+            if (n == 0)
+            {
+                break;
+            }
+
+            if (!Send(httpClient, _buf, n))
+            {
+                return false;
+            }
+
+            if (!_progressFunction.empty())
+            {
+                _progressFunction(file->nbytes());
+            }
+        }
+
+        return Send(httpClient, BLOB, END);
+    }
+
+error:
+
+    Send(httpClient, RESPONSE, FAILED);
+
+    return false;
+}
+
+
+bool ThinClientInterfaceImpl::httpPut(HttpClient& httpClient)
+{
+    Trace trace(this, "ThinClientInterfaceImpl::httpPut");
+
+    {
+        Glib::ustring filename;
+
+        if (!Recv(httpClient, filename))
+        {
+            goto error;
+        }
+
+        trace.put("filename=%s", filename.c_str());
+
+        Glib::ustring path;
+
+        if (!Recv(httpClient, path))
+        {
+            goto error;
+        }
+
+        trace.put("path=%s", path.c_str());
+
+        RefPtr<File> file = File::create(filename.c_str(), "r");
+
+        if (!file->open())
+        {
+            Logger::instance().error("%s: %s", file->path(), strerror(file->error()));
+            goto error;
+        }
+
+        RefPtr<HttpClient> httpClient2 = HttpClient::create();
+
+        Glib::ustring url = Glib::ustring::compose("https://%1%2", _hostname, path);
+
+        snprintf(_buf, BLOCK_SIZE,
+                 "PUT %s HTTP/1.0\r\n"
+                 "Content-Length: %zu\r\n"
+                 "\r\n",
+                 path.c_str(),
+                 file->size());
+
+        if (!connect(*httpClient2, url, _buf))
+        {
+            goto error;
+        }
+
+        while (1)
+        {
+            size_t n = file->read(_buf, BLOCK_SIZE);
+
+            if (n == 0)
+            {
+                break;
+            }
+
+            if (!Send(*httpClient2, _buf, n))
+            {
+                goto error;
+            }
+
+            if (!_progressFunction.empty())
+            {
+                _progressFunction(file->nbytes());
+            }
+        }
+
+        return Send(httpClient, RESPONSE, OK);
+    }
+
+error:
+
+    Send(httpClient, RESPONSE, FAILED);
+
+    return false;
+}
+
+
+bool ThinClientInterfaceImpl::httpGet(HttpClient& httpClient)
+{
+    Trace trace(this, "ThinClientInterfaceImpl::httpGet");
+
+    {
+        Glib::ustring filename;
+
+        if (!Recv(httpClient, filename))
+        {
+            goto error;
+        }
+
+        trace.put("filename=%s", filename.c_str());
+
+        Glib::ustring path;
+
+        if (!Recv(httpClient, path))
+        {
+            goto error;
+        }
+
+        trace.put("path=%s", path.c_str());
+
+        RefPtr<File> file = File::create(filename.c_str(), "w");
+
+        if (file->exists())
+        {
+            Logger::instance().error("%s: Already exists.", file->path());
+            goto error;
+        }
+
+        if (!file->open())
+        {
+            Logger::instance().error("%s: %s", file->path(), strerror(file->error()));
+            goto error;
+        }
+
+        RefPtr<HttpClient> httpClient2 = HttpClient::create();
+
+        Glib::ustring url = Glib::ustring::compose("https://%1%2", _hostname, path);
+
+        snprintf(_buf, BLOCK_SIZE,
+                 "GET %s HTTP/1.0\r\n"
+                 "\r\n",
+                 path.c_str());
+
+        if (!connect(*httpClient2, url, _buf))
+        {
+            goto error;
+        }
+
+        while (1)
+        {
+            ssize_t n = httpClient2->recv(_buf, BLOCK_SIZE);
+
+            if (n == 0)
+            {
+                if (_contentLength != static_cast<size_t>(-1) &&
+                    file->nbytes() < _contentLength &&
+                    httpClient2->canRecv(100) >= 0)
+                {
+                    continue;
+                }
+                break;
+            }
+            else if (n > 0)
+            {
+                file->write(_buf, n);
+            }
+            else
+            {
+                goto error;
+            }
+
+            if (!_progressFunction.empty())
+            {
+                _progressFunction(file->nbytes());
+            }
+        }
+
+        return Send(httpClient, RESPONSE, OK);
+    }
+
+error:
+
+    Send(httpClient, RESPONSE, FAILED);
+
+    return false;
+}
+
+
+bool ThinClientInterfaceImpl::connect(HttpClient& httpClient, Glib::ustring& url, const char* request)
+{
+    Trace trace(this, "ThinClientInterfaceImpl::connect");
+
+    while (1)
+    {
+        trace.put("url=%s", url.c_str());
+
+        httpClient.init();
+        httpClient.setFreshConnect();
+        httpClient.setUrl(url.c_str());
+        httpClient.setVerbose(true);
+
+        if (!httpClient.connect())
+        {
+            Logger::instance().error("CLI: Connect(2) failed.");
+            return false;
+        }
+
+        if (!Send(httpClient, request, strlen(request)))
+        {
+            return false;
+        }
+
+        if (!httpClient.recvResponse())
+        {
+            return false;
+        }
+
+        int status = httpClient.getStatus();
+
+        trace.put("status=%d", status);
+
+        if (status == 200)
+        {
+            const HttpClient::HeaderMap& map = httpClient.getResponseHeaderMap();
+            HttpClient::HeaderMap::const_iterator iter = map.find("content-length");
+            if (iter != map.end())
+            {
+                _contentLength = strtoul(iter->second.value.c_str(), NULL, 10);
+                trace.put("content-length=%zu", _contentLength);
+            }
+            return true;
+        }
+        else if (status == 302)
+        {
+            const HttpClient::HeaderMap& map = httpClient.getResponseHeaderMap();
+            HttpClient::HeaderMap::const_iterator iter = map.find("location");
+            if (iter == map.end())
+            {
+                Logger::instance().error("CLI: Missing location header.");
+                return false;
+            }
+            url = iter->second.value;
+            httpClient.fini();
+        }
+        else
+        {
+            return false;
+        }
+    }
 }

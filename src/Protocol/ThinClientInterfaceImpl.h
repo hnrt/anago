@@ -9,11 +9,15 @@
 
 
 #include <glibmm/ustring.h>
+#include <map>
 #include "ThinClientInterface.h"
 
 
 namespace hnrt
 {
+    class HttpClient;
+    class Trace;
+
     class ThinClientInterfaceImpl
         : public ThinClientInterface
     {
@@ -23,26 +27,6 @@ namespace hnrt
         {
             VERSION_MAJOR = 0,
             VERSION_MINOR = 1,
-        };
-
-        enum Tag
-        {
-            PRINT = 0,
-            LOAD = 1,
-            HTTP_GET = 12,
-            HTTP_PUT = 13,
-            PROMPT = 3,
-            EXIT = 4,
-            ERROR = 14,
-            OK = 5,
-            FAILED = 6,
-            CHUNK = 7,
-            END = 8,
-            COMMAND = 9,
-            RESPONSE = 10,
-            BLOB = 11,
-            DEBUG = 15,
-            PRINT_STDERR = 16,
         };
 
         enum Configuration
@@ -58,34 +42,52 @@ namespace hnrt
         virtual void setUsername(const char*);
         virtual void setPassword(const char*);
         virtual void setTimeout(long);
-        virtual void setPrintCallback(const sigc::slot<void, ThinClientInterface&>&);
-        virtual void setPrintErrorCallback(const sigc::slot<void, ThinClientInterface&>&);
-        virtual void setExitCallback(const sigc::slot<void, ThinClientInterface&>&);
+        virtual void setPrintFunction(const PrintFunction&);
+        virtual void resetPrintFunction();
+        virtual void setPrintErrorFunction(const PrintFunction&);
+        virtual void resetPrintErrorFunction();
+        virtual void setExitFunction(const ExitFunction&);
+        virtual void resetExitFunction();
         virtual void setProgressFunction(const ProgressFunction&);
         virtual void resetProgressFunction();
         virtual bool run(const char*, ...);
         virtual void cancel() { _cancel = true; }
-        virtual const Glib::ustring& getOutput() const { return _output; }
-        virtual const Glib::ustring& getErrorOutput() const { return _errorOutput; }
-        virtual int getExitCode() const { return _exitCode; }
+        virtual int command() const { return _command; }
+        virtual size_t contentLength() const { return _contentLength; }
 
     protected:
 
+        typedef bool (ThinClientInterfaceImpl::*CommandFunction)(HttpClient&);
+        typedef std::map<int, CommandFunction> CommandFunctionMap;
+        typedef std::pair<int, CommandFunction> CommandFunctionMapEntry;
+
         ThinClientInterfaceImpl(const ThinClientInterfaceImpl&);
         void operator =(const ThinClientInterfaceImpl&);
+        bool print(HttpClient&);
+        bool printStderr(HttpClient&);
+        bool debug(HttpClient&);
+        bool exit(HttpClient&);
+        bool error(HttpClient&);
+        bool prompt(HttpClient&);
+        bool load(HttpClient&);
+        bool httpPut(HttpClient&);
+        bool httpGet(HttpClient&);
+        bool connect(HttpClient&, Glib::ustring&, const char*);
+
+        static CommandFunctionMap _commandFunctionMap;
 
         Glib::ustring _hostname;
         Glib::ustring _username;
         Glib::ustring _password;
         long _timeoutInMilliseconds;
         bool volatile _cancel;
-        Glib::ustring _output;
-        Glib::ustring _errorOutput;
-        int _exitCode;
-        sigc::slot<void, ThinClientInterface&> _printCb;
-        sigc::slot<void, ThinClientInterface&> _printErrorCb;
-        sigc::slot<void, ThinClientInterface&> _exitCb;
+        PrintFunction _printFunction;
+        PrintFunction _printErrorFunction;
+        ExitFunction _exitFunction;
         ProgressFunction _progressFunction;
+        int _command;
+        size_t _contentLength;
+        char _buf[BLOCK_SIZE];
     };
 }
 

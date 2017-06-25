@@ -49,10 +49,10 @@ namespace hnrt
         Patch(const Patch&);
         void operator =(const Patch&);
         bool write(const void*, size_t, RefPtr<File>);
-        void print(ThinClientInterface&);
-        void printError(ThinClientInterface&);
-        void exit(ThinClientInterface&);
-        void reportProgress(size_t, size_t, const char*);
+        void print(const char*);
+        void printError(const char*);
+        void exit(int);
+        void reportProgress(size_t);
 
         RefPtr<PatchRecord> _record;
         Glib::ustring _path;
