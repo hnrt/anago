@@ -6,11 +6,7 @@ Update OBJS1 macro in Makefile and do as follows.
 
 # How to update the localization files
 
-0. Build tools once.
-
-    pushd $(PROJECTROOT)/support/src
-    make both
-    popd
+0. Install poutils (https://github.com/hnrt/poutils.git) in your computer.
 
 1. If one or more gettext lines were added or removed, update POTFILES in Makefile.
 
@@ -22,13 +18,13 @@ Update OBJS1 macro in Makefile and do as follows.
 
 3. Check updated strings in English po file.
 
-    ../support/bin/linux/release/pocheck Localization/en_US/Anago.po
+    pocheck Localization/en_US/Anago.po
 
 4. Translate po files.
 
     1. If translations (msgstr) should be exactly the same as labels (msgid), just copy msgid to msgstr.
 
-        ../support/bin/linux/release/poupdate -copy Localization/xx_YY/Anago.po
+        poupdate -copy Localization/xx_YY/Anago.po
 
     2. Otherwise, translate po file by hand.
 
