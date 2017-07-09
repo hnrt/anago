@@ -51,7 +51,7 @@ extract1() {
   cp /dev/null $tmp1
   extract2 "$1"
   if [ -s $tmp1 ]; then
-    echo "\$(OBJDIR)/${1/.cc/.o}: $1 `sort $tmp1 | tr '\n' ' '`"
+    echo "\$(OBJDIR)${1/.cc/.o}: $1 `sort $tmp1 | tr '\n' ' '`"
   fi
 }
 
