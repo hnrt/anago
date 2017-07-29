@@ -387,7 +387,6 @@ bool ThinClientInterfaceImpl::run(const char* arg, ...)
 
         httpClient->init();
         httpClient->setTimeout(_timeoutInMilliseconds);
-        httpClient->setFreshConnect();
         httpClient->setUrl(url.c_str());
         httpClient->setVerbose(VERBOSE_OUTPUT);
 
@@ -870,7 +869,6 @@ bool ThinClientInterfaceImpl::connect(HttpClient& httpClient, Glib::ustring& url
         trace.put("url=%s", url.c_str());
 
         httpClient.init();
-        httpClient.setFreshConnect();
         httpClient.setUrl(url.c_str());
         httpClient.setVerbose(VERBOSE_OUTPUT);
 

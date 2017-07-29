@@ -57,6 +57,7 @@ void HttpClientImpl::init()
     curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYHOST, 0);
     curl_easy_setopt(_curl, CURLOPT_NOPROGRESS, 1);
     curl_easy_setopt(_curl, CURLOPT_ERRORBUFFER, _errbuf);
+    curl_easy_setopt(_curl, CURLOPT_FRESH_CONNECT, 1);
 }
 
 
@@ -93,20 +94,6 @@ void HttpClientImpl::setMaxConnects(int count)
 {
     TRACE("HttpClientImpl@%zx: MAXCONNECTS=%d", this, count);
     curl_easy_setopt(_curl, CURLOPT_MAXCONNECTS, static_cast<long>(count));
-}
-
-
-void HttpClientImpl::setFreshConnect(bool enabled)
-{
-    TRACE("HttpClientImpl@%zx: FRESH_CONNECT=%d", this, enabled ? 1 : 0);
-    curl_easy_setopt(_curl, CURLOPT_FRESH_CONNECT, enabled ? 1L : 0L);
-}
-
-
-void HttpClientImpl::setForbidReuse(bool enabled)
-{
-    TRACE("HttpClientImpl@%zx: FORBID_REUSE=%d", this, enabled ? 1 : 0);
-    curl_easy_setopt(_curl, CURLOPT_FORBID_REUSE, enabled ? 1L : 0L);
 }
 
 
