@@ -102,7 +102,7 @@ ssize_t ConsoleConnector::recv()
     }
     else
     {
-        throw CommunicationConsoleException(_httpClient->getResult(), "Recv failed: %s", _httpClient->getError());
+        throw CommunicationConsoleException(_httpClient->getResult(), "Recv(%zx,%zu) failed: %s", _ibuf.wPtr(), _ibuf.wLen(), _httpClient->getError());
     }
 }
 

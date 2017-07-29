@@ -28,6 +28,7 @@ using namespace hnrt;
 ConsoleViewImpl::ConsoleViewImpl()
     : _console(Console::create(*this))
     , _consoleThread(NULL)
+    , _consoleClosing(false)
     , _fbMgr(*this)
     , _scaler(*new FrameScalerImpl())
     , _hasFocus(false)
@@ -281,6 +282,7 @@ void ConsoleViewImpl::open(const char* location, const char* authorization)
 {
     TRACEFUN(this, "ConsoleViewImpl::open");
     close();
+    _consoleClosing = false;
     _scaler.init();
     _consoleThread = ThreadManager::instance().create(sigc::bind<Glib::ustring, Glib::ustring>(sigc::mem_fun(*this, &ConsoleViewImpl::run), Glib::ustring(location), Glib::ustring(authorization)), true, "Console");
     _consoleThread->set_priority(Glib::THREAD_PRIORITY_HIGH);
@@ -293,6 +295,7 @@ void ConsoleViewImpl::close()
     Glib::Thread* thread = InterlockedExchangePointer(&_consoleThread, (Glib::Thread*)NULL);
     if (thread)
     {
+        _consoleClosing = true;
         _console->terminate();
         thread->join();
         if (_console->statusCode() == 200)
@@ -314,19 +317,22 @@ void ConsoleViewImpl::close()
 void ConsoleViewImpl::run(Glib::ustring location, Glib::ustring authorization)
 {
     TRACEFUN(this, "ConsoleViewImpl::run");
-    try
+    while (!_consoleClosing)
     {
-        _console->open(location.c_str(), authorization.c_str());
-        _console->run();
-        _console->close();
-    }
-    catch (ConsoleException ex)
-    {
-        Logger::instance().warn("ConsoleViewImpl@%zx::run: %s", this, ex.what().c_str());
-    }
-    catch (...)
-    {
-        Logger::instance().warn("ConsoleViewImpl@%zx::run: Unhandled exception caught.", this);
+        try
+        {
+            _console->open(location.c_str(), authorization.c_str());
+            _console->run();
+            _console->close();
+        }
+        catch (ConsoleException ex)
+        {
+            Logger::instance().warn("ConsoleViewImpl@%zx::run: %s", this, ex.what().c_str());
+        }
+        catch (...)
+        {
+            Logger::instance().warn("ConsoleViewImpl@%zx::run: Unhandled exception caught.", this);
+        }
     }
 }
 

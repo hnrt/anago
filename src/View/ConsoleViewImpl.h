@@ -134,6 +134,7 @@ namespace hnrt
 
         RefPtr<Console> _console;
         Glib::Thread* _consoleThread;
+        bool _consoleClosing;
         sigc::connection _connection;
         FrameBufferManager _fbMgr;
         FrameScaler& _scaler;
