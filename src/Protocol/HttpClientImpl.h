@@ -25,8 +25,6 @@ namespace hnrt
         virtual bool isActive() const { return _curl ? true : false; }
         virtual void setTimeout(long);
         virtual void setMaxConnects(int);
-        virtual void setFreshConnect(bool = true);
-        virtual void setForbidReuse(bool = true);
         virtual void setHttpVersion(const char*);
         virtual void setUrl(const char*);
         virtual void setMethod(Method);

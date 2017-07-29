@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include "Base/Atomic.h"
 #include "Controller/SignalManager.h"
+#include "Exception/ConsoleException.h"
 #include "Logger/Trace.h"
 #include "Net/Console.h"
 #include "Thread/ThreadManager.h"
@@ -318,6 +319,10 @@ void ConsoleViewImpl::run(Glib::ustring location, Glib::ustring authorization)
         _console->open(location.c_str(), authorization.c_str());
         _console->run();
         _console->close();
+    }
+    catch (ConsoleException ex)
+    {
+        Logger::instance().warn("ConsoleViewImpl@%zx::run: %s", this, ex.what().c_str());
     }
     catch (...)
     {

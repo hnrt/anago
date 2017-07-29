@@ -48,8 +48,6 @@ namespace hnrt
         virtual bool isActive() const = 0;
         virtual void setTimeout(long) = 0;
         virtual void setMaxConnects(int) = 0;
-        virtual void setFreshConnect(bool = true) = 0;
-        virtual void setForbidReuse(bool = true) = 0;
         virtual void setHttpVersion(const char*) = 0;
         virtual void setUrl(const char*) = 0;
         virtual void setMethod(Method) = 0;

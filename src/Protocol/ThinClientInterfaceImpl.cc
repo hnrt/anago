@@ -19,6 +19,13 @@
 using namespace hnrt;
 
 
+#ifdef _DEBUG
+#define VERBOSE_OUTPUT true
+#else
+#define VERBOSE_OUTPUT false
+#endif
+
+
 ThinClientInterfaceImpl::CommandFunctionMap ThinClientInterfaceImpl::_commandFunctionMap;
 
 
@@ -380,9 +387,8 @@ bool ThinClientInterfaceImpl::run(const char* arg, ...)
 
         httpClient->init();
         httpClient->setTimeout(_timeoutInMilliseconds);
-        httpClient->setFreshConnect();
         httpClient->setUrl(url.c_str());
-        httpClient->setVerbose(true);
+        httpClient->setVerbose(VERBOSE_OUTPUT);
 
         if (!httpClient->connect())
         {
@@ -863,9 +869,8 @@ bool ThinClientInterfaceImpl::connect(HttpClient& httpClient, Glib::ustring& url
         trace.put("url=%s", url.c_str());
 
         httpClient.init();
-        httpClient.setFreshConnect();
         httpClient.setUrl(url.c_str());
-        httpClient.setVerbose(true);
+        httpClient.setVerbose(VERBOSE_OUTPUT);
 
         if (!httpClient.connect())
         {

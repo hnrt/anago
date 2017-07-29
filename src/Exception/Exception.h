@@ -5,7 +5,7 @@
 #define HNRT_EXCEPTION_H
 
 
-#include <glibmm.h>
+#include <glibmm/ustring.h>
 #include <stdexcept>
 
 
