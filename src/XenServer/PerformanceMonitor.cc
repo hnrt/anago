@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <vector>
+#if defined(_DEBUG) && !defined(DEBUG_PERFORMANCEMONITOR)
+#undef _DEBUG
+#endif
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
 #include "Controller/Controller.h"

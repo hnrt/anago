@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include <new>
 #include <stdexcept>
+#if defined(_DEBUG) && !defined(DEBUG_EVENTMONITOR)
+#undef _DEBUG
+#endif
 #include "Base/Atomic.h"
 #include "Base/StringBuffer.h"
 #include "Controller/Controller.h"
