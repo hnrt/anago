@@ -282,6 +282,10 @@ void VirtualMachineNotebook::update()
     {
         openConsole();
     }
+    else
+    {
+        closeConsole();
+    }
 
     _ssv.getTreeView().set(_vm);
 
