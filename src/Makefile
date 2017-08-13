@@ -114,6 +114,11 @@ release-clean::
 debug-clean::
 	$(MAKE) clean CONFIGURATION=debug
 
+release-install:: release
+
+release-install::
+	$(MAKE) install CONFIGURATION=release
+
 ######################################################################
 
 SUBDIRS=\
@@ -321,10 +326,7 @@ all:: $(PROJ1)
 clean::
 	$(RM) $(PROJ1)
 
-install::
-	$(MAKE) bin-install CONFIGURATION=release
-
-bin-install:: $(PROJ1)
+install:: $(PROJ1)
 	$(INSTALL) -m 755 $(PROJ1) $(DESTBINDIR)$(TARGETEXE)
 
 ######################################################################
