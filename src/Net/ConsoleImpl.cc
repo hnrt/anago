@@ -783,21 +783,25 @@ bool ConsoleImpl::processOutgoingData()
         {
             if (canContinue() && isServerNotResponding())
             {
-                try
-                {
-                    // CentOS 7 is likely to respond no framebuffer update while it is starting up.
-                    // Reconnect is needed to avoid such situation after confirming no send data.
-                    TRACEPUT("Reconnecting...");
-                    close();
-                    _state = STATE_CONNECT_RESPONSE;
-                    _fbUpdateCount = 0;
-                    ConsoleConnector::open(_location.c_str(), _authorization.c_str());
-                    _reconnectCount++;
-                }
-                catch (Exception ex)
-                {
-                    _state = STATE_CLOSED;
-                    ConsoleConnector::close();
+                for (int i = 100; !_terminate && i > 0; i--) {
+                    try
+                    {
+                        // CentOS 7 is likely to respond no framebuffer update while it is starting up.
+                        // Reconnect is needed to avoid such situation after confirming no send data.
+                        Logger::instance().warn("Reconnecting...");
+                        close();
+                        _state = STATE_CONNECT_RESPONSE;
+                        _fbUpdateCount = 0;
+                        ConsoleConnector::open(_location.c_str(), _authorization.c_str());
+                        _reconnectCount++;
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger::instance().warn("Reconnect failed: %s", ex.what().c_str());
+                        _state = STATE_CLOSED;
+                        ConsoleConnector::close();
+                    }
                 }
             }
             break;
