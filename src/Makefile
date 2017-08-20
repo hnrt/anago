@@ -620,6 +620,7 @@ clean mo-clean::
 	$(RM) $(PROJ3)
 
 install:: $(PROJ3)
+	@test -d $(DESTENGDIR) || $(MKDIRS) $(DESTENGDIR)
 	$(INSTALL) -m 644 $(PROJ3) $(DESTENGDIR)$(MSGOBJNAME)
 
 ######################################################################
@@ -643,6 +644,7 @@ clean mo-clean::
 	$(RM) $(PROJ4)
 
 install:: $(PROJ4)
+	@test -d $(DESTJPNDIR) || $(MKDIRS) $(DESTJPNDIR)
 	$(INSTALL) -m 644 $(PROJ4) $(DESTJPNDIR)$(MSGOBJNAME)
 
 ######################################################################
