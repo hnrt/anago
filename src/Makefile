@@ -47,7 +47,7 @@ USRCFLAGS=-g $(GTKMMCFLAGS) $(XSCFLAGS) $(CURLCFLAGS) $(XML2CFLAGS)
 USRCPPFLAGS=-D_DEBUG -I.
 endif
 USRLDFLAGS=-Wl,-rpath,/usr/local/lib
-USRLIBS=$(GTKMMLIBS) $(XSLIBS) $(CURLLIBS) $(XML2LIBS) -luuid
+USRLIBS=$(GTKMMLIBS) $(XSLIBS) $(CURLLIBS) $(XML2LIBS)
 
 GTKMMCFLAGS=`pkg-config --cflags gtkmm-2.4`
 GTKMMLIBS=`pkg-config --libs gtkmm-2.4`
@@ -144,7 +144,7 @@ clean distclean::
 ######################################################################
 
 PROJ1=$(BINDIR)$(TARGETEXE)
-LIBS1=$(STDLIBS) $(USRLIBS)
+LIBS1=$(STDLIBS) $(USRLIBS) -luuid -lcrypto
 OBJS1=$(OBJDIR)App/Main.o \
 $(OBJDIR)Base/InterlockedCompareExchange.o \
 $(OBJDIR)Base/InterlockedExchange.o \

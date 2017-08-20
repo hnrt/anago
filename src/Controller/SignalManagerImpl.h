@@ -26,7 +26,7 @@ namespace hnrt
         typedef std::pair<void*, XenObjectSignal> XenObjectSignalEntry;
 
         SignalManagerImpl();
-        ~SignalManagerImpl();
+        virtual ~SignalManagerImpl();
         virtual void clear();
         virtual XenObjectSignal xenObjectSignal(int);
         virtual XenObjectSignal xenObjectSignal(const XenObject&);

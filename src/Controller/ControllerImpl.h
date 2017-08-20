@@ -31,7 +31,7 @@ namespace hnrt
     public:
 
         ControllerImpl();
-        ~ControllerImpl();
+        virtual ~ControllerImpl();
         virtual void parseCommandLine(int argc, char *argv[]);
         virtual void quit();
         virtual void addHost();

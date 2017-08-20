@@ -18,7 +18,7 @@ namespace hnrt
     public:
 
         ViewImpl();
-        ~ViewImpl();
+        virtual ~ViewImpl();
         virtual const Glib::ustring& getDisplayName() { return _displayName; }
         virtual Gtk::Window& getWindow() { return _mainWindow; }
         virtual Gtk::Window& getStatusWindow() { return _statusWindow; }

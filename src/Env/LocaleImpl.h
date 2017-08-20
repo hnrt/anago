@@ -16,7 +16,7 @@ namespace hnrt
     public:
 
         LocaleImpl();
-        ~LocaleImpl();
+        virtual ~LocaleImpl();
 
         //
         // Returns the root directory path of the message catalogs.

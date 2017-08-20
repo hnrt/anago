@@ -16,7 +16,7 @@ namespace hnrt
     public:
 
         ProcessImpl();
-        ~ProcessImpl();
+        virtual ~ProcessImpl();
         virtual Glib::ustring getExecutablePath() const { return _executablePath; }
         virtual Glib::ustring getExecutableDirectory() const;
 

@@ -18,7 +18,7 @@ namespace hnrt
     public:
 
         LoggerImpl();
-        ~LoggerImpl();
+        virtual ~LoggerImpl();
         virtual LogLevel getLevel() const { return _level; }
         virtual void setLevel(LogLevel level) { _level = level; }
         virtual void trace(const char*, ...);

@@ -19,7 +19,7 @@ namespace hnrt
     public:
 
         PingAgentImpl();
-        ~PingAgentImpl();
+        virtual ~PingAgentImpl();
         virtual void open();
         virtual void close();
         virtual void clear();

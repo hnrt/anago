@@ -16,6 +16,7 @@ namespace hnrt
     public:
 
         FrameScalerImpl();
+        virtual ~FrameScalerImpl();
         virtual void init();
         virtual void fini();
         virtual void scale(RefPtr<FrameBuffer>, RefPtr<FrameBuffer>, int, int, GdkRectangle&);

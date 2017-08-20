@@ -21,6 +21,11 @@ FrameScalerImpl::FrameScalerImpl()
 }
 
 
+FrameScalerImpl::~FrameScalerImpl()
+{
+}
+
+
 void FrameScalerImpl::init()
 {
     TRACEFUN(this, "FrameScalerImpl::init");

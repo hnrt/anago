@@ -24,7 +24,7 @@ namespace hnrt
     public:
 
         ModelImpl();
-        ~ModelImpl();
+        virtual ~ModelImpl();
         void init();
         void fini();
         virtual void load();

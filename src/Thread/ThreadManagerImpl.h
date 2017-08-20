@@ -18,7 +18,7 @@ namespace hnrt
     public:
 
         ThreadManagerImpl();
-        ~ThreadManagerImpl();
+        virtual ~ThreadManagerImpl();
         virtual int count() const;
         virtual bool isMain() const { return Glib::Thread::self() == _mainThread; }
         virtual const char* getName() const;
