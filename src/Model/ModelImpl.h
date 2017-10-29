@@ -27,6 +27,7 @@ namespace hnrt
         virtual ~ModelImpl();
         void init();
         void fini();
+        virtual bool isAlreadyRunning();
         virtual void load();
         virtual void save();
         virtual void clear();
@@ -85,6 +86,8 @@ namespace hnrt
 
         ModelImpl(const ModelImpl&);
         void operator =(const ModelImpl&);
+        int createPidFile();
+        bool deletePidFile();
         void loadV1(const RefPtr<Json>&);
         void loadV1Server(const RefPtr<Json>&);
         void loadV1Console(const RefPtr<Json>&);
@@ -98,6 +101,7 @@ namespace hnrt
         RefPtr<VirtualMachine> _selectedSnapshot;
         RefPtr<PatchBase> _patchBase;
         ConsoleMap _consoleMap;
+        int _pidFile;
         int _width;
         int _height;
         int _pane1Width;

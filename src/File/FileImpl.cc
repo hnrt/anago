@@ -117,6 +117,42 @@ bool FileImpl::open(const char* path, const char* mode)
 }
 
 
+bool FileImpl::createExcl(const char* path, const char* mode)
+{
+    if (_fp)
+    {
+        fclose(_fp);
+        _fp = NULL;
+    }
+
+    reset(path, mode);
+
+    int fd = ::open(_path, O_CREAT | O_EXCL | (strchr(_mode, '+') ? O_RDWR : O_WRONLY), S_IRUSR | S_IWUSR);
+    if (fd == -1)
+    {
+        _error = errno;
+        return false;
+    }
+
+    _fp = fdopen(fd, _mode);
+    if (!_fp)
+    {
+        _error = errno;
+        ::close(fd);
+        return false;
+    }
+
+    if (!updateInfo())
+    {
+        fclose(_fp);
+        _fp = NULL;
+        return false;
+    }
+
+    return true;
+}
+
+
 bool FileImpl::close()
 {
     bool retval = true;
@@ -131,6 +167,21 @@ bool FileImpl::close()
         _infoOutOfDate = true;
     }
     return retval;
+}
+
+
+bool FileImpl::remove()
+{
+    if (unlink(_path) == 0)
+    {
+        _infoOutOfDate = true;
+        return true;
+    }
+    else
+    {
+        _error = errno;
+        return false;
+    }
 }
 
 
@@ -380,4 +431,24 @@ time_t FileImpl::ctime() const
         const_cast<FileImpl*>(this)->updateInfo();
     }
     return _info.st_ctime;
+}
+
+
+bool FileImpl::isRegular() const
+{
+    if (_infoOutOfDate)
+    {
+        const_cast<FileImpl*>(this)->updateInfo();
+    }
+    return S_ISREG(_info.st_mode) ? true : false;
+}
+
+
+bool FileImpl::isDirectory() const
+{
+    if (_infoOutOfDate)
+    {
+        const_cast<FileImpl*>(this)->updateInfo();
+    }
+    return S_ISDIR(_info.st_mode) ? true : false;
 }

@@ -2,8 +2,10 @@
 
 
 #include <stdlib.h>
+#include <string.h>
 #include "App/Constants.h"
 #include "Base/StringBuffer.h"
+#include "File/File.h"
 #include "Logger/Trace.h"
 #include "Net/Console.h"
 #include "Net/PingAgent.h"
@@ -37,10 +39,28 @@ static Glib::ustring GetAppDir()
 }
 
 
+static Glib::ustring GetPidPath()
+{
+    return Glib::ustring::compose("%1/.%2.pid",
+                                  getenv("HOME"),
+                                  APPNAME);
+}
+
+
+static bool IsRunning(int pid)
+{
+    char path[32];
+    snprintf(path, sizeof(path), "/proc/%d", pid);
+    RefPtr<File> file = File::create(path);
+    return file->isDirectory();
+}
+
+
 ModelImpl::ModelImpl()
     : _path(GetConfigPath())
     , _appDir(GetAppDir())
     , _patchBase(PatchBase::create())
+    , _pidFile(-1)
     , _width(WIDTH_DEFAULT)
     , _height(HEIGHT_DEFAULT)
     , _pane1Width(PANE1WIDTH_DEFAULT)
@@ -58,6 +78,7 @@ ModelImpl::~ModelImpl()
 
 void ModelImpl::init()
 {
+    _pidFile = createPidFile();
     _patchBase->init();
     XenObjectTypeMap::init();
 }
@@ -67,6 +88,83 @@ void ModelImpl::fini()
 {
     XenObjectTypeMap::fini();
     _patchBase->fini();
+    if (_pidFile == 0)
+    {
+        if (deletePidFile())
+        {
+            _pidFile = -1;
+        }
+    }
+}
+
+
+bool ModelImpl::isAlreadyRunning()
+{
+    return _pidFile > 0;
+}
+
+
+int ModelImpl::createPidFile()
+{
+    RefPtr<File> file = File::create(GetPidPath().c_str());
+    for (;;)
+    {
+        char buf[256];
+        if (file->createExcl(NULL, "w"))
+        {
+            int pid = (int)getpid();
+            snprintf(buf, sizeof(buf), "%d\n", pid);
+            if (!file->write(buf, strlen(buf)))
+            {
+                g_printerr("ERROR: %s: %s\n", file->path(), strerror(file->error()));
+                return -1;
+            }
+            return 0;
+        }
+        if (!file->open(NULL, "r"))
+        {
+            g_printerr("ERROR: %s: %s\n", file->path(), strerror(file->error()));
+            return -1;
+        }
+        size_t n = file->read(buf, sizeof(buf) - 1);
+        if (file->error())
+        {
+            g_printerr("ERROR: %s: %s\n", file->path(), strerror(file->error()));
+            return -1;
+        }
+        buf[n] = '\0';
+        char* stop = buf;
+        int pid = (int)strtol(buf, &stop, 10);
+        if (stop > buf && *stop == '\n' && pid > 0)
+        {
+            if (IsRunning(pid))
+            {
+                g_printerr("INFO: Another instance is running. PID=%d\n", pid);
+                return pid;
+            }
+        }
+        else
+        {
+            g_printerr("WARNING: %s: Looks broken. Trying to recreate...\n", file->path());
+        }
+        if (!file->remove())
+        {
+            g_printerr("ERROR: %s: %s\n", file->path(), strerror(file->error()));
+            return -1;
+        }
+    }
+}
+
+
+bool ModelImpl::deletePidFile()
+{
+    RefPtr<File> file = File::create(GetPidPath().c_str());
+    if (!file->remove())
+    {
+        g_printerr("ERROR: %s: %s\n", file->path(), strerror(file->error()));
+        return false;
+    }
+    return true;
 }
 
 

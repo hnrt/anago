@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "Base/RefObj.h"
 #include "Base/RefPtr.h"
 
@@ -27,7 +28,9 @@ namespace hnrt
         virtual ~File();
         virtual void reset(const char* = 0, const char* = 0) = 0;
         virtual bool open(const char* = 0, const char* = 0) = 0;
+        virtual bool createExcl(const char* = 0, const char* = 0) = 0;
         virtual bool close() = 0;
+        virtual bool remove() = 0;
         virtual bool canRead() const = 0;
         virtual bool canWrite() const = 0;
         virtual bool seek(long, int = SEEK_SET) = 0;
@@ -50,6 +53,8 @@ namespace hnrt
         virtual time_t mtime() const = 0;
         virtual time_t ctime() const = 0;
         virtual size_t nbytes() const = 0;
+        virtual bool isRegular() const = 0;
+        virtual bool isDirectory() const = 0;
 
     protected:
 

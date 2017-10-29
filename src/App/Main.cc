@@ -50,6 +50,11 @@ int main(int argc, char *argv[])
         Controller::init();
         View::init();
 
+        if (Model::instance().isAlreadyRunning())
+        {
+            goto done;
+        }
+
         try
         {
             Model::instance().load();
@@ -79,6 +84,8 @@ int main(int argc, char *argv[])
             View::instance().showError(msg);
             status = EXIT_FAILURE;
         }
+
+    done:
 
         View::instance().clear();
         Model::instance().clear();

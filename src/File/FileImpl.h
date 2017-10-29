@@ -20,7 +20,9 @@ namespace hnrt
         virtual ~FileImpl();
         virtual void reset(const char* = 0, const char* = 0);
         virtual bool open(const char* = 0, const char* = 0);
+        virtual bool createExcl(const char* = 0, const char* = 0);
         virtual bool close();
+        virtual bool remove();
         virtual bool canRead() const;
         virtual bool canWrite() const;
         virtual bool seek(long, int = SEEK_SET);
@@ -43,6 +45,8 @@ namespace hnrt
         virtual time_t mtime() const;
         virtual time_t ctime() const;
         virtual size_t nbytes() const { return _nbytes; }
+        virtual bool isRegular() const;
+        virtual bool isDirectory() const;
 
     protected:
 

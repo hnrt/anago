@@ -30,6 +30,8 @@ namespace hnrt
         static void fini();
         static Model& instance();
 
+        virtual bool isAlreadyRunning() = 0;
+
         virtual void load() = 0;
         virtual void save() = 0;
         virtual void clear() = 0;
