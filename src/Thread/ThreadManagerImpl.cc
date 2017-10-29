@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include "Base/StringBuffer.h"
+#include "Registrant.h"
 #include "ThreadManagerImpl.h"
 
 

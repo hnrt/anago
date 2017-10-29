@@ -12,6 +12,8 @@
 
 namespace hnrt
 {
+    class Registrant;
+
     class ThreadManagerImpl
         : public ThreadManager
     {
@@ -32,30 +34,12 @@ namespace hnrt
         void remove();
         void run(sigc::slot<void>, Glib::ustring);
 
-        class Registrant
-        {
-        public:
-
-            Registrant(ThreadManagerImpl& threadManager, const Glib::ustring& name)
-                : _threadManager(threadManager)
-            {
-                _threadManager.add(name);
-            }
-
-            ~Registrant()
-            {
-                _threadManager.remove();
-            }
-
-        private:
-
-            ThreadManagerImpl& _threadManager;
-        };
-
         Glib::Thread* _mainThread;
         Glib::Mutex _mutex;
         std::map<Glib::Thread*, Glib::ustring> _nameMap;
         std::map<Glib::ustring, int> _countMap;
+
+        friend class Registrant;
     };
 }
 
