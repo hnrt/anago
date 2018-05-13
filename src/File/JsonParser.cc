@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Hideaki Narita
+// Copyright (C) 2018 Hideaki Narita
 
 
 #include "JsonParser.h"

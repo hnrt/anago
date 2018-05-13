@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Hideaki Narita
+// Copyright (C) 2012-2018 Hideaki Narita
 
 
 #ifndef HNRT_REMOTE_FRAME_BUFFER_H

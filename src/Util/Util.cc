@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Hideaki Narita
+// Copyright (C) 2012-2018 Hideaki Narita
 
 
 #include <ctype.h>

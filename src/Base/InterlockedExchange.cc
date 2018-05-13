@@ -1,4 +1,4 @@
-// Copyright (C) 1999-2017 Hideaki Narita
+// Copyright (C) 1999-2018 Hideaki Narita
 
 
 #ifdef __GNUC__

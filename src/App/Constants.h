@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Hideaki Narita
+// Copyright (C) 2018 Hideaki Narita
 
 
 #ifndef HNRT_APP_CONSTANTS_H
@@ -11,7 +11,7 @@
 #define APPDISPNAME "Anago"
 
 
-#define COPYRIGHT "Copyright \xC2\xA9 2012-2017 Hideaki Narita"
+#define COPYRIGHT "Copyright \xC2\xA9 2012-2018 Hideaki Narita"
 
 
 #define TEXTDOMAIN "anago"

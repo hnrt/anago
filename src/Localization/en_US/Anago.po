@@ -1,5 +1,5 @@
 # English translations for anago package.
-# Copyright (C) 2017 Hideaki Narita
+# Copyright (C) 2017-2018 Hideaki Narita
 # This file is distributed under the same license as the anago package.
 # Automatically generated, 2017.
 #
